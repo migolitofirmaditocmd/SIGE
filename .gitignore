@@ -50,3 +50,7 @@ yarn-error.log*
 *.swo
 .DS_Store
 Thumbs.db
+
+# Antigravity & AI Agent Local Rules (Keep confidential/local to machine)
+.agents/
+.agent/

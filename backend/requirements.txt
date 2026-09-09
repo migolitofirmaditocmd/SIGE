@@ -1,0 +1,19 @@
+# Core Framework & REST API
+Django>=5.0,<5.2
+djangorestframework>=3.15.0
+django-cors-headers>=4.3.0
+django-environ>=0.11.0
+
+# Database
+psycopg2-binary>=2.9.9
+
+# QR Engine & Cryptography
+qrcode[pil]>=7.4.2
+Pillow>=10.2.0
+
+# Excel / CSV Processing
+openpyxl>=3.1.2
+
+# Testing & Code Quality
+pytest>=8.0.0
+pytest-django>=4.8.0
