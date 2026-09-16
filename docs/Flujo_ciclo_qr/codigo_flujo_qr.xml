@@ -1,363 +1,243 @@
-<mxGraphModel dx="4376" dy="2284" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+<mxGraphModel dx="5226" dy="3384" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
   <root>
     <mxCell id="0" />
     <mxCell id="1" parent="0" />
-    <mxCell id="start" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="INICIO&#xa;Estudiante registrado en SIGE" vertex="1">
-      <mxGeometry height="70" width="260" x="650" y="40" as="geometry" />
+    <mxCell id="titB" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=16;fontColor=#333333;" value="B. MANTENIMIENTO Y REEMPLAZO DE QR (credencial perdida, robada, dañada o duplicada)" vertex="1">
+      <mxGeometry height="30" width="560" x="40" y="-40" as="geometry" />
     </mxCell>
-    <mxCell id="generateToken" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Generar identificador único / token&#xa;para el QR" vertex="1">
-      <mxGeometry height="70" width="260" x="650" y="150" as="geometry" />
+    <mxCell id="titA" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=16;fontColor=#333333;" value="A. ALTA INICIAL DE QR" vertex="1">
+      <mxGeometry height="30" width="320" x="900" y="-40" as="geometry" />
     </mxCell>
-    <mxCell id="tokenUnique" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿El token ya existe?" vertex="1">
-      <mxGeometry height="100" width="230" x="665" y="260" as="geometry" />
+    <mxCell id="titSub" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=16;fontColor=#333333;" value="SUBPROCESO COMPARTIDO — GENERACIÓN DE TOKEN" vertex="1">
+      <mxGeometry height="30" width="520" x="650" y="710" as="geometry" />
     </mxCell>
-    <mxCell id="regenerateToken" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Regenerar token" vertex="1">
-      <mxGeometry height="70" width="200" x="1070" y="275" as="geometry" />
+    <mxCell id="titC" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=16;fontColor=#333333;" value="CONTINUACIÓN COMPARTIDA — GENERACIÓN DE QR Y CREDENCIAL" vertex="1">
+      <mxGeometry height="30" width="520" x="30" y="1220" as="geometry" />
     </mxCell>
-    <mxCell id="generateQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Generar QR&#xa;El QR contiene únicamente&#xa;el token / identificador" vertex="1">
-      <mxGeometry height="85" width="260" x="650" y="400" as="geometry" />
+    <mxCell id="B1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;" value="INICIO Reporte de pérdida, robo, daño o duplicidad de credencial física" vertex="1">
+      <mxGeometry height="70" width="320" x="40" y="20" as="geometry" />
     </mxCell>
-    <mxCell id="associateQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Asociar QR con el estudiante&#xa;y registrar fecha de generación" vertex="1">
-      <mxGeometry height="75" width="260" x="650" y="525" as="geometry" />
+    <mxCell id="B2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Registrar motivo de la solicitud (pérdida / robo / daño / duplicidad)" vertex="1">
+      <mxGeometry height="70" width="320" x="40" y="140" as="geometry" />
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-19" edge="1" parent="1" source="activeQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="lmANvf-zAWr6qCuQMUJV-18">
+    <mxCell id="B3" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="¿Usuario solicitante tiene rol Administrador? (RF-QR-03)" vertex="1">
+      <mxGeometry height="110" width="290" x="55" y="270" as="geometry" />
+    </mxCell>
+    <mxCell id="B3no" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Rechazar solicitud. Se requiere autorización de rol Administrador" vertex="1">
+      <mxGeometry height="80" width="300" x="-360" y="285" as="geometry" />
+    </mxCell>
+    <mxCell id="B3end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;arcSize=20;" value="FIN Solicitud rechazada (sin cambios en el QR)" vertex="1">
+      <mxGeometry height="60" width="300" x="-360" y="400" as="geometry" />
+    </mxCell>
+    <mxCell id="B4" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="¿El estudiante cuenta con un QR vigente? (RN-QR-01)" vertex="1">
+      <mxGeometry height="110" width="290" x="55" y="420" as="geometry" />
+    </mxCell>
+    <mxCell id="B5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Revocar QR vigente actual: estado = REVOCADO, fecha de revocación, usuario y motivo (RN-QR-03)" vertex="1">
+      <mxGeometry height="95" width="320" x="40" y="580" as="geometry" />
+    </mxCell>
+    <mxCell id="B6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" value="Registrar revocación en bitácora (el histórico conserva la referencia al identificador revocado) (RN-AUT-05, RN-TRX-03)" vertex="1">
+      <mxGeometry height="95" width="320" x="40" y="715" as="geometry" />
+    </mxCell>
+    <mxCell id="A1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;" value="INICIO Estudiante registrado en SIGE, en estatus ACTIVO, sin QR vigente (RN-EST-05)" vertex="1">
+      <mxGeometry height="80" width="320" x="900" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="A2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="¿El estudiante ya cuenta con un QR vigente? (RN-QR-01)" vertex="1">
+      <mxGeometry height="110" width="290" x="915" y="160" as="geometry" />
+    </mxCell>
+    <mxCell id="A2note" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;" value="Caso anómalo: no debería ocurrir en operación normal; se trata como una solicitud de reemplazo (RN-QR-03)" vertex="1">
+      <mxGeometry height="70" width="320" x="1240" y="180" as="geometry" />
+    </mxCell>
+    <mxCell id="T1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Generar candidato de token (UUID v4 / CSPRNG). No debe contener ni derivar datos personales legibles (RN-QR-02)" vertex="1">
+      <mxGeometry height="95" width="320" x="480" y="835" as="geometry" />
+    </mxCell>
+    <mxCell id="T2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="¿Formato y longitud válidos?" vertex="1">
+      <mxGeometry height="100" width="290" x="495" y="980" as="geometry" />
+    </mxCell>
+    <mxCell id="T3" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="¿El token ya existe en la BD? (incluye tokens VIGENTES y REVOCADOS — nunca se reutiliza, RN-QR-03)" vertex="1">
+      <mxGeometry height="110" width="320" x="480" y="1110" as="geometry" />
+    </mxCell>
+    <mxCell id="T4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Incrementar contador de colisiones" vertex="1">
+      <mxGeometry height="70" width="270" x="990" y="1130" as="geometry" />
+    </mxCell>
+    <mxCell id="T4b" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="¿Intentos &lt; máximo configurado (5)?" vertex="1">
+      <mxGeometry height="95" width="260" x="995" y="1290" as="geometry" />
+    </mxCell>
+    <mxCell id="T5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Generar alerta al Administrador: posible fallo del generador aleatorio (anomalía de seguridad)" vertex="1">
+      <mxGeometry height="85" width="270" x="990" y="1425" as="geometry" />
+    </mxCell>
+    <mxCell id="T5end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;arcSize=20;" value="FIN Proceso de generación abortado — requiere revisión técnica" vertex="1">
+      <mxGeometry height="65" width="270" x="990" y="1540" as="geometry" />
+    </mxCell>
+    <mxCell id="T6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Guardar token en la BD: estado = VIGENTE, fecha de creación, estudiante asociado, usuario que generó, origen (alta inicial / reemplazo) (RN-AUT-05)" vertex="1">
+      <mxGeometry height="105" width="320" x="480" y="1330" as="geometry" />
+    </mxCell>
+    <mxCell id="C1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Generar código QR (imagen) El QR codifica únicamente el token (RF-QR-01, RN-QR-02)" vertex="1">
+      <mxGeometry height="85" width="320" x="480" y="1500" as="geometry" />
+    </mxCell>
+    <mxCell id="C2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Asociar QR con el estudiante: fecha de generación, usuario y origen; si es reemplazo, enlazar referencia al identificador revocado anterior" vertex="1">
+      <mxGeometry height="100" width="320" x="480" y="1650" as="geometry" />
+    </mxCell>
+    <mxCell id="C3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="QR = VIGENTE Vigencia indefinida hasta que sea revocado (RN-QR-03)" vertex="1">
+      <mxGeometry height="80" width="320" x="480" y="1800" as="geometry" />
+    </mxCell>
+    <mxCell id="C4" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="¿La credencial física está disponible y en buen estado? (RN-CRE-01)" vertex="1">
+      <mxGeometry height="110" width="290" x="495" y="1940" as="geometry" />
+    </mxCell>
+    <mxCell id="C5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Agregar QR al diseño de una credencial nueva" vertex="1">
+      <mxGeometry height="70" width="260" y="1960" as="geometry" />
+    </mxCell>
+    <mxCell id="C6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Imprimir credencial física completa y entregarla al estudiante" vertex="1">
+      <mxGeometry height="80" width="260" y="2092.5" as="geometry" />
+    </mxCell>
+    <mxCell id="C7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Generar / imprimir sticker QR (reimpresión selectiva si es reemplazo — RF-CRE-02)" vertex="1">
+      <mxGeometry height="80" width="260" x="1000" y="1955" as="geometry" />
+    </mxCell>
+    <mxCell id="C8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Pegar / reemplazar el sticker QR sobre la credencial existente" vertex="1">
+      <mxGeometry height="75" width="260" x="1000" y="2095" as="geometry" />
+    </mxCell>
+    <mxCell id="C9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;" value="QR ACTIVO Y CREDENCIAL ACTUALIZADA — LISTO" vertex="1">
+      <mxGeometry height="80" width="220" x="530" y="2220" as="geometry" />
+    </mxCell>
+    <mxCell id="noteRules" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;" value="REGLAS CLAVE DEL QR  • El QR contiene únicamente un token / identificador (RN-QR-02). • El token no debe exponer datos personales. • Cada estudiante tiene, a lo mucho, un QR vigente (RN-QR-01). • El QR no tiene fecha de expiración automática (RN-QR-03). • Un QR revocado nunca vuelve a estar vigente ni se   reutiliza para otro estudiante (RN-QR-03). • Revocar es la única vía para habilitar un nuevo QR   vigente para el mismo estudiante (RN-QR-01/03). • Solo el rol Administrador puede revocar y regenerar   un identificador (RF-QR-03). • Si la credencial ya existe, se coloca un sticker; si no   existe (o se reporta perdida/dañada), se imprime nueva   (RN-CRE-01, RF-CRE-01/02)." vertex="1">
+      <mxGeometry height="330" width="380" x="1230" y="300" as="geometry" />
+    </mxCell>
+    <mxCell id="noteScan" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;" value="EFECTO EN TIEMPO DE ESCANEO (fuera de este flujo, referencia)  Todo escaneo posterior con el token revocado se rechaza de forma automática, aunque el estudiante siga ACTIVO. Se genera una alerta para verificación manual de identidad. (RN-QR-04)" vertex="1">
+      <mxGeometry height="150" width="380" x="1590" y="700" as="geometry" />
+    </mxCell>
+    <mxCell id="noteAudit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" value="TRAZABILIDAD DE GENERACIÓN Y REVOCACIÓN  Registrar en cada evento: • Estudiante asociado • Token / QR generado o revocado • Fecha y hora del evento • Usuario que realizó la acción • Estado resultante del QR (VIGENTE / REVOCADO) • Motivo (en caso de revocación) • Origen: alta inicial o reemplazo  El historial se conserva de forma permanente, incluso si el QR es revocado posteriormente (RN-AUT-05, RN-TRX-03, RN-TRX-07)." vertex="1">
+      <mxGeometry height="290" width="380" x="1360" y="1110" as="geometry" />
+    </mxCell>
+    <mxCell id="noteToken" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;" value="BUENAS PRÁCTICAS DE GENERACIÓN  • Generador criptográficamente seguro   (CSPRNG), no pseudoaleatorio predecible. • Validación de unicidad contra el universo   completo de tokens (vigentes + revocados). • Límite de reintentos ante colisión, con   alerta si se excede (detección de anomalías). • La verificación de unicidad y la persistencia   se ejecutan en el backend (RN-API-01,   RN-TRX-05), nunca solo en el cliente." vertex="1">
+      <mxGeometry height="220" width="380" x="1650" y="1450" as="geometry" />
+    </mxCell>
+    <mxCell id="eB1" edge="1" parent="1" source="B1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="B2" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="activeQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="QR = ACTIVO&#xa;Vigencia indefinida&#xa;hasta que sea revocado" vertex="1">
-      <mxGeometry height="75" width="260" x="650" y="640" as="geometry" />
-    </mxCell>
-    <mxCell id="physicalSticker" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Generar / imprimir&#xa;STICKER FÍSICO con QR" vertex="1">
-      <mxGeometry height="70" width="260" x="880" y="932.5" as="geometry" />
-    </mxCell>
-    <mxCell id="attachSticker" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Pegar sticker QR&#xa;en la credencial física del estudiante" vertex="1">
-      <mxGeometry height="75" width="260" x="880" y="1070" as="geometry" />
-    </mxCell>
-    <mxCell id="notaCredencial" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="ACLARAR CON EL EQUIPO:&#xa;RF-CRE-01 exige exportar la credencial&#xa;completa en PDF formato CR-80 con foto,&#xa;nombre, grupo y QR integrados.&#xa;Si el sticker es solo el mecanismo físico&#xa;para aplicar el QR sobre una credencial&#xa;ya impresa, este paso debe presentarse&#xa;como complementario al PDF de RF-CRE-01,&#xa;no como sustituto. RF-CRE-02 habilita&#xa;reimpresión individual/por grupo." vertex="1">
-      <mxGeometry height="160" width="280" x="1335" y="90" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-17" edge="1" parent="1" source="qrReady" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="audit">
+    <mxCell id="eB2" edge="1" parent="1" source="B2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="B3" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="qrReady" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="QR listo para utilizar&#xa;No requiere teléfono del estudiante" vertex="1">
-      <mxGeometry height="70" width="260" x="650" y="1247.5" as="geometry" />
-    </mxCell>
-    <mxCell id="scanStart" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" value="ESCANEO DE QR&#xa;El estudiante presenta su credencial física" vertex="1">
-      <mxGeometry height="75" width="280" x="2500" y="30" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-1" edge="1" parent="1" source="authorizedScanner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="prefectScanner">
+    <mxCell id="eB3no" edge="1" parent="1" source="B3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="B3no" value="No">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-2" connectable="0" parent="lmANvf-zAWr6qCuQMUJV-1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="PREFECTO" vertex="1">
-      <mxGeometry relative="1" x="0.055" as="geometry">
-        <mxPoint x="11" y="-20" as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="authorizedScanner" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿Quién escanea?" vertex="1">
-      <mxGeometry height="100" width="230" x="2525" y="145" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-7" edge="1" parent="1" source="prefectScanner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="login">
+    <mxCell id="eB3noend" edge="1" parent="1" source="B3no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="B3end" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="prefectScanner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="PREFECTO&#xa;Puede escanear QR" vertex="1">
-      <mxGeometry height="70" width="200" x="2190" y="335" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-5" edge="1" parent="1" source="adminScanner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="login">
+    <mxCell id="eB3si" edge="1" parent="1" source="B3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="B4" value="Sí">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="adminScanner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="PERSONAL ADMINISTRATIVO&#xa;Puede escanear QR" vertex="1">
-      <mxGeometry height="70" width="220" x="2530" y="265" as="geometry" />
+    <mxCell id="eB4si" edge="1" parent="1" source="B4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="B5" value="Sí (tiene QR vigente)">
+      <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="teacherNoScan" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="DOCENTE&#xa;No escanea QR&#xa;Solo realiza reportes" vertex="1">
-      <mxGeometry height="70" width="220" x="2840" y="280" as="geometry" />
-    </mxCell>
-    <mxCell id="adminDirScanner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="ADMINISTRADOR / DIRECTIVO&#xa;Puede escanear QR&#xa;(control total del sistema)" vertex="1">
-      <mxGeometry height="70" width="220" x="3130" y="350" as="geometry" />
-    </mxCell>
-    <mxCell id="eAdminScan" edge="1" parent="1" source="authorizedScanner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="adminDirScanner" value="ADMINISTRADOR">
-      <mxGeometry relative="1" x="0.1094" y="15" as="geometry">
+    <mxCell id="eB4no" edge="1" parent="1" source="B4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="T1" value="No (sin QR vigente)">
+      <mxGeometry relative="1" x="-0.2667" y="25" as="geometry">
         <mxPoint as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="eAdminScanLogin" edge="1" parent="1" source="adminDirScanner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="login">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="login" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿Usuario autenticado?" vertex="1">
-      <mxGeometry height="100" width="230" x="2525" y="510" as="geometry" />
-    </mxCell>
-    <mxCell id="doLogin" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Solicitar inicio de sesión&#xa;(usuario / contraseña)" vertex="1">
-      <mxGeometry height="70" width="200" x="1685" y="445" as="geometry" />
-    </mxCell>
-    <mxCell id="maxAttempts" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿Excedió intentos fallidos&#xa;configurados? (RNF-SEG-03)" vertex="1">
-      <mxGeometry height="90" width="210" x="1680" y="580" as="geometry" />
-    </mxCell>
-    <mxCell id="cuentaBloqueada" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Cuenta bloqueada temporalmente&#xa;Registrar evento (RF-AUT-05)" vertex="1">
-      <mxGeometry height="70" width="210" x="1680" y="710" as="geometry" />
-    </mxCell>
-    <mxCell id="eLoginToAttempts" edge="1" parent="1" source="doLogin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="maxAttempts">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="eAttemptsRetry" edge="1" parent="1" source="maxAttempts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="login" value="NO, reintentar">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="eAttemptsBlock" edge="1" parent="1" source="maxAttempts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="cuentaBloqueada" value="SÍ">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="eBlockToAudit" edge="1" parent="1" source="cuentaBloqueada" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;libavoidRouting=1;" target="audit">
-      <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="1230" y="745" />
+          <mxPoint x="640" y="475" />
         </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="readQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Leer QR&#xa;Obtener token" vertex="1">
-      <mxGeometry height="70" width="230" x="2770" y="660" as="geometry" />
-    </mxCell>
-    <mxCell id="tokenExists" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿Token válido y existente?" vertex="1">
-      <mxGeometry height="100" width="230" x="2570" y="787.5" as="geometry" />
-    </mxCell>
-    <mxCell id="invalidQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="QR inválido / no registrado&#xa;No mostrar información del estudiante" vertex="1">
-      <mxGeometry height="70" width="220" x="2190" y="802.5" as="geometry" />
-    </mxCell>
-    <mxCell id="qrStatus" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿QR está ACTIVO?" vertex="1">
-      <mxGeometry height="100" width="230" x="2570" y="940" as="geometry" />
-    </mxCell>
-    <mxCell id="revokedQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="QR REVOCADO&#xa;Denegar operación&#xa;Registrar intento" vertex="1">
-      <mxGeometry height="75" width="220" x="2240" y="952.5" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-16" edge="1" parent="1" source="authorizedAction" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="suspicious">
+    <mxCell id="eB5" edge="1" parent="1" source="B5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="B6" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="authorizedAction" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Identificar usuario y aplicar&#xa;permisos según su rol" vertex="1">
-      <mxGeometry height="75" width="230" x="2830" y="1077.5" as="geometry" />
-    </mxCell>
-    <mxCell id="attendance" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="REGISTRAR ASISTENCIA&#xa;Guardar fecha y hora del escaneo" vertex="1">
-      <mxGeometry height="75" width="230" x="2170" y="1218" as="geometry" />
-    </mxCell>
-    <mxCell id="permissionsNote" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" value="PERMISOS DEL SISTEMA (corregido según RF-QR-03 / RF-AUT-02)&#xa;&#xa;ADMINISTRADOR / DIRECTIVO:&#xa;• Control total del sistema&#xa;• ÚNICO rol que revoca y regenera QR&#xa;• Escanea QR, registra asistencia&#xa;• Consulta información, edita estudiantes&#xa;&#xa;PREFECTO:&#xa;• Escanea QR&#xa;• Registra asistencia&#xa;• Consulta información&#xa;• NO edita estudiantes&#xa;• NO revoca ni genera QR&#xa;&#xa;PERSONAL ADMINISTRATIVO:&#xa;• Escanea QR&#xa;• Registra asistencia&#xa;• Consulta información&#xa;• Edita estudiantes&#xa;• NO revoca ni genera QR (exclusivo de Administrador, RF-QR-03)&#xa;&#xa;DOCENTE:&#xa;• NO escanea QR&#xa;• Genera reportes" vertex="1">
-      <mxGeometry height="430" width="380" x="330" y="1570" as="geometry" />
-    </mxCell>
-    <mxCell id="maintenanceStart" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" value="MANTENIMIENTO DEL QR" vertex="1">
-      <mxGeometry height="60" width="300" x="30" y="40" as="geometry" />
-    </mxCell>
-    <mxCell id="damageDecision" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿Sticker dañado pero QR legible?" vertex="1">
-      <mxGeometry height="100" width="250" x="55" y="140" as="geometry" />
-    </mxCell>
-    <mxCell id="reprintSameQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Reimprimir sticker&#xa;con el MISMO QR" vertex="1">
-      <mxGeometry height="70" width="220" x="350" y="155" as="geometry" />
-    </mxCell>
-    <mxCell id="revokeQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="ADMINISTRADOR&#xa;Revocar QR actual (RF-QR-03:&#xa;exclusivo de este rol)" vertex="1">
-      <mxGeometry height="70" width="250" x="55" y="290" as="geometry" />
-    </mxCell>
-    <mxCell id="newQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Generar nuevo token y&#xa;nuevo QR" vertex="1">
-      <mxGeometry height="70" width="250" x="55" y="600" as="geometry" />
-    </mxCell>
-    <mxCell id="newSticker" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Imprimir nuevo sticker&#xa;y colocarlo en la credencial" vertex="1">
-      <mxGeometry height="75" width="250" x="55" y="710" as="geometry" />
-    </mxCell>
-    <mxCell id="history" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" value="Conservar historial del QR anterior:&#xa;token, estudiante, fechas, motivo,&#xa;estado y eventos registrados" vertex="1">
-      <mxGeometry height="100" width="250" x="55" y="450" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-15" edge="1" parent="1" source="suspicious" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="attendance" value="NO">
+    <mxCell id="eB6audit" edge="1" parent="1" source="B6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#666666;" target="noteAudit" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="eAdminReviewRevoke" edge="1" parent="1" source="adminReview" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;libavoidRouting=1;" target="revokeQR" value="Procede revocación">
-      <mxGeometry relative="1" as="geometry">
+    <mxCell id="eB5scan" edge="1" parent="1" source="B5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#666666;" target="noteScan" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eB6T1" edge="1" parent="1" source="B6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;libavoidRouting=1;" target="T1" value="Continúa a generación de token">
+      <mxGeometry relative="1" x="-0.4393" y="33" as="geometry">
+        <mxPoint y="1" as="offset" />
         <Array as="points">
-          <mxPoint x="338" y="1425" />
-          <mxPoint x="338" y="325" />
+          <mxPoint x="640" y="763" />
         </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="eAdminReviewClose" edge="1" parent="1" source="adminReview" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="audit" value="No procede / caso cerrado">
-      <mxGeometry relative="1" x="0.0082" y="-25" as="geometry">
-        <mxPoint x="1" as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="suspicious" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿Posible suplantación de identidad?" vertex="1">
-      <mxGeometry height="100" width="250" x="2530" y="1205.5" as="geometry" />
-    </mxCell>
-    <mxCell id="logSuspicious" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Registrar evento sospechoso&#xa;y dejar trazabilidad" vertex="1">
-      <mxGeometry height="75" width="250" x="2890" y="1218" as="geometry" />
-    </mxCell>
-    <mxCell id="adminReview" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="PERSONAL ADMINISTRATIVO&#xa;Revisar el caso y, de proceder,&#xa;escalar a ADMINISTRADOR para&#xa;ejecutar revocación (RF-QR-03)" vertex="1">
-      <mxGeometry height="90" width="250" x="2890" y="1380" as="geometry" />
-    </mxCell>
-    <mxCell id="dataChange" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="CAMBIO DE DATOS DEL ESTUDIANTE" vertex="1">
-      <mxGeometry height="70" width="260" x="1940" y="1530" as="geometry" />
-    </mxCell>
-    <mxCell id="updateData" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Personal administrativo actualiza&#xa;los datos del estudiante" vertex="1">
-      <mxGeometry height="70" width="260" x="1940" y="1630" as="geometry" />
-    </mxCell>
-    <mxCell id="keepQR" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="El QR NO cambia&#xa;porque identifica al estudiante&#xa;mediante un token" vertex="1">
-      <mxGeometry height="80" width="260" x="1940" y="1730" as="geometry" />
-    </mxCell>
-    <mxCell id="studentLeave" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" value="BAJA DEL ESTUDIANTE" vertex="1">
-      <mxGeometry height="65" width="260" x="1570" y="1525" as="geometry" />
-    </mxCell>
-    <mxCell id="revokeOnLeave" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="ADMINISTRADOR&#xa;revoca QR activo (RF-QR-03)" vertex="1">
-      <mxGeometry height="70" width="260" x="1570" y="1625" as="geometry" />
-    </mxCell>
-    <mxCell id="preserveHistory" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Cambiar estado del estudiante&#xa;y conservar historial" vertex="1">
-      <mxGeometry height="70" width="260" x="1570" y="1730" as="geometry" />
-    </mxCell>
-    <mxCell id="audit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;" value="TRAZABILIDAD / HISTORIAL&#xa;&#xa;• Estudiante asociado&#xa;• Token / QR utilizado&#xa;• Usuario que escaneó&#xa;• Rol del usuario&#xa;• Fecha y hora&#xa;• Acción realizada&#xa;• Resultado&#xa;• Generación / revocación&#xa;• Motivo de revocación&#xa;&#xa;NO se registra dispositivo ni ubicación" vertex="1">
-      <mxGeometry height="260" width="360" x="1050" y="1530" as="geometry" />
-    </mxCell>
-    <mxCell id="e1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="generateToken">
+    <mxCell id="eA1" edge="1" parent="1" source="A1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="A2" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="e2" edge="1" parent="1" source="generateToken" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="tokenUnique">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e3" edge="1" parent="1" source="tokenUnique" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="regenerateToken" value="NO">
-      <mxGeometry relative="1" x="-0.0286" y="30" as="geometry">
-        <mxPoint as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="e5" edge="1" parent="1" source="tokenUnique" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="generateQR" value="SI">
-      <mxGeometry relative="1" y="10" as="geometry">
-        <mxPoint as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="e6" edge="1" parent="1" source="generateQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="associateQR">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="eRegenLoop" edge="1" parent="1" source="regenerateToken" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="tokenUnique" value="Reintentar validación">
-      <mxGeometry relative="1" x="0.0286" y="-20" as="geometry">
-        <mxPoint as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="eInvalidToAudit" edge="1" parent="1" source="invalidQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="audit">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="eRevokedToAudit" edge="1" parent="1" source="revokedQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;elbow=vertical;" target="audit">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e7" edge="1" parent="1" source="associateQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="activeQR">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e9" edge="1" parent="1" source="physicalSticker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="attachSticker">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e10" edge="1" parent="1" source="attachSticker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="qrReady">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e12" edge="1" parent="1" source="scanStart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="authorizedScanner">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e14" edge="1" parent="1" source="authorizedScanner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="adminScanner" value="ADMINISTRATIVO">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e15" edge="1" parent="1" source="authorizedScanner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="teacherNoScan" value="DOCENTE">
-      <mxGeometry relative="1" x="-0.0149" y="15" as="geometry">
-        <mxPoint as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="e18" edge="1" parent="1" source="login" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doLogin" value="NO">
-      <mxGeometry relative="1" x="0.04" y="-20" as="geometry">
-        <mxPoint as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="e20" edge="1" parent="1" source="login" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="readQR" value="SÍ">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e21" edge="1" parent="1" source="readQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="tokenExists">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e22" edge="1" parent="1" source="tokenExists" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="invalidQR" value="NO">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e23" edge="1" parent="1" source="tokenExists" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="qrStatus" value="SÍ">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e24" edge="1" parent="1" source="qrStatus" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="revokedQR" value="NO">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e25" edge="1" parent="1" source="qrStatus" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="authorizedAction" value="SÍ">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e29" edge="1" parent="1" source="attendance" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="audit">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e32" edge="1" parent="1" source="maintenanceStart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="damageDecision">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e33" edge="1" parent="1" source="damageDecision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="reprintSameQR" value="SÍ">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e34" edge="1" parent="1" source="damageDecision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="revokeQR" value="NO">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e36" edge="1" parent="1" source="revokeQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="history">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e37" edge="1" parent="1" source="history" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="newQR">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e38" edge="1" parent="1" source="newQR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="newSticker">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e39" edge="1" parent="1" source="newSticker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;libavoidRouting=1;" target="qrReady">
+    <mxCell id="eA2si" edge="1" parent="1" source="A2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;libavoidRouting=1;" target="B5" value="Sí (anomalía → tratar como reemplazo)">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="180" y="1283" />
+          <mxPoint x="1060" y="628" />
         </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="e40" edge="1" parent="1" source="suspicious" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="logSuspicious" value="SÍ">
+    <mxCell id="eA2note" edge="1" parent="1" source="A2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#666666;" target="A2note" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="e41" edge="1" parent="1" source="logSuspicious" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="adminReview">
+    <mxCell id="eA2no" edge="1" parent="1" source="A2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T1" value="No (flujo normal)">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="e43" edge="1" parent="1" source="dataChange" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="updateData">
+    <mxCell id="eT1T2" edge="1" parent="1" source="T1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T2" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="e44" edge="1" parent="1" source="updateData" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="keepQR">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e45" edge="1" parent="1" source="studentLeave" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="revokeOnLeave">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e46" edge="1" parent="1" source="revokeOnLeave" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="preserveHistory">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-    <mxCell id="e48" edge="1" parent="1" source="revokeQR" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;edgeStyle=orthogonalEdgeStyle;" target="audit">
+    <mxCell id="eT2no" edge="1" parent="1" source="T2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#d79b00;fontColor=#d79b00;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;libavoidRouting=1;" target="T1" value="No">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
-          <mxPoint x="180" y="380" />
-          <mxPoint x="1230" y="380" />
+          <mxPoint x="464" y="1030" />
+          <mxPoint x="464" y="883" />
         </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="e49" edge="1" parent="1" source="revokeOnLeave" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;libavoidRouting=1;" target="audit">
+    <mxCell id="eT2si" edge="1" parent="1" source="T2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T3" value="Sí">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-20" edge="1" parent="1" source="lmANvf-zAWr6qCuQMUJV-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="physicalSticker">
+    <mxCell id="eT3si" edge="1" parent="1" source="T3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T4" value="Sí (colisión)">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-21" connectable="0" parent="lmANvf-zAWr6qCuQMUJV-20" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;SI&lt;/b&gt;" vertex="1">
-      <mxGeometry relative="1" x="-0.5247" y="1" as="geometry">
-        <mxPoint x="4" y="-14" as="offset" />
+    <mxCell id="eT3no" edge="1" parent="1" source="T3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T6" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eT4" edge="1" parent="1" source="T4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T4b" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eT4bsi" edge="1" parent="1" source="T4b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#d79b00;fontColor=#d79b00;entryX=1;entryY=0.2;entryDx=0;entryDy=0;libavoidRouting=1;" target="T1" value="Sí, reintentar">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="895" y="1338" />
+          <mxPoint x="895" y="854" />
+        </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-24" edge="1" parent="1" source="lmANvf-zAWr6qCuQMUJV-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="lmANvf-zAWr6qCuQMUJV-22">
+    <mxCell id="eT4bno" edge="1" parent="1" source="T4b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T5" value="No, se excedió el máximo">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-18" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="¿El estudiante ya cuenta&lt;div&gt;con credencial?&lt;/div&gt;" vertex="1">
-      <mxGeometry height="100" width="230" x="665" y="785" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-25" edge="1" parent="1" source="lmANvf-zAWr6qCuQMUJV-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="lmANvf-zAWr6qCuQMUJV-23">
+    <mxCell id="eT5" edge="1" parent="1" source="T5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="T5end" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-22" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Agregar el QR al diseño de la credencial" vertex="1">
-      <mxGeometry height="70" width="260" x="370" y="920" as="geometry" />
-    </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-26" edge="1" parent="1" source="lmANvf-zAWr6qCuQMUJV-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="qrReady">
+    <mxCell id="eT6C1" edge="1" parent="1" source="T6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C1" value="">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="lmANvf-zAWr6qCuQMUJV-23" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Imprimir y darle la credencial fisica al estudiante" vertex="1">
-      <mxGeometry height="75" width="260" x="370" y="1057.5" as="geometry" />
+    <mxCell id="eC1C2" edge="1" parent="1" source="C1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C2" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC2C3" edge="1" parent="1" source="C2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C3" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC3C4" edge="1" parent="1" source="C3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C4" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC4no" edge="1" parent="1" source="C4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C5" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC5C6" edge="1" parent="1" source="C5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C6" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC4si" edge="1" parent="1" source="C4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C7" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC7C8" edge="1" parent="1" source="C7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C8" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC6end" edge="1" parent="1" source="C6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C9" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC8end" edge="1" parent="1" source="C8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="C9" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eC2audit" edge="1" parent="1" source="C2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#666666;" target="noteAudit" value="">
+      <mxGeometry relative="1" as="geometry" />
     </mxCell>
   </root>
 </mxGraphModel>

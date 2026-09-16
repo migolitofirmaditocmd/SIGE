@@ -1,7 +1,7 @@
 # Especificación de Requisitos del Sistema — SIGE
 ### Sistema Integral de Gestión Escolar
-**Documento derivado del Acta Constitutiva del Proyecto v8**
-**Versión:** 1.0 — Ampliación de RF/RNF | **Estado:** Para revisión del equipo
+**Documento derivado del Acta Constitutiva del Proyecto v9**
+**Versión:** 2.0 — Ampliación de RF/RNF | **Estado:** Para revisión del equipo
 
 ---
 
@@ -33,11 +33,11 @@ Antes de entrar al detalle técnico, aquí va una explicación en términos simp
 | **EST** | Gestión de Estudiantes | La "ficha" de cada alumno: nombre, grupo, foto, tutor, si sigue activo o ya se dio de baja. Es la base de datos maestra de la que todo lo demás depende. |
 | **IMP** | Importación masiva | Para no dar de alta a 500 alumnos a mano: subes un Excel/CSV con el formato correcto y el sistema los carga solo, avisando cuáles filas fallaron y por qué. |
 | **QR** | Identificación QR | Le genera a cada alumno un código único (como un "gafete digital") que lo identifica en el sistema sin mostrar sus datos personales a simple vista. |
-| **CRE** | Credenciales | Toma esos códigos QR y arma el PDF listo para imprimir en tamaño de credencial física, para pegarlo o mandarlo a laminar. |
+| **CRE** | Credenciales | Toma esos códigos QR y los entrega al personal administrativo para que los agreguen en la credencial fisica para su impresión o como sticker para ser añadido a credenciales fisicas ya impresas. |
 | **AUT** | Autenticación y usuarios | El "login" del sistema: quién puede entrar, con qué contraseña, y qué rol tiene (Admin, Prefecto, Docente, etc.), para que cada quien vea solo lo que le toca. |
 | **AST** | Asistencia | El corazón operativo diario: cuando un alumno escanea su QR en la entrada, aquí se decide si llegó a tiempo, tarde, o si faltó, y se guarda el historial. |
 | **REP** | Reportes escolares | El flujo de "reportes de conducta/académicos/emocionales": el maestro lo levanta, el prefecto lo revisa, administración decide si se avisa a la familia. |
-| **COM** | Comunicación con familiares | La parte que efectivamente le manda el aviso al papá/mamá/tutor (por correo, o por WhatsApp como respaldo manual). |
+| **COM** | Comunicación con familiares | La parte que efectivamente manda por correo electrónico los avisos y reportes previamente autorizados al papá/mamá/tutor. |
 | **ADM** | Panel administrativo | La "sala de control" para el Administrador: gestionar usuarios, catálogos (grupos, tipos de reporte) y ver indicadores generales. |
 | **API** | Backend / API / Base de datos | La maquinaria interna que todos los módulos usan por debajo: donde se guarda todo, se valida la información y se hacen los respaldos. No lo ve el usuario final directamente. |
 | **MOV** | Aplicación móvil | La versión para celular de asistencia y reportes, pensada para que el prefecto/docente la use caminando por la escuela, sin necesitar una computadora. |
@@ -65,7 +65,7 @@ Y para los No Funcionales, la idea detrás de cada categoría:
 | **Administrador / Directivo** | Control total: usuarios, estudiantes, configuración, reportes, KPIs | Web |
 | **Prefecto** | Escaneo de asistencia, consulta de expedientes, recepción y canalización de reportes | Web + Móvil |
 | **Docente** | Registro de reportes escolares | Móvil |
-| **Personal administrativo** | Revisión de reportes canalizados, autorización de comunicación a familia, justificación de faltas | Web |
+| **Personal administrativo** | Escaneo de asistencia estudiantil, registro de asistencia docente, consulta de expedientes, revisión de reportes canalizados, autorización de comunicación a familia y justificación/modificación de asistencias autorizadas | Web + Movil |
 | **Solo lectura / Auditoría** | Consulta de estadísticas e información consolidada, sin capacidad de modificación | Web |
 | **Familiar / Tutor** | Receptor pasivo de comunicaciones (Solo correo); no tiene cuenta en el sistema en esta fase | Ninguno (canal externo) |
 | **Estudiante** | Sujeto de los datos; se identifica mediante credencial con QR | No aplica (no es usuario del sistema) |
@@ -79,8 +79,7 @@ Y para los No Funcionales, la idea detrás de cada categoría:
 ### 3.1 Gestión de Estudiantes e Importación — *(OE-02, OE-01 parcial · Hito 01–02)*
 
 **RF-EST-01 — Expediente digital del estudiante** *(reemplaza y expande RF-02)*
-El sistema DEBE mantener una ficha centralizada y única por estudiante con: nombre completo, fecha de nacimiento, fotografía, grado, grupo, ciclo escolar, matrícula, estatus (`ACTIVO`, `BAJA`, `EGRESADO`) y al menos un tutor/familiar asociado con datos de contacto y relación (padre, madre, tutor legal, otro).
-- *Reglas de negocio:* la matrícula es única e inmutable; un cambio de estatus a `BAJA` o `EGRESADO` DEBE conservar el expediente histórico (no se elimina, se archiva lógicamente); DEBE existir bitácora de quién y cuándo modificó cada campo sensible.
+El sistema DEBE mantener una ficha centralizada y única por estudiante con: nombre completo, fecha de nacimiento, fotografía, grado, grupo, ciclo escolar, domicilio, sexo, matrícula, CURP, estatus (`ACTIVO`, `BAJA`, `EGRESADO`) y al menos un tutor/familiar asociado con datos de contacto y relación (padre, madre, tutor legal, otro).
 - *Criterios de aceptación:* 100% de estudiantes de prueba con expediente completo y estatus consistente (KPI-07, KPI-09).
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02 · KPI-07, KPI-09.
 
@@ -96,9 +95,12 @@ El sistema DEBE permitir asociar uno o más tutores por estudiante, cada uno con
 El sistema DEBE permitir buscar y filtrar estudiantes por nombre, matrícula, grupo, grado y estatus, con resultados paginados.
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02.
 
+**RF-EST-05 — Registro de consentimiento del tutor**
+El sistema DEBE permitir registrar, para cada tutor/familiar asociado a un estudiante, el estatus de consentimiento para el tratamiento de los datos personales del menor (PENDIENTE, OTORGADO, REVOCADO) junto con la fecha de registro, conforme a la sección "Protección de datos de menores" del acta y a la LFPDPPP.
+- *Prioridad:* Must (regulatorio). **Trazabilidad:** OE-02 · Hito 02 · Protección de datos de menores (acta, sin KPI numerado específico — se recomienda solicitar a la institución que se agregue uno en una futura actualización de la matriz de KPIs)
+
 **RF-IMP-01 — Importación masiva de estudiantes (CSV/XLSX)** *(expande RF-01)*
 El sistema DEBE permitir cargar archivos CSV y XLSX basados estrictamente en un diccionario de datos publicado por el equipo de desarrollo, ejecutando el proceso en modo transaccional por fila (una fila inválida no bloquea a las demás) y emitiendo, al finalizar, un reporte descargable con: total de filas procesadas, filas insertadas, filas con error y el detalle del error por fila (columna y motivo).
-- *Reglas de negocio:* el sistema DEBE ofrecer una vista previa ("dry-run") antes de confirmar la importación definitiva; los registros duplicados (misma matrícula) DEBEN rechazarse y reportarse, no sobrescribirse silenciosamente.
 - *Fuera de alcance (heredado del acta):* limpieza o transformación de datos históricos no estructurados — la institución debe entregar los archivos ya conformes al diccionario de datos.
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02 · Fuera de alcance §7.
 
@@ -112,7 +114,6 @@ El sistema DEBERÍA proveer una plantilla CSV/XLSX descargable con las columnas 
 
 **RF-QR-01 — Generación de identificador seguro por estudiante** *(expande RF-03)*
 El sistema DEBE generar, para el 100% de los estudiantes registrados, un identificador único e irrepetible que **no exponga datos personales directamente legibles en el payload del código QR** (ver RNF-SEG-02); el identificador DEBE quedar asociado inequívocamente al registro del estudiante en la base de datos.
-- *Reglas de negocio:* el identificador se genera una sola vez por estudiante salvo proceso explícito de regeneración (RF-QR-03); el sistema DEBE validar unicidad antes de persistir.
 - *Criterios de aceptación:* 0 identificadores duplicados; 100% de QR legibles y correctamente asociados (KPI-01 a KPI-04).
 - *Prioridad:* Must. **Trazabilidad:** OE-01 · Hito 01 · KPI-01, KPI-02, KPI-03, KPI-04.
 
@@ -126,12 +127,11 @@ El sistema DEBE permitir, únicamente al rol Administrador, revocar el identific
 - *Prioridad:* Should. **Trazabilidad:** OE-01 · Hito 01 (complementario).
 
 **RF-CRE-01 — Exportación de credenciales para impresión** *(expande RF-04)*
-El sistema DEBE generar documentos PDF listos para imprimir en pliegos tamaño carta, con credenciales en medida estándar CR-80 (85.6 mm × 54 mm), incluyendo fotografía, nombre, grupo/grado, datos institucionales mínimos y el código QR, respetando márgenes de sangrado y guías de corte.
+El sistema DEBE generar, para cada estudiante, una imagen de alta resolución del código QR individual, en el tamaño y formato adecuados para su incorporación posterior en la credencial física — ya sea como parte del diseño de una credencial nueva (cuando el estudiante aún no cuenta con una) o como sticker independiente para pegarse sobre una credencial ya impresa (ver RF-CRE-02).
 - *Prioridad:* Must. **Trazabilidad:** OE-01 · Hito 01 · KPI-06.
 
 **RF-CRE-02 — Reimpresión selectiva de credenciales**
-El sistema DEBERÍA permitir generar el PDF de credenciales para un subconjunto de estudiantes (por grupo o de forma individual), para atender reposiciones sin regenerar el lote completo.
-- *Prioridad:* Should. **Trazabilidad:** OE-01 · Hito 01 (complementario).
+El sistema DEBERÍA permitir reexportar el código QR (imagen/PDF) de un subconjunto de estudiantes (por grupo o de forma individual) — por ejemplo, para generar el sticker de reposición tras una revocación (RF-QR-03) — sin necesidad de reexportar el lote completo.
 
 ---
 
@@ -155,8 +155,8 @@ El sistema DEBE proveer un mecanismo de restablecimiento de contraseña mediante
 - *Prioridad:* Should. **Trazabilidad:** OE-03 · Hito 02.
 
 **RF-AUT-05 — Bitácora de auditoría de accesos y acciones críticas**
-El sistema DEBE registrar usuario, fecha/hora, acción y resultado para inicios de sesión, cambios de rol, modificaciones de asistencia y reportes, y cambios de estatus de estudiante, de forma consultable por el rol Administrador.
-- *Prioridad:* Must. **Trazabilidad:** OE-03, OE-08 · Hito 02 · KPI-58, KPI-61.
+El sistema DEBE registrar usuario, fecha/hora, acción y resultado para inicios de sesión, cambios de rol, registros y modificaciones de asistencia estudiantil y docente, modificaciones de reportes y cambios de estatus de estudiante, de forma consultable por el rol Administrador.
+- *Prioridad:* Must. **Trazabilidad:** OE-03, OE-08 · Hito 02 · KPI-58, KPI-64.
 
 ---
 
@@ -167,11 +167,18 @@ El sistema DEBE generar un registro de asistencia al validar el código QR de un
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · KPI-13, KPI-15, KPI-18.
 
 **RF-AST-02 — Prevención de escaneos duplicados ("rebote")** *(expande RF-06)*
-El motor de asistencia DEBE ignorar y notificar (sin generar un segundo registro) escaneos del mismo estudiante que ocurran dentro de una ventana configurable, con valor por defecto de 5 minutos.
+El motor de asistencia DEBE ignorar y notificar (sin generar un segundo registro) escaneos del mismo estudiante que ocurran dentro de una ventana configurable, con valor por defecto de 5 minutos minimo.
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · KPI-16.
 
 **RF-AST-03 — Determinación automática del estado de asistencia**
-El sistema DEBE determinar el estado (`ASISTIÓ`, `FALTÓ`, `LLEGÓ TARDE`) a partir de reglas de horario configurables por la institución (hora de corte de entrada), aplicadas de forma consistente por grupo y jornada.
+
+El sistema DEBE determinar automáticamente el estado de asistencia de los estudiantes conforme a la hora del primer registro válido de entrada y a los parámetros de horario configurados por la institución.
+
+- Un registro válido realizado a más tardar a la hora de corte DEBE producir el estado `ASISTIÓ`.
+- Un registro válido realizado después de la hora de corte DEBE producir el estado `LLEGÓ TARDE`.
+- Un estudiante sin registro válido de entrada DEBE permanecer sin estado definitivo antes de la hora de verificación de ausencias y DEBE marcarse como `FALTÓ` una vez transcurrida dicha hora.
+- La hora de corte y la hora de verificación de ausencias DEBEN poder configurarse de acuerdo con la jornada institucional.
+
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03.
 
 **RF-AST-04 — Historial diario de asistencia por grupo**
@@ -183,19 +190,39 @@ El sistema DEBE permitir consultar el historial acumulado de asistencia de un es
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 07 · KPI-62.
 
 **RF-AST-06 — Justificación y modificación de faltas con trazabilidad**
-El sistema DEBE permitir a personal autorizado justificar una falta o modificar el estado registrado, exigiendo un motivo, y DEBE conservar un registro inmutable de quién hizo el cambio, cuándo y cuál era el estado anterior.
-- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 07 · KPI-63, KPI-64.
+El sistema DEBE permitir a personal autorizado justificar o modificar registros de asistencia estudiantil y docente, exigiendo un motivo y conservando un registro inmutable de quién realizó el cambio, cuándo se realizó, cuál era el estado anterior y cuál es el nuevo estado.
+- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 07 · KPI-63, KPI-64..
 
 **RF-AST-07 — Información consolidada de apoyo a evaluación académica**
 El sistema DEBE generar información agregada de asistencia (por estudiante, grupo y periodo) exportable o consultable, para ser usada por los docentes conforme a las reglas de evaluación que defina la institución (la fórmula de ponderación queda fuera de este documento).
 - *Prioridad:* Should. **Trazabilidad:** OE-04 · Hito 07.
 
-**RF-AST-08 — Notificación de contingencia vía WhatsApp** *(expande RF-07)*
-El sistema DEBE incluir, en la vista de asistencia del estudiante, un botón que genere un enlace `https://wa.me/<telefono_tutor>?text=<mensaje>` con el estatus de asistencia prellenado, para envío manual por parte del prefecto sin costo para la institución, mientras el módulo de mensajería automatizada (OE-07) no esté disponible o como respaldo ante fallas del correo (ver riesgo R-02).
-- *Reglas de negocio:* el mensaje generado NO DEBE incluir el identificador QR ni datos sensibles adicionales al nombre del estudiante y su estatus del día.
-- *Prioridad:* Should. **Trazabilidad:** OE-04, OE-07 (contingencia) · Hito 03/07.
+**RF-AST-08 — Registro de asistencia del personal docente**
+El sistema DEBE permitir al Personal administrativo registrar la asistencia del personal docente mediante el escaneo del código QR individual asociado al docente.
+El flujo DEBE permitir:
+1. Escanear el código QR del docente.
+2. Validar e identificar al docente.
+3. Seleccionar manualmente si el registro corresponde a `ENTRADA` o `SALIDA`.
+4. Registrar la fecha y hora del evento.
+5. Impedir más de un registro de `ENTRADA` y más de un registro de `SALIDA` para el mismo docente en la misma fecha.
+6. Determinar el estado de la `ENTRADA` conforme al horario esperado del docente para ese día.
+7. Permitir consultar el historial de entradas y salidas del docente.
+8. Permitir identificar ausencias únicamente cuando el docente tenga asistencia programada para ese día y no exista una entrada válida después de la hora de verificación correspondiente.
+9. Mantener trazabilidad de cualquier modificación o justificación posterior.
 
----
+Los docentes no requieren una cuenta de usuario de SIGE para que el Personal administrativo registre su asistencia.
+- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03.
+
+**RF-AST-09 — Configuración de jornada y asistencia programada del personal docente**
+El sistema DEBE permitir al Personal administrativo autorizado registrar y mantener la programación de asistencia de cada docente, incluyendo como mínimo los días de asistencia programada y los horarios esperados de entrada y salida.
+La programación DEBE permitir que diferentes docentes tengan diferentes días y horarios de asistencia.
+El sistema DEBE utilizar esta programación para determinar si corresponde evaluar la asistencia del docente en una fecha determinada y para calcular la puntualidad de los registros de `ENTRADA`.
+Los cambios realizados sobre la programación DEBEN conservar trazabilidad.
+- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03.
+
+**RF-AST-10 — Persistencia y consulta histórica de la asistencia docente**
+El sistema DEBE conservar de forma permanente en la base de datos todo registro de asistencia del personal docente (`ENTRADA`, `SALIDA` y su estado derivado), sin eliminación física, y DEBE permitir su consulta histórica por docente y periodo, de forma equivalente al historial de asistencia estudiantil (RF-AST-04, RF-AST-05).
+- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03/07 · RN-AST-21. *(Pendiente asignar KPI propio — RF-AST-04/05 usan KPI-59/KPI-62 para el lado estudiantil.)*
 
 ### 3.5 Reportes Escolares — *(OE-05/OE-06 · Hito 04/07)*
 
@@ -204,7 +231,7 @@ El sistema DEBE permitir al docente registrar un reporte seleccionando tipo (`em
 - *Prioridad:* Must. **Trazabilidad:** OE-05/06 · Hito 04/07 · KPI-45 a KPI-48.
 
 **RF-REP-02 — Flujo de canalización del reporte**
-El sistema DEBE encaminar cada reporte por el flujo `Docente → Prefecto → Personal administrativo → Familia`, permitiendo a cada rol únicamente las acciones que le correspondan (consultar, filtrar, canalizar, autorizar comunicación), sin importar si la etapa se ejecutó desde la app móvil o la plataforma web.
+El sistema DEBE encaminar cada reporte por el flujo `Registrado por docente → Revisado por prefecto → Canalizado → Revisado por administrativo → Comunicado a familia`, permitiendo a cada rol únicamente las acciones que le correspondan (consultar, filtrar, canalizar, autorizar comunicación), sin importar si la etapa se ejecutó desde la app móvil o la plataforma web.
 - *Prioridad:* Must. **Trazabilidad:** OE-05/06 · Hito 07 · KPI-49 a KPI-52.
 
 **RF-REP-03 — Bandeja y filtrado por rol**
@@ -244,7 +271,7 @@ El sistema DEBE proveer una interfaz única para que el rol Administrador gestio
 - *Prioridad:* Must. **Trazabilidad:** OE-10 · Hito 02.
 
 **RF-ADM-02 — Configuración de parámetros operativos**
-El sistema DEBE permitir configurar, sin intervención de desarrollo, parámetros como la ventana de prevención de rebote (RF-AST-02), el horario de corte de asistencia (RF-AST-03) y las opciones predeterminadas del reglamento escolar por tipo/gravedad de reporte.
+El sistema DEBE permitir configurar los parámetros operativos de asistencia estudiantil y docente de manera independiente, incluyendo la ventana de prevención de rebote, la hora de corte utilizada para determinar puntualidad cuando corresponda y las horas de verificación de ausencias correspondientes a cada población, así como las opciones predeterminadas del reglamento escolar por tipo/gravedad de reporte.
 - *Prioridad:* Should. **Trazabilidad:** OE-10 · Hito 02/07.
 
 **RF-ADM-03 — Panel de indicadores (KPIs)**
@@ -276,7 +303,8 @@ El sistema DEBE devolver errores en un formato consistente (código, mensaje, re
 ### 3.9 Aplicación Móvil — *(OE-11 · Hito 04)*
 
 **RF-MOV-01 — Escaneo y validación de QR desde el dispositivo móvil**
-La aplicación móvil DEBE permitir escanear el código QR de un estudiante usando la cámara del dispositivo y validar el identificador contra el backend en tiempo real.
+La aplicación móvil DEBE permitir escanear el código QR de un estudiante y, cuando exista conexión con el servidor local, validar el identificador contra el backend en tiempo real.
+Cuando no exista conectividad con el servidor, la aplicación DEBE poder almacenar temporalmente el evento de captura conforme a RNF-FIA-01, identificándolo como pendiente de validación y sin considerarlo un registro definitivo hasta completar su sincronización con el backend.
 - *Prioridad:* Must. **Trazabilidad:** OE-11 · Hito 04 · KPI-19, KPI-26.
 
 **RF-MOV-02 — Registro y consulta de asistencia y reportes desde móvil**
@@ -339,7 +367,7 @@ El sistema DEBE limitar los campos de datos personales recolectados a los estric
 ### 4.3 Fiabilidad / Disponibilidad
 
 **RNF-FIA-01 — Tolerancia a desconexión con buffer local** *(= RNF-03 original)*
-El módulo de escaneo de asistencia DEBE almacenar en un buffer local del navegador/dispositivo hasta 1,000 registros generados durante una pérdida de conectividad, y DEBE sincronizarlos automáticamente con el servidor al restablecerse la conexión, resolviendo conflictos de duplicidad conforme a la regla de rebote (RF-AST-02).
+El módulo de escaneo de asistencia DEBE almacenar temporalmente en el navegador o dispositivo hasta 1,000 eventos de captura generados durante una pérdida de conectividad y DEBE sincronizarlos automáticamente con el servidor al restablecerse la conexión. Los eventos almacenados offline se consideran pendientes de validación y DEBEN ser validados por el backend antes de incorporarse como registros definitivos, aplicando las reglas de integridad, unicidad y duplicidad correspondientes.
 - *Prioridad:* Must. **Trazabilidad:** OE-04, OE-12 · Hito 06 · KPI-39.
 
 **RNF-FIA-02 — Disponibilidad durante jornada escolar**
@@ -357,7 +385,7 @@ La interfaz DEBE implementar curvaturas tipo "squircle" (`border-radius: 12–16
 - *Prioridad:* Should. **Trazabilidad:** Hito 06 (validación de usabilidad) · KPI-37.
 
 **RNF-USA-02 — Curva de aprendizaje del personal operativo**
-Un prefecto o docente sin capacitación previa DEBERÍA poder completar las tareas críticas de su rol (escanear asistencia, registrar un reporte) con una guía mínima, alcanzando al menos 90% de tareas completadas correctamente en las pruebas de usabilidad.
+Un prefecto, docente o personal administrativo sin capacitación técnica previa DEBERÍA poder completar las tareas críticas de su rol (registrar asistencia estudiantil, registrar asistencia docente cuando corresponda y registrar reportes escolares) con una guía mínima, alcanzando al menos 90% de tareas completadas correctamente en las pruebas de usabilidad.
 - *Prioridad:* Should. **Trazabilidad:** Hito 06 · KPI-36.
 
 ### 4.5 Compatibilidad
@@ -392,7 +420,7 @@ El procedimiento de instalación y configuración del servidor local DEBE quedar
 
 | Módulo | Requisitos clave | OE | Hito principal | KPIs asociados |
 |---|---|---|---|---|
-| Estudiantes / Importación | RF-EST-01..04, RF-IMP-01..02 | OE-02 | Hito 02 | KPI-07, KPI-09 |
+| Estudiantes / Importación | RF-EST-01..05, RF-IMP-01..02 | OE-02 | Hito 02 | KPI-07, KPI-09 |
 | QR / Credenciales | RF-QR-01..03, RF-CRE-01..02 | OE-01 | Hito 01 | KPI-01 a KPI-06 |
 | Autenticación / RBAC | RF-AUT-01..05 | OE-03 | Hito 02 | KPI-08 |
 | Asistencia | RF-AST-01..08 | OE-04 | Hito 03 / Hito 07 | KPI-13 a KPI-18, KPI-59 a KPI-64 |
