@@ -1,4 +1,4 @@
-# ACTA CONSTITUTIVA DEL PROYECTO v8
+# ACTA CONSTITUTIVA DEL PROYECTO v9
 # Sistema Integral de Gestión Escolar
 
 
@@ -9,13 +9,9 @@
 
 Nombre técnico provisional del producto: **SIGE**
 
----
-
 ## 2. Propósito del proyecto
 
 El proyecto tiene como propósito establecer una infraestructura tecnológica centralizada, escalable y sostenible que reduzca la dependencia de procesos manuales, facilite el acceso y gestión de la información escolar y siente las bases para la incorporación progresiva de nuevas herramientas y servicios digitales que atiendan las necesidades de la institución.
-
----
 
 ## 3. Problema que se busca resolver
 
@@ -35,13 +31,11 @@ El proyecto busca atender esta necesidad mediante el desarrollo de una plataform
 
 La solución deberá permitir que estas funcionalidades se desarrollen de manera progresiva sobre una misma infraestructura tecnológica, priorizando aquellas necesidades que representen mayor valor operativo para la institución.
 
----
 
 ## 4. Objetivo general
 
 Desarrollar e implementar una plataforma digital integral para la gestión escolar que permita a la institución centralizar, organizar y automatizar procesos relacionados con la administración de estudiantes, identificación, control de asistencia, seguimiento de incidencias y comportamiento, generación de reportes y comunicación de información relevante a los familiares.
 
----
 
 ## 5. Objetivos específicos
 
@@ -86,37 +80,21 @@ El prefecto podrá determinar cuáles reportes deberán ser canalizados al perso
 
 El sistema deberá conservar el historial, estado y trazabilidad de cada reporte, permitiendo identificar su registro, revisión, canalización, comunicación y resolución conforme a los permisos definidos para cada rol.
 
-### OE-06 — Reportes e incidencias escolares
-Implementar un módulo de reportes escolares accesible desde la plataforma web y desde la aplicación móvil, que permita al personal docente registrar reportes relacionados con estudiantes mediante un flujo estructurado de clasificación, revisión, canalización y seguimiento.
-
-El docente deberá poder registrar el reporte desde un dispositivo móvil o desde la plataforma web y determinar inicialmente:
-
-- tipo de reporte: emocional, académico o conductual;
-- nivel de gravedad del reporte;
-- opciones o situaciones predeterminadas correspondientes al tipo y nivel de gravedad seleccionado, basadas en el reglamento escolar;
-- una observación adicional de entre 50 y 100 caracteres.
-
-Una vez registrado, el reporte deberá enviarse al prefecto correspondiente, quien podrá consultarlo, revisarlo y filtrarlo desde la plataforma web o aplicación móvil disponible para su rol.
-
-El prefecto podrá determinar cuáles reportes deberán ser canalizados al personal administrativo autorizado, quien realizará la revisión correspondiente y determinará cuáles reportes deberán ser comunicados a la familia del estudiante.
-
-El sistema deberá conservar el historial, estado y trazabilidad de cada reporte, permitiendo identificar su registro, revisión, canalización, comunicación y resolución conforme a los permisos definidos para cada rol.
-
-### OE-07 — Comunicación con familiares
+### OE-06 — Comunicación con familiares
 Integrar un mecanismo de comunicación automatizada con los familiares de los estudiantes mediante correo electrónico, permitiendo enviar información y reportes previamente definidos y autorizados, una vez que los módulos necesarios para generar dicha información se encuentren operativos.
 
 El sistema deberá permitir preparar y enviar las comunicaciones autorizadas utilizando los datos de contacto registrados en el expediente del estudiante, manteniendo trazabilidad básica del envío y respetando los permisos y criterios definidos por la institución.
 
-### OE-08 — Calidad, seguridad y continuidad
+### OE-07 — Calidad, seguridad y continuidad
 Implementar mecanismos de validación de datos, control de acceso, protección de información, manejo de errores, pruebas funcionales y respaldo de datos almacenados en el servidor local institucional, estableciendo criterios mínimos de calidad, seguridad, continuidad y recuperación que deberán cumplirse antes de la puesta en operación de cada módulo.
 
-### OE-09 — Backend, base de datos y API
+### OE-08 — Backend, base de datos y API
 Diseñar e implementar la infraestructura de backend, base de datos y API necesaria para soportar de forma centralizada, segura y escalable el resto de los módulos del sistema, incluyendo mecanismos básicos de manejo de errores y respaldo, disponible de forma incremental desde el Hito 01.
 
-### OE-10 — Panel administrativo
+### OE-09 — Panel administrativo
 Implementar una interfaz centralizada que permita al personal autorizado administrar usuarios, estudiantes y módulos disponibles conforme a su rol, consolidando el acceso a las principales funciones operativas del sistema.
 
-### OE-11 — Aplicación móvil para operación escolar
+### OE-10 — Aplicación móvil para operación escolar
 Diseñar, desarrollar e implementar una aplicación móvil integrada con la infraestructura de backend y API de SIGE, destinada a facilitar las operaciones escolares que requieran movilidad dentro de la institución.
 
 La aplicación deberá contemplar, de acuerdo con los permisos correspondientes:
@@ -126,24 +104,22 @@ La aplicación deberá contemplar, de acuerdo con los permisos correspondientes:
 - registro de asistencia asociado al estudiante, grupo, fecha y hora;
 - consulta del resultado del registro de asistencia;
 - registro de reportes escolares por parte de docentes;
-- consulta, revisión y canalización de reportes por parte de prefectos;
+- consulta, revisión y canalización de reportes por parte de prefectos y personal administrativo;
 - acceso del personal autorizado a las funciones operativas que resulten necesarias para la gestión de asistencia y reportes.
 
 La aplicación deberá utilizar los mismos mecanismos de autenticación, autorización, validación de datos y reglas de negocio establecidos para la plataforma web, evitando la creación de procesos independientes que puedan generar inconsistencias entre sistemas.
 
-### OE-12 — Infraestructura y servidor local institucional
+### OE-11 — Infraestructura y servidor local institucional
 Configurar, desplegar y validar un entorno de operación local para SIGE mediante un servidor instalado en una computadora proporcionada por la institución y conectado a su red local, permitiendo que la plataforma web y la aplicación móvil accedan a los servicios internos del sistema sin depender de una conexión a Internet.
 
 El entorno deberá contemplar la configuración de los servicios necesarios para la ejecución del sistema, conexión con la base de datos institucional, control de acceso, procedimientos básicos de respaldo y recuperación, así como mecanismos de diagnóstico y recuperación ante interrupciones del servicio.
 
 La solución deberá diferenciar las funcionalidades que pueden operar exclusivamente dentro de la red institucional de aquellas que dependan de servicios externos, como el correo electrónico o el acceso remoto.
 
-### OE-13 — Integración y operación multiplataforma
+### OE-12 — Integración y operación multiplataforma
 Integrar y validar la comunicación entre la plataforma web, aplicación móvil, API, base de datos y servidor local, garantizando que los componentes utilicen una fuente centralizada de información, las mismas reglas de negocio y mecanismos compatibles de autenticación, autorización y validación.
 
 La integración deberá permitir ejecutar los procesos internos prioritarios desde computadoras y dispositivos móviles conectados a la red institucional, manteniendo la consistencia de la información independientemente del medio utilizado.
-
----
 
 ## 6. Producto final esperado
 
@@ -293,20 +269,23 @@ La aplicación deberá contemplar, de acuerdo con el rol del usuario:
 
 **Para docentes:**
 - autenticación;
-- escaneo de códigos QR;
-- registro de asistencia;
-- consulta del resultado de los registros realizados;
 - registro de reportes escolares;
 - consulta de los reportes generados y su estado, conforme a sus permisos.
 
 **Para prefectos:**
 - autenticación;
+- escaneo de códigos QR;
+- registro de asistencia;
+- consulta del resultado de los registros realizados;
 - consulta de reportes recibidos;
 - filtrado y revisión de reportes;
 - canalización de reportes hacia el personal administrativo;
 - consulta del estado de los reportes conforme a sus permisos.
 
 **Para personal autorizado:**
+- escaneo de códigos QR;
+- registro de asistencia;
+- consulta del resultado de los registros realizados;
 - consulta de información operativa;
 - consulta y gestión de asistencias;
 - justificación de faltas;
@@ -318,8 +297,6 @@ La aplicación deberá comunicarse con el backend mediante la API institucional 
 Cuando el sistema se encuentre operando dentro de la institución, los dispositivos móviles deberán poder comunicarse con el servidor local mediante la red institucional, permitiendo realizar las funciones internas sin depender de una conexión a Internet, siempre que exista conectividad con la red local.
 
 Las funciones que dependan de servicios externos, como el envío de correo electrónico o el acceso remoto desde fuera de la institución, permanecerán sujetas a la disponibilidad de Internet y de dichos servicios.
-
----
 
 ## 7. Matriz de alcance
 
@@ -489,8 +466,6 @@ Considerando únicamente los costos externos potenciales, se estima que el proye
 
 Este rango es preliminar y sujeto a cambios, por lo que el presupuesto definitivo deberá establecerse después de determinar la arquitectura final del sistema, el número esperado de usuarios, los mecanismos de notificación y los proveedores que serán utilizados.
 
----
-
 ## 9. Principios de desarrollo
 
 El proyecto seguirá los siguientes principios:
@@ -513,8 +488,6 @@ El proyecto seguirá los siguientes principios:
 El proyecto se considerará exitoso cuando exista una versión funcional, integrada y validada de SIGE que permita ejecutar de principio a fin los procesos prioritarios definidos en el alcance mediante la plataforma web y la aplicación móvil, utilizando una fuente centralizada de información alojada en el servidor local institucional.
 
 La solución deberá demostrar interoperabilidad entre la aplicación móvil, la plataforma web, la API, la base de datos y el servidor local, así como control de acceso, trazabilidad de las operaciones críticas, mecanismos básicos de respaldo y recuperación y capacidad para ejecutar los procesos internos prioritarios dentro de la red institucional sin depender de Internet, salvo aquellas funciones que requieran servicios externos.
-
----
 
 ## 11. Hitos y niveles de madurez tecnológica
 
@@ -848,12 +821,12 @@ La aceptación de la funcionalidad deberá sustentarse principalmente en:
 - **KPI-17:** 100 % de los casos críticos de asistencia deberán resultar satisfactorios.
 - **KPI-19:** 100 % de las funciones críticas definidas para la aplicación móvil deberán encontrarse operativas.
 - **KPI-21:** 100 % de los registros generados desde la aplicación móvil deberán persistir correctamente.
-- **KPI-25:** 100 % de las funciones críticas de consulta y filtrado definidas para prefectura deberán encontrarse disponibles.
-- **KPI-26:** 100 % de las funciones móviles críticas deberán operar mediante la API institucional definida.
-- **KPI-27:** 100 % de los casos definidos de comunicación entre la aplicación móvil y la API deberán resultar satisfactorios.
+- **KPI-23:** 100 % de las funciones críticas de consulta y filtrado definidas para prefectura deberán encontrarse disponibles.
+- **KPI-24:** 100 % de las funciones móviles críticas deberán operar mediante la API institucional definida.
+- **KPI-25:** 100 % de los casos definidos de comunicación entre la aplicación móvil y la API deberán resultar satisfactorios.
 - **KPI-42:** 100 % de los procesos prioritarios deberán poder ejecutarse de principio a fin.
-- **KPI-55:** 100 % de los estados de asistencia deberán diferenciar correctamente entre asistió, falta, llegó tarde y falta justificada.
-- **KPI-58:** 100 % de los registros de asistencia modificados deberán conservar trazabilidad.
+- **KPI-61:** 100 % de los estados de asistencia deberán diferenciar correctamente entre asistió, falta, llegó tarde y falta justificada.
+- **KPI-64:** 100 % de los registros de asistencia modificados deberán conservar trazabilidad.
 - **KPI-66:** 100 % de los procedimientos de respaldo y recuperación deberán haber sido probados.
 - **KPI-68:** 100 % de los procesos prioritarios deberán encontrarse validados antes de la entrega.
 
@@ -867,11 +840,11 @@ La aceptación deberá considerar:
 
 - **KPI-11:** 100 % de los casos de prueba críticos definidos para la etapa deberán haber sido ejecutados.
 - **KPI-17:** 100 % de los casos críticos de asistencia deberán resultar satisfactorios.
-- **KPI-26:** 100 % de las funciones móviles críticas deberán utilizar la API, reglas de negocio y mecanismos de autorización definidos para el sistema.
+- **KPI-24:** 100 % de las funciones móviles críticas deberán utilizar la API, reglas de negocio y mecanismos de autorización definidos para el sistema.
 - **KPI-30:** 100 % de los escenarios críticos definidos para la operación mediante servidor local y dispositivos móviles deberán ser superados.
 - **KPI-39:** 100 % de los escenarios definidos para la operación con pérdida de Internet y servidor local disponible deberán ser superados.
 - **KPI-40:** 100 % de los escenarios definidos para la recuperación después de una interrupción del servidor local deberán ser superados.
-- **KPI-61:** al menos el 95 % de los casos de prueba críticos de la versión final deberán resultar satisfactorios.
+- **KPI-57:** al menos el 95 % de los casos de prueba críticos de la versión final deberán resultar satisfactorios.
 
 Las pruebas deberán encontrarse documentadas y deberán proporcionar evidencia verificable del comportamiento de los módulos, las integraciones y los procesos prioritarios.
 
@@ -898,14 +871,14 @@ La aceptación deberá sustentarse en:
 
 - **KPI-08:** 100 % de los roles definidos deberán contar con permisos funcionales.
 - **KPI-09:** 100 % de las operaciones críticas deberán mantener datos persistentes.
-- **KPI-29:** 100 % de los servicios internos definidos deberán encontrarse desplegados en el servidor local institucional.
-- **KPI-30:** 100 % de las conexiones web/API definidas mediante la red local deberán resultar satisfactorias.
-- **KPI-31:** 100 % de las conexiones aplicación móvil/API mediante la red local deberán resultar satisfactorias.
-- **KPI-32:** 100 % de los procesos internos prioritarios definidos deberán poder ejecutarse sin conexión a Internet cuando el servidor y la red local se encuentren disponibles.
-- **KPI-33:** 100 % de los respaldos de prueba deberán poder recuperarse correctamente.
-- **KPI-34:** 100 % de los servicios críticos deberán contar con documentación correspondiente.
-- **KPI-66:** 100 % de los procedimientos de respaldo y recuperación deberán haber sido probados.
-- **KPI-67:** 100 % de los procesos prioritarios deberán encontrarse validados.
+- **KPI-28:** 100 % de los servicios internos definidos deberán encontrarse desplegados en el servidor local institucional.
+- **KPI-29:** 100 % de las conexiones web/API definidas mediante la red local deberán resultar satisfactorias.
+- **KPI-30:** 100 % de las conexiones aplicación móvil/API mediante la red local deberán resultar satisfactorias.
+- **KPI-31:** 100 % de los procesos internos prioritarios definidos deberán poder ejecutarse sin conexión a Internet cuando el servidor y la red local se encuentren disponibles.
+- **KPI-32:** 100 % de los respaldos de prueba deberán poder recuperarse correctamente.
+- **KPI-33:** 100 % de los servicios críticos deberán contar con documentación correspondiente.
+- **KPI-67:** 100 % de los procedimientos de respaldo y recuperación deberán haber sido probados.
+- **KPI-68:** 100 % de los procesos prioritarios deberán encontrarse validados.
 - **KPI-70:** 100 % de los entregables deberán encontrarse documentados y entregados.
 
 Las operaciones críticas deberán generar registros verificables y deberá comprobarse la integridad de la información almacenada. La versión final deberá encontrarse desplegada o preparada para su despliegue en el entorno definido por la institución.
@@ -933,12 +906,12 @@ Deberá verificarse:
 - **KPI-14:** 100 % de las lecturas válidas deberán asociarse con el grupo correspondiente.
 - **KPI-15:** 100 % de los registros deberán conservar fecha y hora.
 - **KPI-16:** no deberán existir duplicados no permitidos en los escenarios contemplados.
-- **KPI-56:** 100 % de los grupos de prueba deberán contar con historial diario correctamente generado.
-- **KPI-57:** 100 % de los estudiantes de prueba deberán contar con un estado de asistencia correctamente determinado.
-- **KPI-58:** el sistema deberá diferenciar correctamente entre asistió, falta, llegó tarde y falta justificada.
-- **KPI-59:** deberá ser posible consultar el historial individual de asistencia de los estudiantes de prueba.
-- **KPI-60:** las faltas justificadas deberán poder registrarse mediante usuarios con autorización.
-- **KPI-61:** las modificaciones realizadas sobre registros de asistencia deberán conservar trazabilidad.
+- **KPI-59:** 100 % de los grupos de prueba deberán contar con historial diario correctamente generado.
+- **KPI-60:** 100 % de los estudiantes de prueba deberán contar con un estado de asistencia correctamente determinado.
+- **KPI-61:** el sistema deberá diferenciar correctamente entre asistió, falta, llegó tarde y falta justificada.
+- **KPI-62:** deberá ser posible consultar el historial individual de asistencia de los estudiantes de prueba.
+- **KPI-63:** las faltas justificadas deberán poder registrarse mediante usuarios con autorización.
+- **KPI-64:** las modificaciones realizadas sobre registros de asistencia deberán conservar trazabilidad.
 
 La aceptación deberá considerar tanto la consulta de asistencia por grupo y fecha como la consulta individual por estudiante, garantizando que ambas representaciones provengan de la misma información almacenada en el sistema.
 
@@ -1007,7 +980,7 @@ La aceptación del proyecto completo requerirá, como mínimo:
 2. la validación de los procesos prioritarios;
 3. la ausencia de errores críticos abiertos al momento de la entrega;
 4. la entrega de la documentación y evidencias correspondientes; y
-5. la aprobación institucional de la versión final, conforme al KPI-35.
+5. la aprobación institucional de la versión final, conforme al KPI-71.
 
 Los criterios específicos de aceptación de cada módulo, requisito, historia de usuario y entregable se desarrollarán durante la fase de planificación detallada y deberán mantener trazabilidad con los KPIs, pruebas y criterios de aceptación definidos para el proyecto.
 
