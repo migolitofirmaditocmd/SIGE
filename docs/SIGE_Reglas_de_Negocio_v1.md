@@ -62,6 +62,9 @@ Mientras que el documento de Requisitos Funcionales (RF) describe **qué debe ha
 
 ### 2.3 Identificación QR y Credenciales (QR / CRE)
 
+Credencial nueva / estudiante sin credencial: el QR se incluye directamente en el diseño de la credencial y se manda a imprimir completa (esto es justo lo que pide RF-CRE-01: PDF formato CR-80 con foto, nombre, grupo y QR integrados).
+Credencial ya impresa (reposición, QR revocado/regenerado, etc.): se genera solo el sticker con el nuevo QR y se pega sobre la credencial existente, sin reimprimir todo.
+
 | ID | Tipo | Enunciado | Condición / Disparador | Consecuencia | Excepciones | Trazabilidad |
 |---|---|---|---|---|---|---|
 | RN-QR-01 | RES | Un estudiante tiene, en todo momento, cuando mucho un identificador QR **vigente**. | Generación de QR | Se rechaza generar un segundo QR vigente para el mismo estudiante sin revocar el anterior. | — | RF-QR-01, RF-QR-03 |
