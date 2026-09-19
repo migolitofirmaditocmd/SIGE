@@ -1,8 +1,8 @@
 # Criterios de Aceptación — SIGE
 ### Sistema Integral de Gestión Escolar
 **Documento complementario de:** `SIGE_Historias_de_Usuario_v1.md`
-**Derivado de:** Catálogo de Reglas de Negocio v2 · Especificación de Requisitos v2 (RF/RNF) · Diagramas de flujo · Acta Constitutiva v9
-**Versión:** 1.0 | **Estado:** Para revisión del equipo
+**Derivado de:** Catálogo de Reglas de Negocio v2.1 · Especificación de Requisitos v2.1 (RF/RNF) · Diagramas de flujo · Acta Constitutiva v9
+**Versión:** 1.1 | **Estado:** Para revisión del equipo
 
 ---
 
@@ -10,9 +10,9 @@
 
 - Cada historia (`SIGE-US-###`) tiene sus criterios `CA-###-##` en formato **Dado que / Cuando / Entonces**, derivados del par *condición → consecuencia* de las reglas de negocio.
 - **Cada criterio es binario** (cumple / no cumple) y debe convertirse en al menos un caso de prueba (convención del catálogo de RN).
-- Etiquetas: `[Feliz]` camino normal · `[Alt]` flujo alternativo · `[Neg]` rechazo/error · `[Límite]` valor frontera · `[Perm]` permisos · `[Aud]` auditoría · `[UX]` interfaz · `[⚠ A-##]` criterio sujeto a un hallazgo del Anexo A del documento de historias (validar antes de implementar).
+- Etiquetas: `[Feliz]` camino normal · `[Alt]` flujo alternativo · `[Neg]` rechazo/error · `[Límite]` valor frontera · `[Perm]` permisos · `[Aud]` auditoría · `[UX]` interfaz.
 - Los **criterios transversales (CT-##)** de la sección 2 aplican a **todas** las historias y no se repiten en cada una; cuando una historia los refuerza, se cita el CT.
-- Los valores por defecto (5 min de rebote, 5 intentos, 10:00 de verificación, 1,000 eventos de buffer) son configurables donde así lo indican las RN.
+- Los valores por defecto (5 min de rebote, 5 intentos con 15 min de bloqueo, 10:00 de verificación, 1,000 eventos de buffer) son configurables donde así lo indican las RN.
 
 ---
 
@@ -41,7 +41,7 @@
 
 ## 3. Definition of Ready (DoR)
 
-Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la necesita y para qué? · ¿está acotada y es lo bastante pequeña para un incremento? · ¿sus criterios son binarios y QA puede convertirlos en casos de prueba? · ¿están definidos el comportamiento de UI y sus estados? · ¿se conocen datos, validaciones, reglas y permisos? · ¿se identificaron excepciones, no funcionales y dependencias? · ¿los hallazgos `⚠ A-##` que la afectan están resueltos o aceptados por escrito?
+Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la necesita y para qué? · ¿está acotada y es lo bastante pequeña para un incremento? · ¿sus criterios son binarios y QA puede convertirlos en casos de prueba? · ¿están definidos el comportamiento de UI y sus estados? · ¿se conocen datos, validaciones, reglas y permisos? · ¿se identificaron excepciones, no funcionales y dependencias? · ¿las reglas y requisitos que la afectan (RN v2.1, RF v2.1) están definidos sin ambigüedades?
 
 ## 4. Definition of Done (DoD) global
 
@@ -79,6 +79,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-002-05 · Perm** — **Dado que** una cuenta está bloqueada, **cuando** un ADM la desbloquea, **entonces** el usuario puede ingresar de inmediato y queda registro del desbloqueo.
 - **CA-002-06 · Perm** — **Dado que** el actor no es ADM, **cuando** intenta desbloquear una cuenta, **entonces** se rechaza la operación.
 - **CA-002-07 · Alt** — **Dado que** el ADM cambia el umbral de intentos, **cuando** se aplica, **entonces** el nuevo valor rige para bloqueos posteriores y el cambio queda auditado.
+- **CA-002-08 · Alt** — **Dado que** el bloqueo dura 15 minutos por defecto, **cuando** transcurren 15 minutos desde el bloqueo, **entonces** la cuenta vuelve a aceptar intentos.
 
 ### SIGE-US-003 — Dar de alta una cuenta de usuario con rol
 - **CA-003-01 · Feliz** — **Dado que** un ADM captura nombre, usuario único, correo, rol y contraseña válida, **cuando** guarda, **entonces** se crea la cuenta con exactamente un rol y queda auditada.
@@ -134,12 +135,13 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-008-07 · Aud** — **Dado que** el alta se completa, **cuando** se consulta el expediente, **entonces** registra quién y cuándo la realizó.
 
 ### SIGE-US-009 — Guardar y completar un registro incompleto
-- **CA-009-01 · Alt** — **Dado que** faltan datos obligatorios distintos al tutor pero se cumplen los requisitos mínimos `[⚠ A-14]`, **cuando** el PAD guarda, **entonces** el registro se guarda como **incompleto** y la ficha lista los campos faltantes.
+- **CA-009-01 · Alt** — **Dado que** faltan la fecha de nacimiento o la fotografía pero existen nombre, matrícula, grado, grupo, ciclo y un tutor con contacto válido, **cuando** el PAD guarda, **entonces** el registro se guarda como INCOMPLETO, permanece `ACTIVO` y la ficha lista los campos faltantes.
 - **CA-009-02 · Neg** — **Dado que** no se cumplen los requisitos mínimos, **cuando** el PAD intenta guardar, **entonces** no se guarda nada.
 - **CA-009-03 · UX** — **Dado que** un registro es incompleto, **cuando** aparece en listas o en su ficha, **entonces** muestra la insignia "Incompleto".
 - **CA-009-04 · Feliz** — **Dado que** el PAD completa el último campo faltante, **cuando** guarda, **entonces** la insignia desaparece.
 - **CA-009-05 · Neg** — **Dado que** un registro incompleto no tiene fotografía, **cuando** se solicita exportar credenciales, **entonces** se excluye y se lista como pendiente (RN-CRE-01).
 - **CA-009-06 · Neg** — **Dado que** el registro no tiene tutor, **cuando** se intenta guardar como incompleto, **entonces** se rechaza: el tutor nunca es opcional.
+- **CA-009-07 · Neg** — **Dado que** falta la matrícula, el grupo o el tutor, **cuando** el PAD guarda, **entonces** no se guarda nada.
 
 ### SIGE-US-010 — Asociar y administrar tutores de un estudiante
 - **CA-010-01 · Feliz** — **Dado que** un estudiante tiene ficha, **cuando** el PAD agrega un tutor con nombre, relación, teléfono y correo válidos, **entonces** queda asociado al estudiante.
@@ -184,15 +186,17 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-015-02 · Perm** — **Dado que** el actor es PAD u otro rol distinto de ADM, **cuando** intenta reactivar, **entonces** se rechaza.
 - **CA-015-03 · Neg** — **Dado que** el estudiante no tiene tutor válido, **cuando** el ADM intenta reactivarlo, **entonces** se rechaza hasta que lo tenga (RN-EST-03).
 - **CA-015-04 · Aud** — **Dado que** el reingreso se completó, **cuando** se consulta la bitácora, **entonces** aparece un registro diferenciado de auditoría.
-- **CA-015-05 · Neg** — **Dado que** el estudiante está en `EGRESADO`, **cuando** se intenta reingresar, **entonces** se rechaza `[⚠ A-05]`.
+- **CA-015-05 · Neg** — **Dado que** el estudiante está `EGRESADO`, **cuando** un ADM intenta reingresarlo, **entonces** se rechaza (RN-EST-09).
+- **CA-015-06 · Feliz** — **Dado que** un estudiante en `BAJA` tenía QR vigente, **cuando** se reingresa, **entonces** conserva ese QR vigente.
 
 ### SIGE-US-016 — Registrar y consultar el consentimiento del tutor
 - **CA-016-01 · Feliz** — **Dado que** un tutor está asociado a un estudiante, **cuando** el PAD registra su consentimiento como `OTORGADO`, **entonces** se guarda estatus y fecha de registro.
 - **CA-016-02 · Feliz** — **Dado que** el consentimiento se documentó fuera de SIGE (formato físico), **cuando** el PAD captura solo el estatus, **entonces** se acepta sin requerir adjuntos.
 - **CA-016-03 · UX** — **Dado que** el estatus es `PENDIENTE`, **cuando** un rol autorizado consulta el expediente, **entonces** ve la advertencia.
-- **CA-016-04 · Alt** — **Dado que** el estatus cambia a `REVOCADO`, **cuando** se guarda, **entonces** queda la fecha del cambio y el historial previo `[⚠ A-05: efecto operativo pendiente]`.
+- **CA-016-04 · Alt** — **Dado que** el consentimiento de un tutor cambia a `REVOCADO`, **cuando** se guarda, **entonces** se conserva la fecha y el historial, el expediente muestra advertencia y no se envían comunicaciones a ese tutor (RN-COM-04).
 - **CA-016-05 · Neg** — **Dado que** se intenta un valor distinto de `PENDIENTE`, `OTORGADO` o `REVOCADO`, **cuando** se guarda, **entonces** se rechaza.
 - **CA-016-06 · Perm** — **Dado que** el rol no tiene acceso al expediente, **cuando** intenta ver o cambiar el consentimiento, **entonces** se deniega.
+- **CA-016-07 · Feliz** — **Dado que** se registra un tutor nuevo, **cuando** se guarda, **entonces** su consentimiento queda en `PENDIENTE`; **y dado que** se revisa el total de tutores de prueba, **entonces** el 100 % tiene un estatus registrado (KPI-75).
 
 ---
 
@@ -211,7 +215,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-018-03 · Neg** — **Dado que** el tipo de una columna no corresponde (p. ej. texto donde va fecha en el encabezado/estructura), **cuando** se carga, **entonces** se rechaza el archivo completo.
 - **CA-018-04 · Neg** — **Dado que** el formato de archivo no es CSV ni XLSX, **cuando** se intenta cargar, **entonces** se rechaza.
 - **CA-018-05 · Neg** — **Dado que** la estructura es inválida, **cuando** se rechaza el archivo, **entonces** no se persiste ningún registro.
-- **CA-018-06 · Perm** — **Dado que** el rol no es PAD/ADM `[⚠ A-15]`, **cuando** intenta cargar un archivo, **entonces** se deniega.
+- **CA-018-06 · Perm** — **Dado que** el rol no es PAD/ADM, **cuando** intenta cargar un archivo, **entonces** se deniega (RN-IMP-05).
 
 ### SIGE-US-019 — Procesar cada fila de forma independiente
 - **CA-019-01 · Feliz** — **Dado que** el archivo tiene filas válidas e inválidas, **cuando** se procesa, **entonces** las válidas quedan listas para insertar y las inválidas se descartan sin afectar a las demás.
@@ -220,6 +224,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-019-04 · Neg** — **Dado que** una fila no incluye un tutor válido, **cuando** se procesa, **entonces** se descarta y ninguno de sus datos se guarda.
 - **CA-019-05 · Neg** — **Dado que** una fila tiene un campo con formato inválido, **cuando** se procesa, **entonces** el reporte registra fila, campo, tipo de error y descripción.
 - **CA-019-06 · Alt** — **Dado que** el proceso termina la última fila, **cuando** existen filas descartadas, **entonces** se muestra el reporte de filas descartadas al terminar.
+- **CA-019-07 · Alt** — **Dado que** una fila trae los mínimos pero no la fotografía, **cuando** se procesa, **entonces** se inserta como INCOMPLETO.
 
 ### SIGE-US-020 — Revisar la vista previa y confirmar la importación
 - **CA-020-01 · Feliz** — **Dado que** el procesamiento terminó, **cuando** SIGE muestra la vista previa, **entonces** indica cuántos registros se insertarán y cuántos se rechazarán.
@@ -227,7 +232,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-020-03 · Feliz** — **Dado que** el usuario confirma la importación definitiva, **cuando** se ejecuta, **entonces** se generan las fichas de los registros válidos en estatus `ACTIVO`, asignadas a su grupo y ciclo.
 - **CA-020-04 · Alt** — **Dado que** el usuario cancela, **cuando** confirma la cancelación, **entonces** la importación termina y no se persiste ningún dato.
 - **CA-020-05 · Neg** — **Dado que** ninguna fila es válida, **cuando** llega a la vista previa, **entonces** no se ofrece confirmar (o se advierte que no hay nada que insertar).
-- **CA-020-06 · Neg** — **Dado que** durante la confirmación otro proceso creó una de las matrículas `[⚠ A-15]`, **cuando** se confirma, **entonces** el sistema no sobrescribe y reporta el conflicto.
+- **CA-020-06 · Neg** — **Dado que** al confirmar la matrícula de una fila ya fue creada por otro proceso, **cuando** se confirma, **entonces** solo esa fila se rechaza, se reporta como duplicada y el resto se importa.
 
 ### SIGE-US-021 — Descargar el reporte de resultados de la importación
 - **CA-021-01 · Feliz** — **Dado que** finalizó la importación, **cuando** se abre el reporte, **entonces** muestra total procesadas, insertadas y con error.
@@ -270,7 +275,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 
 ### SIGE-US-025 — Exportar el QR para la credencial física
 - **CA-025-01 · Feliz** — **Dado que** un estudiante `ACTIVO` tiene QR vigente y fotografía, **cuando** el PAD exporta, **entonces** obtiene su QR en alta resolución/PDF.
-- **CA-025-02 · Neg** — **Dado que** un estudiante no cumple alguna condición (no `ACTIVO`, sin QR vigente o sin foto), **cuando** se exporta el lote, **entonces** se excluye del PDF y aparece en el listado de pendientes con el motivo.
+- **CA-025-02 · Neg** — **Dado que** un estudiante no está `ACTIVO` o no tiene QR vigente, **cuando** se exporta, **entonces** se excluye y se lista como pendiente con motivo; **y dado que** no tiene fotografía, **cuando** se exporta como sticker, **entonces** sí se incluye.
 - **CA-025-03 · Feliz** — **Dado que** el lote se exporta, **cuando** se verifica el QR de una muestra, **entonces** 100 % es legible y corresponde al estudiante correcto.
 - **CA-025-04 · Neg** — **Dado que** un QR está revocado, **cuando** se exporta, **entonces** no aparece en el archivo.
 - **CA-025-05 · UX** — **Dado que** se exporta, **cuando** el personal ve el resultado, **entonces** puede distinguir el formato para credencial nueva y el de sticker.
@@ -306,6 +311,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-028-07 · Feliz** — **Dado que** el ADM cambia la hora de corte, **cuando** se consultan registros ya determinados, **entonces** conservan su estado (sin efecto retroactivo).
 - **CA-028-08 · Feliz** — **Dado que** el registro se guardó, **cuando** se intenta eliminarlo, **entonces** se rechaza; solo puede modificarse vía justificación.
 - **CA-028-09 · UX** — **Dado que** se completó el registro, **cuando** se muestra el resultado, **entonces** el operador ve nombre del estudiante y estado resultante.
+- **CA-028-10 · Alt** — **Dado que** el estudiante ya tiene `ASISTIÓ`, **cuando** escanea fuera de la ventana de rebote, **entonces** se guarda un evento adicional y el estado no cambia (RN-AST-07).
 
 ### SIGE-US-029 — Ignorar escaneos duplicados (rebote)
 - **CA-029-01 · Límite** — **Dado que** la ventana es 5 min y hubo un escaneo válido a las 07:50:00, **cuando** el mismo estudiante escanea a las 07:54:59, **entonces** el segundo se ignora.
@@ -314,6 +320,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-029-04 · Límite** — **Dado que** el ADM configura la ventana, **cuando** ingresa 0 o 31 min, **entonces** se rechaza; 1 y 30 se aceptan.
 - **CA-029-05 · Feliz** — **Dado que** el rebote se evalúa por estudiante, **cuando** dos estudiantes distintos escanean en la misma ventana, **entonces** ambos se procesan.
 - **CA-029-06 · Alt** — **Dado que** un evento offline se sincroniza, **cuando** cae dentro de la ventana de un escaneo previo del mismo estudiante, **entonces** también se descarta como rebote.
+- **CA-029-07 · Límite** — **Dado que** un escaneo fue ignorado por rebote, **cuando** llega otro 5 min después del **último escaneo procesado** (no del ignorado), **entonces** se procesa.
 
 ### SIGE-US-030 — Marcar automáticamente FALTÓ a quien no registró entrada
 - **CA-030-01 · Feliz** — **Dado que** llegó la hora de verificación (10:00 inicial) y un estudiante `ACTIVO` programado no tiene registro válido de entrada, **cuando** corre el proceso, **entonces** se le asigna `FALTÓ` con origen `AUTOMÁTICO`.
@@ -325,33 +332,36 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-030-07 · Aud** — **Dado que** se asignó `FALTÓ`, **cuando** se consulta el historial, **entonces** el origen es `AUTOMÁTICO`, distinto de una modificación manual.
 
 ### SIGE-US-031 — Reclasificar la asistencia de quien llega después de un FALTÓ automático
-- **CA-031-01 · Feliz** — **Dado que** un estudiante quedó `FALTÓ` automático, **cuando** realiza un escaneo válido posterior, **entonces** su estado se actualiza según la hora efectiva del escaneo comparada con la hora de corte `[⚠ A-01]`.
+- **CA-031-01 · Feliz** — **Dado que** un estudiante quedó `FALTÓ` automático, **cuando** realiza un escaneo válido posterior, **entonces** se reclasifica: `ASISTIÓ` si su hora efectiva es ≤ la hora de corte, `LLEGÓ TARDE` si es posterior.
 - **CA-031-02 · Aud** — **Dado que** se reclasificó, **cuando** se consulta su expediente, **entonces** aparecen el estado `FALTÓ` previo (automático) y el nuevo con su origen y hora.
 - **CA-031-03 · Neg** — **Dado que** se reclasificó, **cuando** se revisan los registros del día, **entonces** no existe un segundo registro de entrada para la misma fecha y jornada.
 - **CA-031-04 · Aud** — **Dado que** la reclasificación ocurrió por escaneo, **cuando** se revisa el historial, **entonces** se distingue de una justificación manual.
 - **CA-031-05 · Neg** — **Dado que** el estudiante ya no está `ACTIVO`, **cuando** escanea, **entonces** se rechaza (no reclasifica).
 - **CA-031-06 · Neg** — **Dado que** el escaneo cae dentro de la ventana de rebote de otro previo, **cuando** llega, **entonces** se ignora sin cambios.
+- **CA-031-07 · Neg** — **Dado que** el estado fue justificado manualmente (`FALTA JUSTIFICADA`), **cuando** el estudiante escanea, **entonces** no se reclasifica.
 
 ### SIGE-US-032 — Capturar asistencia sin conexión al servidor (app móvil)
 - **CA-032-01 · Feliz** — **Dado que** el dispositivo perdió conexión con el servidor, **cuando** el operador escanea, **entonces** el evento se almacena localmente con fecha, hora, tipo y QR leído, marcado `PENDIENTE DE VALIDACIÓN`.
 - **CA-032-02 · UX** — **Dado que** hay eventos pendientes, **cuando** el operador ve la pantalla, **entonces** un indicador persistente muestra "sin conexión" y el número de pendientes.
 - **CA-032-03 · Límite** — **Dado que** el buffer tiene 999 eventos, **cuando** se captura el 1,000.º, **entonces** se almacena.
-- **CA-032-04 · Límite** — **Dado que** el buffer tiene 1,000 eventos, **cuando** se intenta capturar otro, **entonces** se rechaza con alerta de buffer lleno `[⚠ A-13]`.
+- **CA-032-04 · Límite** — **Dado que** el buffer tiene 1,000 eventos, **cuando** se intenta capturar otro, **entonces** se rechaza y se alerta al operador (RN-MOV-03).
 - **CA-032-05 · Neg** — **Dado que** un evento está pendiente, **cuando** se consulta el historial definitivo, **entonces** no aparece como registro definitivo.
 - **CA-032-06 · Feliz** — **Dado que** no hay conexión, **cuando** el operador consulta el resultado del escaneo, **entonces** se le informa que quedó pendiente, no confirmado.
+- **CA-032-07 · UX** — **Dado que** no hay conexión, **cuando** se escanea, **entonces** solo se almacena fecha, hora de captura, tipo y token; no se muestra nombre ni estatus del estudiante.
 
 ### SIGE-US-033 — Sincronizar y validar los eventos capturados sin conexión
 - **CA-033-01 · Feliz** — **Dado que** hay eventos pendientes, **cuando** se restablece la conexión, **entonces** se sincronizan automáticamente sin intervención del operador.
-- **CA-033-02 · Feliz** — **Dado que** el backend valida un evento (identidad, estatus `ACTIVO`, QR vigente, unicidad y rebote) y es correcto, **cuando** se procesa, **entonces** se incorpora al historial definitivo con el estado calculado a partir de la hora de captura `[⚠ A-18]`.
+- **CA-033-02 · Feliz** — **Dado que** el backend valida un evento y es correcto, **cuando** se procesa, **entonces** se incorpora con el estado calculado a partir de su **hora de captura** corregida por el desfase (RN-TRX-04).
 - **CA-033-03 · Neg** — **Dado que** el estudiante pasó a `BAJA` durante la desconexión, **cuando** se sincroniza su evento, **entonces** se descarta y se notifica al operador con motivo.
 - **CA-033-04 · Neg** — **Dado que** el QR fue revocado durante la desconexión, **cuando** se sincroniza, **entonces** se descarta y se notifica.
 - **CA-033-05 · Neg** — **Dado que** el evento duplica otro por regla de rebote, **cuando** se sincroniza, **entonces** se descarta y se notifica como duplicado.
 - **CA-033-06 · Alt** — **Dado que** el estudiante ya fue marcado `FALTÓ` a las 10:00 y su evento offline llega después, **cuando** se sincroniza y es válido, **entonces** se aplica US-031.
 - **CA-033-07 · Alt** — **Dado que** el servidor vuelve a fallar durante la sincronización, **cuando** ocurre, **entonces** los eventos no enviados permanecen en el buffer y se reintentan.
 - **CA-033-08 · UX** — **Dado que** terminó la sincronización, **cuando** el operador ve el resumen, **entonces** muestra cuántos se aceptaron y cuántos se descartaron.
+- **CA-033-09 · Neg** — **Dado que** un evento offline tiene hora efectiva futura, **cuando** se sincroniza, **entonces** se rechaza y se notifica al operador.
 
 ### SIGE-US-034 — Justificar o modificar la asistencia de un estudiante
-- **CA-034-01 · Feliz** — **Dado que** un PAD/ADM selecciona un registro `FALTÓ`, **cuando** captura motivo y confirma la justificación, **entonces** el estado pasa a `FALTA JUSTIFICADA` `[⚠ A-07]`.
+- **CA-034-01 · Feliz** — **Dado que** un PAD/ADM justifica un registro `FALTÓ` con motivo, **cuando** confirma, **entonces** el estado pasa a `FALTA JUSTIFICADA` con origen `MANUAL`.
 - **CA-034-02 · Aud** — **Dado que** se modificó un registro, **cuando** se consulta su trazabilidad, **entonces** conserva estado anterior, nuevo, usuario, fecha/hora, motivo y origen `MANUAL`.
 - **CA-034-03 · Neg** — **Dado que** el motivo está vacío, **cuando** se intenta confirmar, **entonces** se rechaza.
 - **CA-034-04 · Perm** — **Dado que** el usuario es PRE, DOC o SL, **cuando** intenta modificar asistencia (UI o API), **entonces** se rechaza.
@@ -394,6 +404,8 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-038-04 · Neg** — **Dado que** el QR de un estudiante se escanea en el flujo docente, **cuando** se lee, **entonces** se rechaza (RN-AST-11).
 - **CA-038-05 · Feliz** — **Dado que** se registra un docente, **cuando** se revisa, **entonces** no requiere ni crea una cuenta de usuario de SIGE.
 - **CA-038-06 · Feliz** — **Dado que** se genera el token, **cuando** se verifica, **entonces** es opaco y sin datos personales (RN-QR-02).
+- **CA-038-07 · Perm** — **Dado que** solo el ADM puede revocar, **cuando** un PAD intenta revocar el QR de un docente, **entonces** se rechaza.
+- **CA-038-08 · Feliz** — **Dado que** existen docentes `ACTIVO` de prueba, **cuando** se verifica el lote, **entonces** el 100 % tiene un único QR vigente y 0 identificadores repetidos (KPI-72).
 
 ### SIGE-US-039 — Programar días y horarios de asistencia de cada docente
 - **CA-039-01 · Feliz** — **Dado que** el PAD captura días, hora de entrada y hora de salida de un docente, **cuando** guarda, **entonces** la programación queda asociada al docente.
@@ -405,28 +417,31 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 
 ### SIGE-US-040 — Registrar la ENTRADA de un docente
 - **CA-040-01 · Feliz** — **Dado que** un PAD escanea el QR vigente de un docente con asistencia programada y elige `ENTRADA`, **cuando** la hora cumple el horario esperado, **entonces** se guarda con estado `ASISTIÓ`.
-- **CA-040-02 · Límite** — **Dado que** la hora excede el límite establecido de su horario `[⚠ A-10]`, **cuando** se registra, **entonces** el estado es `LLEGÓ TARDE`.
+- **CA-040-02 · Límite** — **Dado que** la hora efectiva supera hora esperada + tolerancia del docente, **cuando** se registra la `ENTRADA`, **entonces** el estado es `LLEGÓ TARDE`.
 - **CA-040-03 · Neg** — **Dado que** ya existe una `ENTRADA` del docente en esa fecha, **cuando** se intenta otra, **entonces** se rechaza y no se crea registro.
 - **CA-040-04 · Alt** — **Dado que** el docente no tiene asistencia programada ese día, **cuando** se registra la `ENTRADA`, **entonces** se guarda el evento sin determinar puntualidad y no se le evalúa ausencia ese día.
 - **CA-040-05 · Perm** — **Dado que** el usuario no es PAD, **cuando** intenta registrar asistencia docente, **entonces** se rechaza la operación.
 - **CA-040-06 · Neg** — **Dado que** el QR es inválido, revocado o no pertenece a un docente, **cuando** se escanea, **entonces** se rechaza el registro.
 - **CA-040-07 · Feliz** — **Dado que** el PAD debe elegir el tipo, **cuando** escanea, **entonces** el sistema no procesa el registro hasta que elige `ENTRADA` o `SALIDA`.
 - **CA-040-08 · Feliz** — **Dado que** se guardó la `ENTRADA`, **cuando** se intenta borrarla, **entonces** se rechaza (RN-AST-21).
+- **CA-040-09 · Límite** — **Dado que** la tolerancia del docente es 0 y su hora esperada es 08:00, **cuando** registra a las 08:00, **entonces** es `ASISTIÓ`; a las 08:01, `LLEGÓ TARDE`.
+- **CA-040-10 · Feliz** — **Dado que** se ejecutan los escenarios de prueba de entrada, **cuando** se revisan los registros, **entonces** el 100 % tiene fecha, hora y estado correctos y 0 docentes tienen más de una `ENTRADA` en la misma fecha (KPI-73, KPI-74).
 
 ### SIGE-US-041 — Registrar la SALIDA de un docente
 - **CA-041-01 · Feliz** — **Dado que** un PAD escanea el QR vigente y elige `SALIDA`, **cuando** guarda, **entonces** se registra la hora efectiva del escaneo.
 - **CA-041-02 · Neg** — **Dado que** ya existe una `SALIDA` ese día, **cuando** se intenta otra, **entonces** se rechaza.
 - **CA-041-03 · Feliz** — **Dado que** el horario esperado de salida es 15:00 y el docente sale a las 14:20, **cuando** se registra, **entonces** se conserva 14:20 sin ajustarla.
 - **CA-041-04 · Neg** — **Dado que** el docente no registra salida, **cuando** termina la jornada, **entonces** el sistema no genera una salida automática.
-- **CA-041-05 · Alt** — **Dado que** no existe `ENTRADA` previa ese día, **cuando** se intenta registrar `SALIDA`, **entonces** se aplica la política definida `[⚠ A-10]`.
+- **CA-041-05 · Alt** — **Dado que** no existe `ENTRADA` ese día, **cuando** se registra la `SALIDA`, **entonces** se guarda con la marca "SALIDA SIN ENTRADA" visible en el historial.
 - **CA-041-06 · Perm** — **Dado que** el usuario no es PAD, **cuando** intenta registrar, **entonces** se rechaza.
+- **CA-041-07 · Feliz** — **Dado que** se ejecutan los escenarios de prueba de salida, **cuando** se revisan los registros, **entonces** 0 docentes tienen más de una `SALIDA` en la misma fecha (KPI-74).
 
 ### SIGE-US-042 — Detectar automáticamente las ausencias de docentes
 - **CA-042-01 · Feliz** — **Dado que** llegó la hora de verificación docente y un docente con asistencia programada hoy no tiene `ENTRADA`, **cuando** corre el proceso, **entonces** se le asigna `FALTÓ` con origen `AUTOMÁTICO`.
 - **CA-042-02 · Neg** — **Dado que** un docente no tiene asistencia programada hoy, **cuando** corre el proceso, **entonces** no se le genera ausencia.
 - **CA-042-03 · Feliz** — **Dado que** el docente ya tiene `ENTRADA`, **cuando** corre el proceso, **entonces** no se realiza ninguna acción.
 - **CA-042-04 · Feliz** — **Dado que** el ADM configuró una hora de verificación docente distinta de la estudiantil, **cuando** corre el proceso, **entonces** usa la del personal docente.
-- **CA-042-05 · Alt** — **Dado que** un docente marcado `FALTÓ` registra después una `ENTRADA` válida ese día, **cuando** se registra, **entonces** el sistema aplica la política de reclasificación una vez definida `[⚠ A-09]`.
+- **CA-042-05 · Alt** — **Dado que** un docente marcado `FALTÓ` registra una `ENTRADA` válida ese día, **cuando** se registra, **entonces** el estado se reclasifica según su límite de entrada, sin contarse como segunda entrada, con origen `AUTOMÁTICO`.
 - **CA-042-06 · Aud** — **Dado que** se asignó `FALTÓ`, **cuando** se consulta el historial, **entonces** su origen es `AUTOMÁTICO`.
 
 ### SIGE-US-043 — Justificar o modificar la asistencia de un docente
@@ -457,11 +472,13 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-045-07 · Neg** — **Dado que** el reporte ya fue enviado al prefecto, **cuando** se intenta modificar tipo o gravedad, **entonces** se rechaza.
 - **CA-045-08 · Feliz** — **Dado que** el docente elige tipo y gravedad, **cuando** avanza, **entonces** solo aparecen las opciones predeterminadas correspondientes a esa combinación.
 - **CA-045-09 · Feliz** — **Dado que** el registro se hace desde el móvil, **cuando** se compara con web, **entonces** las validaciones y datos son idénticos (CT-04).
+- **CA-045-10 · Perm** — **Dado que** un DOC intenta reportar a un estudiante de un grupo que no tiene asignado, **cuando** guarda, **entonces** se rechaza.
+- **CA-045-11 · Alt** — **Dado que** el grupo del estudiante no tiene prefecto asignado, **cuando** el DOC guarda, **entonces** el reporte queda en la bandeja de PAD/ADM y se genera una alerta.
 
 ### SIGE-US-046 — Consultar la bandeja y el estado de los reportes
 - **CA-046-01 · Perm** — **Dado que** un DOC abre su bandeja, **cuando** consulta, **entonces** solo ve los reportes que él registró.
 - **CA-046-02 · Feliz** — **Dado que** PAD o ADM abren la bandeja, **cuando** consultan, **entonces** ven todos los reportes filtrables por tipo, gravedad, grupo, estudiante y estado.
-- **CA-046-03 · Feliz** — **Dado que** el PRE abre su bandeja, **cuando** consulta, **entonces** ve los reportes que le corresponden `[⚠ A-12]` con los mismos filtros.
+- **CA-046-03 · Perm** — **Dado que** un PRE abre su bandeja, **cuando** consulta, **entonces** ve únicamente los reportes de los grupos que tiene asignados.
 - **CA-046-04 · Perm** — **Dado que** un reporte es visible para un rol que no puede canalizar o autorizar, **cuando** intenta la acción, **entonces** se rechaza.
 - **CA-046-05 · Perm** — **Dado que** un DOC conoce el ID de un reporte ajeno, **cuando** lo solicita por URL/API, **entonces** se deniega.
 - **CA-046-06 · UX** — **Dado que** no hay reportes o falla la carga, **cuando** se abre, **entonces** se muestra estado vacío o de error con reintento.
@@ -470,7 +487,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-047-01 · Feliz** — **Dado que** el reporte está `REGISTRADO POR DOCENTE`, **cuando** el PRE lo aprueba, **entonces** pasa a `REVISADO POR PREFECTO`.
 - **CA-047-02 · Feliz** — **Dado que** está `REVISADO POR PREFECTO`, **cuando** el PRE ejecuta la acción de canalizar, **entonces** pasa a `CANALIZADO` y aparece en la bandeja de PAD.
 - **CA-047-03 · Neg** — **Dado que** el reporte no ha sido revisado, **cuando** se intenta canalizar directamente, **entonces** se rechaza (no se saltan etapas).
-- **CA-047-04 · Alt** — **Dado que** el PRE rechaza el reporte, **cuando** captura el motivo, **entonces** pasa a `RECHAZADO` y se notifica al docente autor.
+- **CA-047-04 · Alt** — **Dado que** el PRE rechaza con motivo, **cuando** confirma, **entonces** el reporte queda `RECHAZADO` (fin del flujo del original) y se notifica al docente.
 - **CA-047-05 · Neg** — **Dado que** el PRE rechaza, **cuando** deja el motivo vacío, **entonces** se rechaza la acción.
 - **CA-047-06 · Aud** — **Dado que** cambia la etapa, **cuando** se consulta la trazabilidad, **entonces** hay una entrada con usuario y fecha/hora.
 - **CA-047-07 · Perm** — **Dado que** el usuario no es PRE, **cuando** intenta revisar o canalizar, **entonces** se rechaza.
@@ -486,7 +503,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 
 ### SIGE-US-049 — Revisar reportes canalizados y aprobarlos o devolverlos (administrativo)
 - **CA-049-01 · Feliz** — **Dado que** el reporte está `CANALIZADO`, **cuando** el PAD lo aprueba, **entonces** pasa a `REVISADO POR ADMINISTRATIVO`.
-- **CA-049-02 · Alt** — **Dado que** el PAD lo rechaza con motivo, **cuando** confirma, **entonces** pasa a `RECHAZADO` y regresa a la bandeja del prefecto `[⚠ A-11]`.
+- **CA-049-02 · Alt** — **Dado que** el PAD rechaza con motivo, **cuando** confirma, **entonces** el reporte regresa a la revisión del prefecto.
 - **CA-049-03 · Neg** — **Dado que** el motivo está vacío, **cuando** rechaza, **entonces** se rechaza la acción.
 - **CA-049-04 · Neg** — **Dado que** el reporte no está `CANALIZADO`, **cuando** el PAD intenta revisarlo, **entonces** se rechaza.
 - **CA-049-05 · Perm** — **Dado que** el usuario es PRE o DOC, **cuando** intenta la revisión administrativa, **entonces** se rechaza.
@@ -495,7 +512,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 ### SIGE-US-050 — Decidir si un reporte se comunica a la familia o se resuelve internamente
 - **CA-050-01 · Feliz** — **Dado que** el reporte está `REVISADO POR ADMINISTRATIVO`, **cuando** el PAD decide comunicarlo, **entonces** queda autorizado y SIGE verifica que exista un contacto válido.
 - **CA-050-02 · Neg** — **Dado que** no hay contacto familiar válido, **cuando** se autoriza, **entonces** el reporte queda `AUTORIZADO` pendiente de contacto y no se envía nada.
-- **CA-050-03 · Alt** — **Dado que** el PAD decide que no requiere comunicación, **cuando** registra el motivo, **entonces** el reporte pasa a `RESUELTO` `[⚠ A-11]`.
+- **CA-050-03 · Alt** — **Dado que** el PAD decide no comunicar y registra el motivo, **cuando** confirma, **entonces** el reporte pasa a `RESUELTO`.
 - **CA-050-04 · Neg** — **Dado que** el PAD decide no comunicar, **cuando** omite el motivo, **entonces** se rechaza.
 - **CA-050-05 · Perm** — **Dado que** el usuario es DOC o PRE, **cuando** intenta comunicar a la familia, **entonces** se rechaza (nunca desde el registro del docente ni la revisión del prefecto).
 - **CA-050-06 · UX** — **Dado que** el consentimiento del tutor está `PENDIENTE`, **cuando** el PAD decide, **entonces** ve la advertencia.
@@ -519,6 +536,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-052-05 · Neg** — **Dado que** el destinatario no está marcado como válido, **cuando** se intenta enviar, **entonces** se rechaza.
 - **CA-052-06 · Feliz** — **Dado que** el envío fue exitoso, **cuando** termina, **entonces** el reporte pasa a `COMUNICADO A FAMILIA` y luego a `RESUELTO`.
 - **CA-052-07 · Alt** — **Dado que** no hay Internet, **cuando** se intenta enviar, **entonces** el envío no se completa y el estado se registra sin afectar las funciones internas.
+- **CA-052-08 · Neg** — **Dado que** el único tutor con contacto válido tiene consentimiento `REVOCADO`, **cuando** se intenta enviar, **entonces** se rechaza y se advierte al PAD.
 
 ### SIGE-US-053 — Registrar el estado de cada envío y reintentarlo
 - **CA-053-01 · Feliz** — **Dado que** se solicita un envío, **cuando** se procesa, **entonces** se registra fecha, hora y estado `PENDIENTE`, `ENVIADO` o `FALLIDO`.
@@ -546,11 +564,12 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-055-05 · Neg** — **Dado que** se modificó un parámetro, **cuando** se consultan registros históricos ya determinados, **entonces** no cambian.
 - **CA-055-06 · Perm** — **Dado que** el usuario no es ADM, **cuando** intenta modificar, **entonces** se rechaza.
 - **CA-055-07 · Feliz** — **Dado que** no se ha configurado, **cuando** el sistema inicia, **entonces** usa 5 min de rebote y 10:00 de verificación por defecto.
+- **CA-055-08 · Neg** — **Dado que** el ADM configura una hora de verificación anterior o igual a la de corte, **cuando** guarda, **entonces** se rechaza.
 
 ### SIGE-US-056 — Ver el panel de indicadores operativos
 - **CA-056-01 · Feliz** — **Dado que** el ADM abre el panel, **cuando** carga, **entonces** ve asistencia del día, reportes abiertos y credenciales pendientes.
 - **CA-056-02 · Feliz** — **Dado que** se registra una asistencia nueva, **cuando** se actualiza el panel, **entonces** la cifra refleja el dato vigente.
-- **CA-056-03 · Perm** — **Dado que** el rol no tiene acceso `[⚠ A-21]`, **cuando** intenta abrirlo, **entonces** se deniega.
+- **CA-056-03 · Perm** — **Dado que** el usuario no es ADM ni SL, **cuando** intenta abrir el panel, **entonces** se deniega.
 - **CA-056-04 · UX** — **Dado que** no hay datos o falla la carga, **cuando** se abre, **entonces** se muestra estado vacío o de error con reintento.
 
 ---
@@ -578,16 +597,16 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 
 | Épica | Historias | Criterios |
 |---|---|---|
-| EP-01 Autenticación y acceso | 7 | 42 |
-| EP-02 Estudiantes | 9 | 51 |
-| EP-03 Importación | 5 | 28 |
-| EP-04 QR y credenciales | 5 | 34 |
-| EP-05 Asistencia estudiantil | 11 | 76 |
-| EP-06 Asistencia docente | 7 | 41 |
-| EP-07 Reportes | 7 | 45 |
-| EP-08 Comunicación | 2 | 12 |
-| EP-09 Administración | 3 | 16 |
+| EP-01 Autenticación y acceso | 7 | 45 |
+| EP-02 Estudiantes | 9 | 55 |
+| EP-03 Importación | 5 | 29 |
+| EP-04 QR y credenciales | 5 | 32 |
+| EP-05 Asistencia estudiantil | 11 | 80 |
+| EP-06 Asistencia docente | 7 | 47 |
+| EP-07 Reportes | 7 | 48 |
+| EP-08 Comunicación | 2 | 13 |
+| EP-09 Administración | 3 | 17 |
 | EP-10 Continuidad | 2 | 11 |
-| **Total** | **58** | **≈ 356** + 16 transversales |
+| **Total** | **58** | **377** + 16 transversales |
 
-> Antes de implementar, resolver o aceptar por escrito los criterios marcados `[⚠ A-##]` (vacíos e inconsistencias del Anexo A del documento de historias); son los puntos donde los documentos fuente se contradicen o no definen la regla.
+> Los hallazgos del Anexo A del documento de historias quedaron resueltos en RN v2.1 y RF v2.1; ya no hay criterios pendientes de validación por esa causa.

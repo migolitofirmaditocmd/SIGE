@@ -534,6 +534,7 @@ Cada hito permitirá evaluar de manera progresiva el grado de desarrollo, integr
 - 100 % de las operaciones críticas con datos persistentes;
 - 0 errores críticos abiertos al cierre del hito;
 - 100 % de los casos de prueba críticos ejecutados.
+- 100 % de los tutores con estatus de consentimiento registrado.
 
 ### Hito 03 — Backend, API y control de asistencia
 **Periodo objetivo:** Semanas 11–14
@@ -552,6 +553,9 @@ Cada hito permitirá evaluar de manera progresiva el grado de desarrollo, integr
 - consulta de asistencia;
 - pruebas de integración entre API y base de datos;
 - definición de los servicios necesarios para su posterior consumo desde la aplicación móvil.
+- 100 % de los docentes activos con un QR único asociado.
+- 100 % de los registros de asistencia docente con fecha, hora y estado correctamente determinados.
+- 0 registros duplicados de ENTRADA o SALIDA por docente y fecha.
 
 **KPIs:**
 - 100 % de las lecturas válidas asociadas al estudiante correcto;
@@ -774,6 +778,10 @@ La siguiente matriz consolida los indicadores definidos para cada hito del proye
 | KPI69 | Hito 08 — Preparación para operación y entrega | Errores críticos abiertos al momento de la entrega | 0 |
 | KPI70 | Hito 08 — Preparación para operación y entrega | Entregables documentados y entregados | 100 % |
 | KPI71 | Hito 08 — Preparación para operación y entrega | Aprobación de la versión final por parte de la institución | Aprobada |
+| KPI72 | Hito 03 — Backend, API y control de asistencia | Docentes activos con QR único asociado | 100 % |
+| KPI73 | Hito 03 — Backend, API y control de asistencia | Registros de asistencia docente con fecha, hora y estado correctamente determinados | 100 % |
+| KPI74 | Hito 03 — Backend, API y control de asistencia | Registros duplicados de `ENTRADA` o `SALIDA` por docente y fecha | 0 |
+| KPI75 | Hito 02 — Sistema web integrado | Tutores con estatus de consentimiento registrado (`PENDIENTE`, `OTORGADO` o `REVOCADO`) | 100 % |
 
 ---
 
@@ -880,6 +888,7 @@ La aceptación deberá sustentarse en:
 - **KPI-67:** 100 % de los procedimientos de respaldo y recuperación deberán haber sido probados.
 - **KPI-68:** 100 % de los procesos prioritarios deberán encontrarse validados.
 - **KPI-70:** 100 % de los entregables deberán encontrarse documentados y entregados.
+- **KPI-75:** 100 % de tutores con estatus de consentimiento registrado
 
 Las operaciones críticas deberán generar registros verificables y deberá comprobarse la integridad de la información almacenada. La versión final deberá encontrarse desplegada o preparada para su despliegue en el entorno definido por la institución.
 
@@ -912,6 +921,9 @@ Deberá verificarse:
 - **KPI-62:** deberá ser posible consultar el historial individual de asistencia de los estudiantes de prueba.
 - **KPI-63:** las faltas justificadas deberán poder registrarse mediante usuarios con autorización.
 - **KPI-64:** las modificaciones realizadas sobre registros de asistencia deberán conservar trazabilidad.
+- **KPI-72:** 100 % de docentes activos con QR único
+- **KPI-73:** 100 % de registros docentes con fecha, hora y estado correctos
+- **KPI-74:** 0 duplicados de entrada/salida por docente y fecha
 
 La aceptación deberá considerar tanto la consulta de asistencia por grupo y fecha como la consulta individual por estudiante, garantizando que ambas representaciones provengan de la misma información almacenada en el sistema.
 
@@ -967,6 +979,7 @@ La aprobación institucional deberá sustentarse en:
 - Cumplimiento de los KPIs aplicables a los hitos precedentes.
 - Evidencia de que los procesos prioritarios pueden ejecutarse correctamente.
 - Evidencia de que el sistema cumple los requisitos acordados y se encuentra preparado para su utilización en un entorno real o piloto.
+
 
 ### 13.10. Regla de aceptación
 
