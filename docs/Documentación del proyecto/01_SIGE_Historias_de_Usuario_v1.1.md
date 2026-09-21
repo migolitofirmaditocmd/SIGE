@@ -56,7 +56,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 | **EP-03** | Importar estudiantes masivamente | Plantilla · Cargar/validar · Procesar filas · Vista previa · Reporte | US-017 a US-021 |
 | **EP-04** | Identificar con QR y credenciales | Generar · Validar lote · Revocar/reemplazar · Exportar · Reexportar | US-022 a US-026 |
 | **EP-05** | Controlar asistencia estudiantil | Escanear/validar · Registrar · Rebote · Ausencias · Reclasificar · Offline · Justificar · Consultar | US-027 a US-037 |
-| **EP-06** | Controlar asistencia docente | Alta y QR · Programación · Entrada · Salida · Ausencias · Justificar · Historial | US-038 a US-044 |
+| **EP-06** | Controlar asistencia docente | Alta y QR · Programación · Entrada · Salida · Ausencias · Justificar · Historial · Editar ficha · Desactivar/reactivar · Consultar · Vincular cuenta| US-038 a US-044 · US-059 a US-062 |
 | **EP-07** | Gestionar reportes escolares | Registrar · Consultar · Revisar/canalizar · Corregir · Revisión administrativa · Decidir comunicación · Trazabilidad | US-045 a US-051 |
 | **EP-08** | Comunicar con familiares | Enviar · Estado y reintento | US-052 a US-053 |
 | **EP-09** | Administrar el sistema | Catálogos · Parámetros · Indicadores | US-054 a US-056 |
@@ -484,10 +484,11 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 > **Como** personal administrativo, **quiero** dar de alta a un docente y generar su QR individual, **para** poder registrar su asistencia sin que necesite una cuenta de SIGE.
 
 - **Contexto:** cubre RF-AST-11 (registro de docentes) y RF-QR-04 (QR del personal docente), que sustentan RN-QR-05 y RN-AST-11.
-- **Reglas de negocio:** RN-AST-11 (cada docente debe tener un QR vigente asociado inequívocamente a su identidad) · RN-QR-05 (máximo un QR vigente por persona y tipo de registro; estudiantes y docentes tienen identificadores independientes) · RN-QR-02/03 (mismas reglas de token que US-022) · RF-AST-08 (el docente no requiere cuenta) · RN-AST-23 (docente con datos mínimos y estatus `ACTIVO`/`INACTIVO`; el inactivo conserva su historial) · RN-QR-06 (solo el ADM revoca o regenera el QR docente).
-- **Datos (mínimos, RN-TRX-01):** nombre completo, identificador interno, estado (activo/inactivo), QR.
+- **Reglas de negocio:** RN-AST-11 (cada docente debe tener un QR vigente asociado inequívocamente a su identidad) · RN-QR-05 (máximo un QR vigente por persona y tipo de registro; estudiantes y docentes tienen identificadores independientes) · RN-QR-02/03 (mismas reglas de token que US-022) · RF-AST-08 (el docente no requiere cuenta) · RN-AST-23 (docente con datos mínimos y estatus `ACTIVO`/`INACTIVO`; el inactivo conserva su historial) · RN-QR-06 (solo el ADM revoca o regenera el QR docente) · RN-AST-26 (identificador único e inmutable, también frente a docentes `INACTIVO`) · RN-AST-27 (datos mínimos y opcionales).
+- **Datos:** *mínimos:* nombre completo, identificador interno (clave institucional) y estatus; *opcionales:* fotografía, correo y teléfono (RN-AST-27); QR.
+- **Flujos alternativos:** identificador ya existente → se rechaza el alta; faltan datos mínimos → no se guarda.
 - **UX/UI y estados:** reutiliza el subproceso de token de F-QR T.
-- **Trazabilidad:** RF-AST-11, RF-QR-04 · RN-AST-11, RN-AST-23, RN-QR-05, RN-QR-06 · OE-01, OE-04 · KPI-72.
+- **Trazabilidad:** RF-AST-11, RF-QR-04 · RN-AST-11, RN-AST-23, RN-QR-05, RN-QR-06 · OE-01, OE-04 · KPI-72 · RN-AST-26, RN-AST-27.
 
 ### SIGE-US-039 — Programar días y horarios de asistencia de cada docente
 **Épica:** EP-06 · **Módulo:** AST · **Actor:** PAD · **Prioridad:** Must · **Hito:** 03
@@ -540,6 +541,51 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 - **Datos:** docente, rango de fechas; por día: entrada, salida, estado, origen, justificaciones.
 - **Trazabilidad:** RF-AST-08 (punto 7), RF-AST-10 · OE-04 · KPI-73.
 
+### SIGE-US-059 — Editar la ficha de un docente
+**Épica:** EP-06 · **Módulo:** AST · **Actor:** PAD, ADM · **Prioridad:** Must · **Hito:** 03
+**Como** personal administrativo, **quiero** actualizar los datos de la ficha de un docente, **para** mantener su información vigente sin alterar su identidad en el sistema.
+ 
+- **Reglas de negocio:** RN-AST-26 (identificador inmutable; corrección excepcional por PAD/ADM con motivo y bitácora) · RN-AST-27 (datos mínimos y opcionales) · RN-AUT-05 (toda edición se audita) · RN-TRX-01.
+- **Permisos:** PAD, ADM.
+- **Datos:** nombre completo, fotografía, correo, teléfono; el identificador aparece bloqueado.
+- **UX/UI y estados:** una acción separada "Corrección excepcional de identificador" exige motivo y confirmación; estados: guardando, éxito, error de validación, identificador duplicado.
+- **Flujos alternativos:** un identificador nuevo que ya existe se rechaza.
+- **Dependencias:** US-038.
+- **Trazabilidad:** RF-AST-11 · RN-AST-26, RN-AST-27 · OE-04 · Hito 03.
+ 
+### SIGE-US-060 — Desactivar y reactivar a un docente
+**Épica:** EP-06 · **Módulo:** AST · **Actor:** PAD, ADM (desactivar); ADM (reactivar) · **Prioridad:** Must · **Hito:** 03
+**Como** personal administrativo, **quiero** desactivar a un docente que deja de laborar y que el administrador pueda reactivarlo si regresa, **para** que deje de evaluarse sin perder su historial.
+ 
+- **Reglas de negocio:** RN-AST-28 (transiciones válidas; reactivar solo ADM; motivo obligatorio; nunca se elimina) · RN-AST-29 (efectos de la desactivación: deja de evaluarse, programación suspendida, QR conservado, historial consultable) · RN-AST-23 · RN-AUT-05 · RN-TRX-03.
+- **Permisos:** desactivar: PAD, ADM. Reactivar: solo ADM.
+- **Datos:** docente, motivo (obl.), fecha.
+- **UX/UI y estados:** la confirmación resume los efectos; si el docente tiene una cuenta vinculada activa, se advierte al ADM sin desactivarla; la acción "Reactivar" solo se muestra al ADM.
+- **Flujos alternativos:** un PAD que intenta reactivar recibe rechazo; un docente `INACTIVO` que escanea su QR es rechazado (F-AST §5, D3).
+- **Dependencias:** US-038, US-042.
+- **Trazabilidad:** RF-AST-11 · RN-AST-28, RN-AST-29 · OE-04 · Hito 03.
+ 
+### SIGE-US-061 — Consultar y filtrar docentes
+**Épica:** EP-06 · **Módulo:** AST · **Actor:** PAD, ADM · **Prioridad:** Must · **Hito:** 03
+**Como** personal administrativo, **quiero** buscar docentes por nombre, identificador y estatus y ver su ficha, **para** localizar a un docente y consultar su programación, su QR y su historial.
+ 
+- **Reglas de negocio:** RN-AUT-06 (solo ADM y PAD) · RN-TRX-02 · RN-AST-23.
+- **Datos:** filtros por nombre, identificador y estatus; resultados paginados. La ficha muestra datos, estatus, estado del QR (`VIGENTE`, `REVOCADO` o sin QR), programación vigente y acceso al historial (US-044).
+- **UX/UI y estados:** tabla en escritorio y tarjetas en móvil; estados: cargando, sin resultados, error, permiso denegado.
+- **Dependencias:** US-038, US-039, US-044.
+- **Trazabilidad:** RF-AST-12 · OE-04 · Hito 03.
+ 
+### SIGE-US-062 — Vincular a un docente con su cuenta de usuario
+**Épica:** EP-06 · **Módulo:** AUT/AST · **Actor:** ADM · **Prioridad:** Must · **Hito:** 03
+> **Como** administrador, **quiero** vincular la ficha de un docente con su cuenta de rol Docente, **para** que sus reportes queden asociados a él y a sus grupos asignados.
+ 
+- **Reglas de negocio:** RN-AST-30 (vínculo 1 a 1; una cuenta Docente necesita un docente `ACTIVO` para reportar) · RN-REP-09 (grupos asignados) · RN-AUT-01 · RN-AUT-06.
+- **Permisos:** solo ADM.
+- **Datos:** docente; cuenta con rol Docente.
+- **UX/UI y estados:** selector de cuentas Docente sin vincular; se muestra el vínculo actual; quitar el vínculo pide confirmación.
+- **Flujos alternativos:** cuenta o docente ya vinculados → se rechaza; docente `INACTIVO` → la cuenta no puede registrar reportes y se advierte.
+- **Dependencias:** US-003, US-038, US-045.
+- **Trazabilidad:** RF-AST-11, RF-AUT-03 · RN-AST-30, RN-REP-09 · OE-03, OE-04 · Hito 03.
 ---
 
 # EP-07 — Reportes escolares
@@ -723,8 +769,8 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 | QR / CRE | RN-QR-01 a 06 · RN-CRE-01 | US-022 a US-027 · US-038 |
 | AUT | RN-AUT-01 a 06 | US-001 a US-007 |
 | AST (estudiantes) | RN-AST-01 a 09 y RN-AST-22 | US-027 a US-036 · US-055 |
-| AST (docentes) | RN-AST-10 a 21 y RN-AST-23 a 25 | US-038 a US-044 |
-| REP | RN-REP-01 a 09 | US-045 a US-051 |
+| AST (docentes) | RN-AST-10 a 21 y RN-AST-23 a 30 | US-038 a US-044 · US-059 a US-062 |
+| REP | RN-REP-01 a 09 | US-045 a US-051 · US-062 |
 | COM | RN-COM-01 a 04 | US-016 · US-050 · US-052 · US-053 |
 | ADM | RN-ADM-01 y 02 | US-054 · US-055 |
 | API / MOV / INF | RN-API-01 a 03 · RN-MOV-01 a 03 · RN-INF-01 a 03 | US-006 · US-032 · US-033 · US-057 · US-058 |

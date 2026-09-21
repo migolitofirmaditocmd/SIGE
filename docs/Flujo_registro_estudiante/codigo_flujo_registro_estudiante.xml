@@ -5,6 +5,9 @@
     <mxCell id="inicio" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="Inicio" vertex="1">
       <mxGeometry height="60" width="160" x="-145" y="60" as="geometry" />
     </mxCell>
+    <mxCell id="tipo" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Qué se registrará?&#xa;(Estudiante / Docente)" vertex="1">
+      <mxGeometry height="100" width="200" x="60" y="50" as="geometry" />
+    </mxCell>
     <mxCell id="metodo" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Cómo se registrará&#xa;el estudiante?" vertex="1">
       <mxGeometry height="100" width="200" x="-165" y="160" as="geometry" />
     </mxCell>
@@ -54,7 +57,7 @@
     <mxCell id="ToE8OGGFIniwwYAILBBF-25" edge="1" parent="1" source="1QN-bX83L7vcZn4b69eD-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="estado">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="ToE8OGGFIniwwYAILBBF-22" edge="1" parent="1" source="dryrun_confirmar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="resolver_duplicado">
+    <mxCell id="ToE8OGGFIniwwYAILBBF-22" edge="1" parent="1" source="dryrun_confirmar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="terminar_sin_persistir">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
     <mxCell id="ToE8OGGFIniwwYAILBBF-23" connectable="0" parent="ToE8OGGFIniwwYAILBBF-22" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;No&lt;/b&gt;" vertex="1">
@@ -70,8 +73,8 @@
         <mxPoint x="23" y="-11" as="offset" />
       </mxGeometry>
     </mxCell>
-    <mxCell id="dryrun_confirmar" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Confirmar&lt;br&gt;importación definitiva de toda la base de datos?" vertex="1">
-      <mxGeometry height="90" width="200" x="-120" y="2320" as="geometry" />
+    <mxCell id="dryrun_confirmar" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Confirmar&lt;br&gt;importación definitiva de toda la base de datos? (RN-IMP-04)" vertex="1">
+      <mxGeometry height="110" width="240" x="-140" y="2310" as="geometry" />
     </mxCell>
     <mxCell id="nota_reporte_final" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Al finalizar el procesamiento de TODAS las filas,&#xa;SIGE DEBE generar un reporte descargable&#xa;(RF-IMP-01): total procesadas, insertadas,&#xa;con error y detalle de error por fila." vertex="1">
       <mxGeometry height="110" width="260" x="-480" y="1190" as="geometry" />
@@ -79,10 +82,13 @@
     <mxCell id="nota_plantilla" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="SIGE DEBERÍA ofrecer aquí una plantilla&#xa;CSV/XLSX descargable con las columnas&#xa;del diccionario de datos (RF-IMP-02),&#xa;antes de seleccionar el archivo." vertex="1">
       <mxGeometry height="90" width="230" x="-890" y="205" as="geometry" />
     </mxCell>
+    <mxCell id="nota_rol_import" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Solo Administrador y Personal administrativo pueden importar, descargar la plantilla y el reporte de importación (RN-IMP-05)." vertex="1">
+      <mxGeometry height="90" width="230" x="-890" y="310" as="geometry" />
+    </mxCell>
     <mxCell id="bR_i2nWcn27trFgycERd-21" edge="1" parent="1" source="menu_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="bR_i2nWcn27trFgycERd-19">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="menu_admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Personal administrativo&#xa;abre menú de estudiantes" vertex="1">
+    <mxCell id="menu_admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Personal administrativo (o Administrador)&#xa;abre menú de estudiantes (RN-AUT-06)" vertex="1">
       <mxGeometry height="70" width="250" x="700" y="330" as="geometry" />
     </mxCell>
     <mxCell id="ToE8OGGFIniwwYAILBBF-3" edge="1" parent="1" source="validar_manual" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1QN-bX83L7vcZn4b69eD-31">
@@ -93,19 +99,12 @@
     <mxCell id="validar_manual" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Validar campos y formato&#xa;de los datos" vertex="1">
       <mxGeometry height="70" width="250" x="700" y="670" as="geometry" />
     </mxCell>
-    <mxCell id="bR_i2nWcn27trFgycERd-3" edge="1" parent="1" source="manual_incompleto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
-      <mxGeometry relative="1" as="geometry">
-        <mxPoint x="795" y="945" as="targetPoint" />
-      </mxGeometry>
+    <mxCell id="bR_i2nWcn27trFgycERd-3" edge="1" parent="1" source="manual_incompleto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="guardar_incompleto">
+      <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="bR_i2nWcn27trFgycERd-10" connectable="0" parent="bR_i2nWcn27trFgycERd-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;Si&lt;/b&gt;" vertex="1">
+    <mxCell id="bR_i2nWcn27trFgycERd-10" connectable="0" parent="bR_i2nWcn27trFgycERd-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;Sí&lt;/b&gt;" vertex="1">
       <mxGeometry relative="1" x="-0.2235" y="-1" as="geometry">
         <mxPoint y="-11" as="offset" />
-      </mxGeometry>
-    </mxCell>
-    <mxCell id="1QN-bX83L7vcZn4b69eD-41" connectable="0" parent="bR_i2nWcn27trFgycERd-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;No&lt;/b&gt;" vertex="1">
-      <mxGeometry relative="1" x="-0.1425" y="9" as="geometry">
-        <mxPoint as="offset" />
       </mxGeometry>
     </mxCell>
     <mxCell id="1QN-bX83L7vcZn4b69eD-42" edge="1" parent="1" source="manual_incompleto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="gF3PJZLBA2T3-90LYPZc-3">
@@ -116,19 +115,19 @@
         </Array>
       </mxGeometry>
     </mxCell>
-    <mxCell id="1QN-bX83L7vcZn4b69eD-43" connectable="0" parent="1QN-bX83L7vcZn4b69eD-42" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;Si&lt;/b&gt;" vertex="1">
+    <mxCell id="1QN-bX83L7vcZn4b69eD-43" connectable="0" parent="1QN-bX83L7vcZn4b69eD-42" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;No&lt;/b&gt;" vertex="1">
       <mxGeometry relative="1" x="-0.9646" y="-5" as="geometry">
         <mxPoint x="20" y="-15" as="offset" />
       </mxGeometry>
     </mxCell>
-    <mxCell id="manual_incompleto" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Faltan datos&#xa;obligatorios?" vertex="1">
-      <mxGeometry height="100" width="200" x="505" y="894.9999999999999" as="geometry" />
+    <mxCell id="manual_incompleto" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Cumple los datos&#xa;mínimos? (RN-EST-10)&#xa;nombre, matrícula, grado,&#xa;grupo, ciclo y tutor válido" vertex="1">
+      <mxGeometry height="140" width="280" x="465" y="875" as="geometry" />
     </mxCell>
     <mxCell id="ToE8OGGFIniwwYAILBBF-7" edge="1" parent="1" source="guardar_incompleto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="validacion_final">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="guardar_incompleto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Guardar como registro&#xa;incompleto, si cumple requisitos mínimos" vertex="1">
-      <mxGeometry height="90" width="250" x="790" y="910" as="geometry" />
+    <mxCell id="guardar_incompleto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Guardar como registro INCOMPLETO (conserva estatus ACTIVO) e identificar los campos faltantes (RN-EST-10)" vertex="1">
+      <mxGeometry height="110" width="250" x="790" y="890" as="geometry" />
     </mxCell>
     <mxCell id="ToE8OGGFIniwwYAILBBF-9" edge="1" parent="1" source="validacion_final" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="existe">
       <mxGeometry relative="1" as="geometry" />
@@ -155,11 +154,27 @@
     <mxCell id="existe" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿El estudiante&#xa;ya existe en SIGE?" vertex="1">
       <mxGeometry height="100" width="200" x="-140" y="1499.9999999999998" as="geometry" />
     </mxCell>
-    <mxCell id="duplicado" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Existe más de un registro&#xa;con el mismo identificador?" vertex="1">
+    <mxCell id="duplicado" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Existe más de un registro&#xa;con el mismo identificador?&#xa;(RN-IMP-07)" vertex="1">
       <mxGeometry height="110" width="230" x="170" y="1819.9999999999998" as="geometry" />
     </mxCell>
-    <mxCell id="resolver_duplicado" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Terminar automaticamente importación de datos" vertex="1">
-      <mxGeometry height="140" width="260" x="-920" y="2170" as="geometry" />
+    <mxCell id="resolver_duplicado" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Rechazar solo esa fila y reportarla como duplicada (RN-IMP-07); no sobrescribe ni detiene el resto de la importación" vertex="1">
+      <mxGeometry height="110" width="260" x="-920" y="2170" as="geometry" />
+    </mxCell>
+    <mxCell id="terminar_sin_persistir" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Terminar la importación sin persistir ningún dato (RN-IMP-04)" vertex="1">
+      <mxGeometry height="80" width="260" x="-920" y="2325" as="geometry" />
+    </mxCell>
+    <mxCell id="fin_cancelado" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" value="Fin — importación cancelada; no se guardó ningún registro" vertex="1">
+      <mxGeometry height="80" width="260" x="-920" y="2450" as="geometry" />
+    </mxCell>
+    <mxCell id="eTerminarFin" edge="1" parent="1" source="terminar_sin_persistir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" target="fin_cancelado">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="eRD_err" edge="1" parent="1" source="resolver_duplicado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="mostrar_errores">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="-1095" y="2225" />
+        </Array>
+      </mxGeometry>
     </mxCell>
     <mxCell id="crear" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Crear nuevo registro&#xa;del estudiante" vertex="1">
       <mxGeometry height="75" width="250" x="160" y="1619.9999999999995" as="geometry" />
@@ -194,8 +209,8 @@
     <mxCell id="nota_importacion" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Regla de importación:&lt;br&gt;Los registros con errores no deben incorporarse como datos válidos hasta que el error sea corregido, como se cada registro se analiza individualmente, se descartara la fila defectuosa, y se pasara a analizar la siguiente fila, al final habra un reporte de todas las filas descartadas." vertex="1">
       <mxGeometry height="120" width="230" x="-860" y="740" as="geometry" />
     </mxCell>
-    <mxCell id="nota_incompleto" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Los campos faltantes deben quedar identificados para que el personal autorizado pueda completarlos posteriormente." vertex="1">
-      <mxGeometry height="110" width="250" x="1060" y="1030" as="geometry" />
+    <mxCell id="nota_incompleto" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Los campos faltantes deben quedar identificados para que el personal autorizado pueda completarlos posteriormente. El registro incompleto conserva el estatus ACTIVO y no genera credencial hasta completarse (RN-EST-10)." vertex="1">
+      <mxGeometry height="130" width="250" x="1060" y="1030" as="geometry" />
     </mxCell>
     <mxCell id="nota_roles" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Modificación manual: únicamente personal administrativo con permisos suficientes." vertex="1">
       <mxGeometry height="90" width="250" x="-500" y="3080" as="geometry" />
@@ -203,7 +218,13 @@
     <mxCell id="nota_consulta" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Consulta: el acceso a los datos depende del rol y permisos. El personal autorizado puede consultar información del estudiante e historial correspondiente." vertex="1">
       <mxGeometry height="110" width="280" x="180" y="3090" as="geometry" />
     </mxCell>
-    <mxCell id="e1" edge="1" parent="1" source="inicio" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="metodo">
+    <mxCell id="e1" edge="1" parent="1" source="inicio" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="tipo">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e1b" edge="1" parent="1" source="tipo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="metodo" value="Estudiante">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e1c" edge="1" parent="1" source="tipo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_menu" value="Docente">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
     <mxCell id="e2" edge="1" parent="1" source="metodo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="importar_archivo" value="Excel / CSV">
@@ -280,13 +301,13 @@
         <mxPoint x="23" y="-14" as="offset" />
       </mxGeometry>
     </mxCell>
-    <mxCell id="bR_i2nWcn27trFgycERd-23" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿El registro existente está&lt;br&gt;INCOMPLETO?" vertex="1">
-      <mxGeometry height="110" width="220" x="170" y="889.9999999999999" as="geometry" />
+    <mxCell id="bR_i2nWcn27trFgycERd-23" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿El registro está INCOMPLETO?&lt;br&gt;(faltan fecha de nacimiento&lt;br&gt;o fotografía) (RN-EST-10)" vertex="1">
+      <mxGeometry height="130" width="260" x="150" y="880" as="geometry" />
     </mxCell>
-    <mxCell id="nota_duplicado_aclaracion" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="RF-IMP-01: los registros duplicados&lt;br&gt;(misma matrícula, alta nueva) DEBEN&lt;br&gt;rechazarse y reportarse, NO&lt;br&gt;sobrescribirse silenciosamente." vertex="1">
+    <mxCell id="nota_duplicado_aclaracion" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="RF-IMP-01: los registros duplicados&lt;br&gt;(misma matrícula, alta nueva) DEBEN&lt;br&gt;rechazarse y reportarse, NO&lt;br&gt;sobrescribirse silenciosamente&lt;br&gt;(RN-IMP-03, RN-IMP-07)." vertex="1">
       <mxGeometry height="130" width="240" x="-440" y="2030" as="geometry" />
     </mxCell>
-    <mxCell id="gF3PJZLBA2T3-90LYPZc-2" parent="1" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Anotaciones importantes&lt;/span&gt;&lt;/h1&gt;&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-size: 12px; font-weight: normal;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/h1&gt;&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;li&gt;&lt;strong&gt;Importación Excel/CSV:&lt;/strong&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt; pensada para cargas masivas.&lt;span aria-hidden=&quot;true&quot; class=&quot;PDq2pG_selectionAnchor&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;br&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;span&gt;Interfaz web:&lt;/span&gt; pensada para que personal administrativo registre o complete estudiantes individualmente.&lt;br&gt;&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;br&gt;Los errores de importación &lt;/span&gt;&lt;strong&gt;no deberían crear estudiantes parcialmente dañados&lt;/strong&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;. Lo ideal es que SIGE presente un resumen de errores y permita corregir el archivo o los registros antes de confirmar la importación.&lt;br&gt;&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;br&gt;Los datos incompletos sí pueden existir como&lt;/span&gt; &lt;strong&gt;registro incompleto&lt;/strong&gt;, &lt;span style=&quot;font-weight: normal;&quot;&gt;siempre que los campos obligatorios para crear el registro estén presentes. Así el administrativo puede completarlos posteriormente.&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;br&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Un estudiante dado de baja&lt;/span&gt; &lt;strong&gt;no se elimina&lt;/strong&gt;; &lt;span style=&quot;font-weight: normal;&quot;&gt;cambia de estado y conserva su historial.&lt;/span&gt;&lt;/li&gt;&lt;/h1&gt;" vertex="1">
+    <mxCell id="gF3PJZLBA2T3-90LYPZc-2" parent="1" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Anotaciones importantes&lt;/span&gt;&lt;/h1&gt;&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-size: 12px; font-weight: normal;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/h1&gt;&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;li&gt;&lt;strong&gt;Importación Excel/CSV:&lt;/strong&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt; pensada para cargas masivas.&lt;span aria-hidden=&quot;true&quot; class=&quot;PDq2pG_selectionAnchor&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;br&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;span&gt;Interfaz web:&lt;/span&gt; pensada para que personal administrativo registre o complete estudiantes individualmente.&lt;br&gt;&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;br&gt;Los errores de importación &lt;/span&gt;&lt;strong&gt;no deberían crear estudiantes parcialmente dañados&lt;/strong&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;. Lo ideal es que SIGE presente un resumen de errores y permita corregir el archivo o los registros antes de confirmar la importación.&lt;br&gt;&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;br&gt;Los datos incompletos sí pueden existir como&lt;/span&gt; &lt;strong&gt;registro incompleto&lt;/strong&gt;, &lt;span style=&quot;font-weight: normal;&quot;&gt;siempre que estén los datos mínimos (nombre, matrícula, grado, grupo, ciclo y un tutor con contacto válido); solo pueden faltar la fecha de nacimiento y la fotografía (RN-EST-10). El registro incompleto conserva el estatus ACTIVO. Así el administrativo puede completarlos posteriormente.&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;br&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Un estudiante dado de baja&lt;/span&gt; &lt;strong&gt;no se elimina&lt;/strong&gt;; &lt;span style=&quot;font-weight: normal;&quot;&gt;cambia de estado y conserva su historial.&lt;/span&gt;&lt;/li&gt;&lt;/h1&gt;" vertex="1">
       <mxGeometry height="740" width="740" x="590" y="2207.5" as="geometry" />
     </mxCell>
     <mxCell id="1QN-bX83L7vcZn4b69eD-7" edge="1" parent="1" source="gF3PJZLBA2T3-90LYPZc-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="mostrar_errores">
@@ -369,8 +390,8 @@
         <mxPoint x="27" as="offset" />
       </mxGeometry>
     </mxCell>
-    <mxCell id="1QN-bX83L7vcZn4b69eD-31" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿El registro cuenta con los datos de al menos un tutor?" vertex="1">
-      <mxGeometry height="100" width="200" x="-165" y="895" as="geometry" />
+    <mxCell id="1QN-bX83L7vcZn4b69eD-31" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿El registro cuenta con al menos un tutor con contacto válido?&#xa;(RN-EST-03, RN-EST-11)" vertex="1">
+      <mxGeometry height="120" width="260" x="-195" y="885" as="geometry" />
     </mxCell>
     <mxCell id="1QN-bX83L7vcZn4b69eD-46" edge="1" parent="1" source="grupo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="dryrun_preview" value="">
       <mxGeometry relative="1" as="geometry">
@@ -378,20 +399,170 @@
         <mxPoint x="-20" y="2280" as="targetPoint" />
       </mxGeometry>
     </mxCell>
-    <mxCell id="dryrun_preview" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Mostrar VISTA PREVIA (dry-run):&#xa;registros a insertar / rechazados&#xa;(RF-IMP-01, obligatorio)" vertex="1">
-      <mxGeometry height="90" width="250" x="-145" y="2170" as="geometry" />
+    <mxCell id="dryrun_preview" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Mostrar VISTA PREVIA (dry-run):&#xa;registros a insertar / rechazados&#xa;(RF-IMP-01, obligatorio).&#xa;Las filas están en preparación; no se persiste nada hasta confirmar (RN-IMP-04)" vertex="1">
+      <mxGeometry height="105" width="250" x="-145" y="2170" as="geometry" />
     </mxCell>
-    <mxCell id="1QN-bX83L7vcZn4b69eD-52" edge="1" parent="1" source="resolver_duplicado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="1QN-bX83L7vcZn4b69eD-51" value="">
-      <mxGeometry relative="1" as="geometry">
-        <mxPoint x="-660" y="2240" as="sourcePoint" />
-        <mxPoint x="-20" y="3250" as="targetPoint" />
-      </mxGeometry>
+
+    <!-- ==================== RAMA DOCENTE (RF-AST-11, RF-AST-12, RN-AST-23/26-30) ==================== -->
+    <mxCell id="titDocente" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="ALTA Y GESTIÓN DEL PERSONAL DOCENTE (RF-AST-11, RF-AST-12)" vertex="1">
+      <mxGeometry height="30" width="620" x="1450" y="-30" as="geometry" />
     </mxCell>
-    <mxCell id="1QN-bX83L7vcZn4b69eD-55" edge="1" parent="1" source="1QN-bX83L7vcZn4b69eD-51" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="1QN-bX83L7vcZn4b69eD-19">
+    <mxCell id="note_docente_scope" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Sin importación masiva de docentes: el alta es individual, por interfaz web (RF-AST-11; fuera de alcance del acta §7)." vertex="1">
+      <mxGeometry height="90" width="300" x="1830" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="note_docente_min" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Ficha del docente — Mínimos (obligatorios): nombre completo, identificador interno (único e inmutable) y estatus. Opcionales: fotografía, correo electrónico, teléfono (RN-AST-27). La fotografía solo es obligatoria para exportar credencial completa; el sticker no la exige (RN-CRE-01)." vertex="1">
+      <mxGeometry height="170" width="300" x="1830" y="130" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_menu" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Personal administrativo (o Administrador) abre menú de docentes (RN-AUT-06)" vertex="1">
+      <mxGeometry height="80" width="320" x="1450" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_captura" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" value="Capturar datos del docente desde la interfaz web" vertex="1">
+      <mxGeometry height="60" width="240" x="1490" y="150" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_validar" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Validar campos y formato de los datos" vertex="1">
+      <mxGeometry height="70" width="320" x="1450" y="270" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_dup" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿El identificador interno ya existe (ACTIVO o INACTIVO)? (RN-AST-26)" vertex="1">
+      <mxGeometry height="110" width="320" x="1440" y="380" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_dup_no" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Rechazar el alta: identificador duplicado (RN-AST-26)" vertex="1">
+      <mxGeometry height="80" width="280" x="1830" y="395" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_dup_end" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" value="FIN — Alta rechazada" vertex="1">
+      <mxGeometry height="55" width="280" x="1830" y="505" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_min" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Cumple los datos mínimos? nombre completo e identificador interno (RN-AST-27)" vertex="1">
+      <mxGeometry height="110" width="320" x="1440" y="540" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_min_no" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="No se guarda ningún dato del docente (RN-AST-27)" vertex="1">
+      <mxGeometry height="70" width="280" x="1830" y="555" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_min_end" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" value="FIN — Alta cancelada" vertex="1">
+      <mxGeometry height="55" width="280" x="1830" y="655" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_crear" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="Guardar ficha del docente = ACTIVO (RN-AST-23, RN-AST-26, RN-AST-27)" vertex="1">
+      <mxGeometry height="90" width="320" x="1450" y="690" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_qr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Generar el código QR del docente → ver Flujo del ciclo QR, Sección A (RF-QR-04, RN-QR-06)" vertex="1">
+      <mxGeometry height="100" width="320" x="1450" y="820" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_prog" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Registrar programación de asistencia: días, horario esperado de entrada/salida y tolerancia de puntualidad (RF-AST-09)" vertex="1">
+      <mxGeometry height="100" width="320" x="1450" y="960" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_estado" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="Agregar ficha de docente activo a la base de datos" vertex="1">
+      <mxGeometry height="75" width="320" x="1450" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="note_docente_nunca_elimina" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Un docente nunca se elimina; solo se desactiva o reactiva (RN-AST-28, RN-TRX-03)." vertex="1">
+      <mxGeometry height="90" width="300" x="1830" y="1100" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_gestion" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" value="Gestión posterior del docente" vertex="1">
+      <mxGeometry height="65" width="320" x="1450" y="1215" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_accion" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="¿Qué acción se requiere?" vertex="1">
+      <mxGeometry height="110" width="280" x="2000" y="1330" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_editar" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Editar ficha (identificador bloqueado; corrección excepcional con motivo) (RN-AST-26, RN-AST-27)" vertex="1">
+      <mxGeometry height="90" width="250" x="1450" y="1500" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_desactivar" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Desactivar docente (Personal administrativo o Administrador, con motivo) (RN-AST-28)" vertex="1">
+      <mxGeometry height="90" width="260" x="1720" y="1500" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_reactivar" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Reactivar docente (solo Administrador, con motivo) (RN-AST-28)" vertex="1">
+      <mxGeometry height="90" width="260" x="2000" y="1500" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_vincular" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Vincular con cuenta de usuario Docente (solo Administrador) (RN-AST-30)" vertex="1">
+      <mxGeometry height="90" width="270" x="2280" y="1500" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_consultar" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Consultar ficha, QR, programación e historial (RF-AST-12)" vertex="1">
+      <mxGeometry height="90" width="260" x="2570" y="1500" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_desactivar_note" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Efectos: deja de evaluarse en la verificación de ausencias; su programación queda suspendida; su QR vigente NO se revoca (los escaneos se rechazan por estatus); su historial sigue consultable (RN-AST-29)." vertex="1">
+      <mxGeometry height="130" width="300" x="1720" y="1630" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_reactivar_note" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Requiere motivo; queda como evento distinto del alta original; conserva su QR vigente si lo tenía (RN-AST-28, RN-AST-29)." vertex="1">
+      <mxGeometry height="110" width="280" x="2040" y="1630" as="geometry" />
+    </mxCell>
+    <mxCell id="doc_fin" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="Fin / docente en el estado correspondiente" vertex="1">
+      <mxGeometry height="70" width="320" x="1900" y="1800" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e_dm1" edge="1" parent="1" source="doc_menu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_captura">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="1QN-bX83L7vcZn4b69eD-51" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Revisar ERRORES, registros duplicados&lt;br&gt;y resolver conflicto&lt;br&gt;(salvaguarda ante creación&lt;br&gt;simultánea; validación primaria&lt;br&gt;de unicidad ya ocurrió en&lt;br&gt;Validación final)" vertex="1">
-      <mxGeometry height="140" width="260" x="-1545" y="1480" as="geometry" />
+    <mxCell id="e_dm2" edge="1" parent="1" source="doc_captura" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_validar">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm3" edge="1" parent="1" source="doc_validar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_dup">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm4" edge="1" parent="1" source="doc_dup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_dup_no" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm5" edge="1" parent="1" source="doc_dup_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_dup_end">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm6" edge="1" parent="1" source="doc_dup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_min" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm7" edge="1" parent="1" source="doc_min" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_min_no" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm8" edge="1" parent="1" source="doc_min_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_min_end">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm9" edge="1" parent="1" source="doc_min" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_crear" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm10" edge="1" parent="1" source="doc_crear" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_qr">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm11" edge="1" parent="1" source="doc_qr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_prog">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm12" edge="1" parent="1" source="doc_prog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_estado">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm13" edge="1" parent="1" source="doc_estado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_gestion">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm14" edge="1" parent="1" source="doc_gestion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_accion">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm15" edge="1" parent="1" source="doc_accion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_editar" value="Editar ficha">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm16" edge="1" parent="1" source="doc_accion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_desactivar" value="Desactivar">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm17" edge="1" parent="1" source="doc_accion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_reactivar" value="Reactivar">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm18" edge="1" parent="1" source="doc_accion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_vincular" value="Vincular cuenta">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm19" edge="1" parent="1" source="doc_accion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_consultar" value="Consultar">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm20" edge="1" parent="1" source="doc_editar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_fin">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm21" edge="1" parent="1" source="doc_desactivar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_desactivar_note">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm22" edge="1" parent="1" source="doc_desactivar_note" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_fin">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm23" edge="1" parent="1" source="doc_reactivar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="doc_reactivar_note">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm24" edge="1" parent="1" source="doc_reactivar_note" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_fin">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm25" edge="1" parent="1" source="doc_vincular" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_fin">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e_dm26" edge="1" parent="1" source="doc_consultar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="doc_fin">
+      <mxGeometry relative="1" as="geometry" />
     </mxCell>
   </root>
 </mxGraphModel>

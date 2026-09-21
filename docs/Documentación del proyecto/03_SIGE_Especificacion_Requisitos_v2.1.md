@@ -64,7 +64,7 @@ Y para los No Funcionales, la idea detrás de cada categoría:
 |---|---|---|
 | **Administrador / Directivo** | Control total: usuarios, estudiantes, configuración, reportes, KPIs | Web |
 | **Prefecto** | Escaneo de asistencia, consulta de expedientes, recepción y canalización de reportes | Web + Móvil |
-| **Docente** | Registro y consulta de sus propios reportes escolares (de los grupos que tiene asignados). No consulta asistencia directamente: recibe la información consolidada mediante exportación entregada por PAD/ADM | Móvil (y web) |
+| **Docente** | Registro y consulta de sus propios reportes escolares (de los grupos que tiene asignados). No consulta asistencia directamente: recibe la información consolidada mediante exportación entregada por PAD/ADM. Su cuenta se vincula a su ficha de docente (RN-AST-30) | Móvil (y web) |
 | **Personal administrativo** | Alta/edición de estudiantes e importación, generación de QR y exportación de credenciales, escaneo de asistencia estudiantil, alta y programación de docentes y registro de su asistencia, consulta de expedientes, revisión de reportes canalizados, autorización y envío de comunicación a familia, justificación/modificación de asistencias, información consolidada de asistencia | Web + Móvil |
 | **Solo lectura / Auditoría** | Consulta de estadísticas, información consolidada e indicadores, sin capacidad de modificación; no accede a la bitácora ni a expedientes | Web |
 | **Familiar / Tutor** | Receptor pasivo de comunicaciones (Solo correo); no tiene cuenta en el sistema en esta fase | Ninguno (canal externo) |
@@ -106,7 +106,7 @@ El sistema DEBE permitir registrar, para cada tutor/familiar asociado a un estud
 
 **RF-IMP-01 — Importación masiva de estudiantes (CSV/XLSX)** *(expande RF-01)*
 El sistema DEBE permitir cargar archivos CSV y XLSX basados estrictamente en un diccionario de datos publicado por el equipo de desarrollo, ejecutando el proceso en modo transaccional por fila (una fila inválida no bloquea a las demás) y emitiendo, al finalizar, un reporte descargable con: total de filas procesadas, filas insertadas, filas con error y el detalle del error por fila (columna y motivo).
-- *Fuera de alcance (heredado del acta):* limpieza o transformación de datos históricos no estructurados — la institución debe entregar los archivos ya conformes al diccionario de datos.
+- *Fuera de alcance (heredado del acta):* limpieza o transformación de datos históricos no estructurados — la institución debe entregar los archivos ya conformes al diccionario de datos. Tampoco se contempla la importación masiva de docentes (la matriz de alcance del acta limita la carga masiva a estudiantes); el alta de docentes es individual, por interfaz web.
 > - Solo el Administrador y el Personal administrativo PUEDEN importar (RN-IMP-05).
 > - Toda importación DEBE pasar por una vista previa (*dry-run*) sin persistencia; solo la confirmación explícita persiste los registros válidos (RN-IMP-04).
 > - Las filas sin datos mínimos se descartan; las filas con datos obligatorios diferidos vacíos se insertan como INCOMPLETO (RN-IMP-06).
@@ -136,11 +136,11 @@ El sistema DEBE permitir, únicamente al rol Administrador, revocar el identific
 - *Prioridad:* Should. **Trazabilidad:** OE-01 · Hito 01 (complementario).
 
 **RF-QR-04 — QR del personal docente**
-El sistema DEBE generar, para cada docente `ACTIVO`, un identificador único, opaco e irrepetible, con las mismas reglas que RF-QR-01 (sin datos personales legibles; unicidad contra tokens vigentes y revocados). El Personal administrativo y el Administrador PUEDEN generarlo; solo el Administrador PUEDE revocarlo y regenerarlo (mismas reglas que RF-QR-03), y el QR docente es independiente del QR de estudiantes (RN-QR-05, RN-QR-06). Su exportación sigue RF-CRE-01/RF-CRE-02.
+El sistema DEBE generar, para cada docente `ACTIVO`, un identificador único, opaco e irrepetible, con las mismas reglas que RF-QR-01 (sin datos personales legibles; unicidad contra tokens vigentes y revocados). El Personal administrativo y el Administrador PUEDEN generarlo; solo el Administrador PUEDE revocarlo y regenerarlo (mismas reglas que RF-QR-03), y el QR docente es independiente del QR de estudiantes (RN-QR-05, RN-QR-06). Su exportación sigue RF-CRE-01/RF-CRE-02. Al desactivarse un docente su QR vigente no se revoca y se conserva para una eventual reactivación (RN-AST-29). La exportación sigue RN-CRE-01: la credencial completa exige fotografía y el sticker no.
 - *Prioridad:* Must. **Trazabilidad:**  OE-01, OE-04 · Hito 03 · KPI-72 · RN-AST-11, RN-QR-05, RN-QR-06.
 
 **RF-CRE-01 — Exportación de credenciales para impresión** *(expande RF-04)*
-El sistema DEBE generar, para cada estudiante `ACTIVO` con QR vigente, una imagen de alta resolución del QR individual y un PDF por lote o individual, en dos modalidades: **credencial completa** (requiere fotografía cargada) y **sticker** de QR (no requiere fotografía) para pegarse sobre una credencial ya impresa. Los estudiantes que no cumplan las condiciones DEBEN excluirse y listarse aparte como pendientes con el motivo (RN-CRE-01). El diseño, impresión y entrega física quedan fuera del alcance.
+El sistema DEBE generar, para cada estudiante o docente `ACTIVO` con QR vigente, una imagen de alta resolución del QR individual y un PDF por lote o individual, en dos modalidades: **credencial completa** (requiere fotografía cargada) y **sticker** de QR (no requiere fotografía) para pegarse sobre una credencial ya impresa. Los estudiantes que no cumplan las condiciones DEBEN excluirse y listarse aparte como pendientes con el motivo (RN-CRE-01). El diseño, impresión y entrega física quedan fuera del alcance.
 - *Prioridad:* Must. **Trazabilidad:** OE-01 · Hito 01 · KPI-06.
 
 **RF-CRE-02 — Reimpresión selectiva de credenciales**
@@ -160,7 +160,7 @@ El sistema DEBE restringir cada función y cada dato mostrado según el rol del 
 - *Prioridad:* Must. **Trazabilidad:** OE-03 · Hito 02 · KPI-08.
 
 **RF-AUT-03 — Gestión del ciclo de vida de cuentas**
-El sistema DEBE permitir a Administrador dar de alta, desactivar y reasignar el rol de una cuenta de usuario, y DEBE bloquear temporalmente una cuenta tras un número configurable de intentos fallidos consecutivos (5 por defecto) durante un periodo configurable (15 minutos por defecto), con desbloqueo manual anticipado por Administrador.
+El sistema DEBE permitir a Administrador dar de alta, desactivar y reasignar el rol de una cuenta de usuario, y DEBE bloquear temporalmente una cuenta tras un número configurable de intentos fallidos consecutivos (5 por defecto) durante un periodo configurable (15 minutos por defecto), con desbloqueo manual anticipado por Administrador. Una cuenta con rol Docente DEBE poder vincularse a la ficha de un docente (RF-AST-11, RN-AST-30).
 - *Prioridad:* Must. **Trazabilidad:** OE-03 · Hito 02.
 
 **RF-AUT-04 — Recuperación segura de contraseña**
@@ -168,7 +168,7 @@ El sistema DEBE proveer un mecanismo de restablecimiento de contraseña mediante
 - *Prioridad:* Should. **Trazabilidad:** OE-03 · Hito 02.
 
 **RF-AUT-05 — Bitácora de auditoría de accesos y acciones críticas**
-El sistema DEBE registrar usuario, fecha/hora, acción y resultado para inicios de sesión, cambios de rol, registros y modificaciones de asistencia estudiantil y docente, modificaciones de reportes y cambios de estatus de estudiante, de forma consultable por el rol Administrador.
+El sistema DEBE registrar usuario, fecha/hora, acción y resultado para inicios de sesión, cambios de rol, registros y modificaciones de asistencia estudiantil y docente, modificaciones de reportes y cambios de estatus de estudiante y de docente, altas y ediciones de fichas de docentes y correcciones de identificador, de forma consultable por el rol Administrador.
 - *Prioridad:* Must. **Trazabilidad:** OE-03, 	OE-07 (Calidad, seguridad y continuidad) · Hito 02 · KPI-64.
 
 ---
@@ -234,9 +234,16 @@ El sistema DEBE permitir al Personal administrativo autorizado registrar y mante
 El sistema DEBE conservar de forma permanente en la base de datos todo registro de asistencia del personal docente (`ENTRADA`, `SALIDA` y su estado derivado), sin eliminación física, y DEBE permitir su consulta histórica por docente y periodo, de forma equivalente al historial de asistencia estudiantil (RF-AST-04, RF-AST-05).
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03/07 · KPI-73, KPI-74 · RN-AST-21
 
-**RF-AST-11 — Registro y mantenimiento del personal docente**
-El sistema DEBE permitir al Personal administrativo y al Administrador registrar, editar y desactivar (nunca eliminar) docentes con los datos mínimos: nombre completo, identificador interno y estatus (`ACTIVO`/`INACTIVO`), sin requerir cuenta de usuario. Un docente `INACTIVO` conserva su historial y deja de evaluarse. Los cambios DEBEN conservar trazabilidad.
-- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · KPI-72 · RN-AST-23.
+**RF-AST-11 — Expediente y mantenimiento del personal docente**
+El sistema DEBE mantener una ficha (expediente) por docente, independiente de las cuentas de usuario, con:
+- **Datos mínimos (obligatorios):** nombre completo, identificador interno (clave institucional, única e inmutable, RN-AST-26) y estatus (`ACTIVO` / `INACTIVO`).
+- **Datos opcionales:** fotografía, correo electrónico y teléfono (RN-AST-27). No se recolectan otros datos personales.
+El sistema DEBE permitir al Personal administrativo y al Administrador registrar y editar la ficha y desactivar al docente con motivo; DEBE permitir **solo al Administrador** reactivarlo con motivo (RN-AST-28). Un docente nunca se elimina y su historial se conserva. Al desactivarlo aplican los efectos de RN-AST-29 (el QR no se revoca, la programación queda suspendida y el historial sigue consultable). El sistema DEBE permitir al Administrador vincular al docente con una cuenta de usuario con rol Docente (RN-AST-30). Todo alta, edición y cambio de estatus DEBE conservar trazabilidad (RN-AUT-05).
+- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · KPI-72 · RN-AST-23, RN-AST-26 a RN-AST-30.
+
+**RF-AST-12 — Consulta y filtrado de docentes**
+El sistema DEBE permitir al Personal administrativo y al Administrador buscar y filtrar docentes por nombre, identificador interno y estatus, con resultados paginados, y consultar su ficha con: datos, estatus, estado de su QR (`VIGENTE`, `REVOCADO` o sin QR), programación vigente y acceso a su historial de asistencia (RF-AST-10).
+- *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · RN-AUT-06.
 
 ### 3.5 Reportes Escolares — *(OE-05/OE-06 · Hito 04/07)*
 
@@ -440,7 +447,7 @@ El procedimiento de instalación y configuración del servidor local DEBE quedar
 | Estudiantes / Importación | RF-EST-01..05, RF-IMP-01..02 | OE-02 | Hito 02 | KPI-07, KPI-09, KPI-75 |
 | QR / Credenciales | RF-QR-01..04 | OE-01 | Hito 01 | KPI-01 a KPI-06, KPI-72 |
 | Autenticación / RBAC | RF-AUT-01..05 | OE-03 | Hito 02 | KPI-08 |
-| Asistencia | RF-AST-01..11 | OE-04 | Hito 03 / Hito 07 | KPI-13 a KPI-18, KPI-59 a KPI-64, KPI-72 a KPI-74 |
+| Asistencia | RF-AST-01..12 | OE-04 | Hito 03 / Hito 07 | KPI-13 a KPI-18, KPI-59 a KPI-64, KPI-72 a KPI-74 |
 | Reportes | RF-REP-01..05 | OE-05 (Reportes) | Hito 04 / Hito 07 | KPI-22, KPI-23, KPI-45 a KPI-53 |
 | Comunicación | RF-COM-01..03 | 	OE-06 (Comunicación) | Hito 07 | — |
 | Panel administrativo | RF-ADM-01..03 | 	OE-09 (Panel administrativo) | Hito 02 | KPI-07, KPI-08 |
@@ -454,7 +461,7 @@ El procedimiento de instalación y configuración del servidor local DEBE quedar
 ## 6. Resumen de priorización MoSCoW (fase Hito 01–02)
 
 **Must (bloquean el cierre de Hito 01/02):**
-RF-EST-01, RF-EST-03, RF-EST-04, RF-IMP-01, RF-QR-01, RF-QR-02, RF-CRE-01, RF-AUT-01, RF-AUT-02, RF-AUT-03, RF-AUT-05, RF-ADM-01, RNF-SEG-01, RNF-SEG-02, RNF-SEG-03, RNF-SEG-04,RF-QR-04, RF-AST-11.
+RF-EST-01, RF-EST-03, RF-EST-04, RF-IMP-01, RF-QR-01, RF-QR-02, RF-CRE-01, RF-AUT-01, RF-AUT-02, RF-AUT-03, RF-AUT-05, RF-ADM-01, RNF-SEG-01, RNF-SEG-02, RNF-SEG-03, RNF-SEG-04,RF-QR-04, RF-AST-11, RF-AST-12.
 
 **Should (deseables en Hito 01/02, exigibles a más tardar en Hito 03/04):**
 RF-EST-02, RF-IMP-02, RF-QR-03, RF-CRE-02, RF-AUT-04, RF-ADM-02.

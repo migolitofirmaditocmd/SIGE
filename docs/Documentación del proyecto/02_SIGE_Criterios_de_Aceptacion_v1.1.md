@@ -406,6 +406,10 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-038-06 · Feliz** — **Dado que** se genera el token, **cuando** se verifica, **entonces** es opaco y sin datos personales (RN-QR-02).
 - **CA-038-07 · Perm** — **Dado que** solo el ADM puede revocar, **cuando** un PAD intenta revocar el QR de un docente, **entonces** se rechaza.
 - **CA-038-08 · Feliz** — **Dado que** existen docentes `ACTIVO` de prueba, **cuando** se verifica el lote, **entonces** el 100 % tiene un único QR vigente y 0 identificadores repetidos (KPI-72).
+- **CA-038-09 · Neg** — **Dado que** ya existe un docente (activo o `INACTIVO`) con el mismo identificador, **cuando** el PAD guarda un alta nueva, **entonces** se rechaza y no se crea ni modifica ninguna ficha.
+- **CA-038-10 · Neg** — **Dado que** falta el nombre completo o el identificador, **cuando** el PAD guarda, **entonces** no se guarda nada.
+- **CA-038-11 · Feliz** — **Dado que** el PAD captura solo los datos mínimos, **cuando** guarda, **entonces** el docente queda `ACTIVO` sin marca de incompleto, aunque no tenga fotografía, correo ni teléfono.
+- **CA-038-12 · Alt** — **Dado que** un docente `ACTIVO` con QR vigente no tiene fotografía, **cuando** se exporta su QR, **entonces** se incluye como sticker y se excluye (con motivo) de la credencial completa.
 
 ### SIGE-US-039 — Programar días y horarios de asistencia de cada docente
 - **CA-039-01 · Feliz** — **Dado que** el PAD captura días, hora de entrada y hora de salida de un docente, **cuando** guarda, **entonces** la programación queda asociada al docente.
@@ -457,6 +461,40 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-044-03 · Feliz** — **Dado que** se consultan fechas antiguas, **cuando** se abre el historial, **entonces** todos los registros siguen disponibles.
 - **CA-044-04 · Perm** — **Dado que** el rol no es PAD/ADM, **cuando** intenta consultar, **entonces** se deniega.
 - **CA-044-05 · UX** — **Dado que** no hay registros en el periodo, **cuando** se consulta, **entonces** se muestra estado vacío.
+
+### SIGE-US-059 — Editar la ficha de un docente
+- **CA-059-01 · Feliz** — **Dado que** el PAD edita el nombre, la fotografía, el correo o el teléfono de un docente, **cuando** guarda, **entonces** la ficha se actualiza y la edición queda auditada.
+- **CA-059-02 · Neg** — **Dado que** la ficha ya tiene identificador, **cuando** el usuario intenta cambiarlo por la edición normal, **entonces** el campo está bloqueado y la API rechaza el cambio.
+- **CA-059-03 · Alt** — **Dado que** hay un error de identificador, **cuando** un PAD/ADM usa la corrección excepcional con motivo, **entonces** se aplica y la bitácora guarda valor anterior, valor nuevo, usuario, fecha/hora y motivo.
+- **CA-059-04 · Neg** — **Dado que** el identificador corregido ya existe en otra ficha (activa o `INACTIVO`), **cuando** se guarda, **entonces** se rechaza.
+- **CA-059-05 · Perm** — **Dado que** el usuario no es PAD ni ADM, **cuando** intenta editar una ficha (UI o API), **entonces** se deniega.
+- **CA-059-06 · Neg** — **Dado que** se intenta borrar un campo mínimo, **cuando** se guarda, **entonces** se rechaza.
+
+### SIGE-US-060 — Desactivar y reactivar a un docente
+- **CA-060-01 · Feliz** — **Dado que** un docente está `ACTIVO`, **cuando** un PAD/ADM lo desactiva con motivo, **entonces** pasa a `INACTIVO` y el cambio queda auditado con usuario, fecha/hora, estatus anterior, nuevo y motivo.
+- **CA-060-02 · Neg** — **Dado que** falta el motivo, **cuando** se intenta desactivar o reactivar, **entonces** se rechaza.
+- **CA-060-03 · Feliz** — **Dado que** un docente pasó a `INACTIVO`, **cuando** corre la verificación de ausencias docentes, **entonces** no se le genera `FALTÓ`.
+- **CA-060-04 · Neg** — **Dado que** un docente `INACTIVO` tiene QR vigente, **cuando** el PAD escanea su QR, **entonces** se rechaza el registro y el QR no aparece como revocado.
+- **CA-060-05 · Feliz** — **Dado que** un docente está `INACTIVO`, **cuando** un PAD/ADM consulta su historial, **entonces** ve todos sus registros anteriores y su programación suspendida.
+- **CA-060-06 · Perm** — **Dado que** el actor es PAD u otro rol distinto de ADM, **cuando** intenta reactivar a un docente (UI o API), **entonces** se rechaza.
+- **CA-060-07 · Feliz** — **Dado que** un ADM reactiva a un docente con motivo, **cuando** confirma, **entonces** pasa a `ACTIVO`, conserva su QR vigente y queda un evento de reactivación distinto del alta original.
+- **CA-060-08 · Alt** — **Dado que** el docente tiene una cuenta vinculada activa, **cuando** se desactiva, **entonces** SIGE advierte al ADM y la cuenta no se desactiva automáticamente.
+- **CA-060-09 · Neg** — **Dado que** existe un docente, **cuando** alguien intenta eliminarlo físicamente, **entonces** se rechaza.
+ 
+### SIGE-US-061 — Consultar y filtrar docentes
+- **CA-061-01 · Feliz** — **Dado que** un PAD/ADM abre el listado, **cuando** filtra por nombre, identificador o estatus, **entonces** obtiene resultados paginados que cumplen.
+- **CA-061-02 · Feliz** — **Dado que** abre la ficha de un docente, **cuando** la consulta, **entonces** ve datos, estatus, estado del QR, programación vigente y acceso a su historial.
+- **CA-061-03 · Alt** — **Dado que** filtra por `INACTIVO`, **cuando** consulta, **entonces** aparecen los docentes desactivados con su historial íntegro.
+- **CA-061-04 · Perm** — **Dado que** el usuario es PRE, DOC o SL, **cuando** intenta consultar fichas de docentes (menú, URL o API), **entonces** se deniega.
+- **CA-061-05 · UX** — **Dado que** no hay coincidencias, **cuando** se aplica el filtro, **entonces** se muestra un estado vacío; en móvil los resultados se presentan como tarjetas.
+ 
+### SIGE-US-062 — Vincular a un docente con su cuenta de usuario
+- **CA-062-01 · Feliz** — **Dado que** existe un docente `ACTIVO` y una cuenta Docente sin vincular, **cuando** el ADM las vincula, **entonces** el vínculo queda registrado y auditado.
+- **CA-062-02 · Neg** — **Dado que** el docente ya tiene una cuenta vinculada, **cuando** se intenta vincular otra, **entonces** se rechaza (relación 1 a 1).
+- **CA-062-03 · Neg** — **Dado que** la cuenta ya está vinculada a un docente, **cuando** se intenta vincularla a otro, **entonces** se rechaza.
+- **CA-062-04 · Neg** — **Dado que** una cuenta Docente no tiene vínculo, **cuando** intenta registrar un reporte, **entonces** se rechaza.
+- **CA-062-05 · Perm** — **Dado que** el actor no es ADM, **cuando** intenta crear o quitar un vínculo, **entonces** se rechaza.
+- **CA-062-06 · Alt** — **Dado que** el docente vinculado pasa a `INACTIVO`, **cuando** su cuenta intenta registrar un reporte, **entonces** se rechaza.
 
 ---
 
@@ -602,11 +640,11 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 | EP-03 Importación | 5 | 29 |
 | EP-04 QR y credenciales | 5 | 32 |
 | EP-05 Asistencia estudiantil | 11 | 80 |
-| EP-06 Asistencia docente | 7 | 47 |
+| EP-06 Asistencia docente | 11 | 77 |
 | EP-07 Reportes | 7 | 48 |
 | EP-08 Comunicación | 2 | 13 |
 | EP-09 Administración | 3 | 17 |
 | EP-10 Continuidad | 2 | 11 |
-| **Total** | **58** | **377** + 16 transversales |
+| **Total** | **62** | **407** (más los 16 transversales, que no cambian). |
 
 > Los hallazgos del Anexo A del documento de historias quedaron resueltos en RN v2.1 y RF v2.1; ya no hay criterios pendientes de validación por esa causa.
