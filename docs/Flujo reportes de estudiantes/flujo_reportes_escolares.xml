@@ -1,425 +1,458 @@
-<mxfile host="app.diagrams.net">
-  <diagram name="Página-1" id="GgfZEhKQdiJ33Oep3raZ">
-    <mxGraphModel dx="3647" dy="1903" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="t1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 1 — REGISTRO DEL REPORTE POR EL DOCENTE" vertex="1">
-          <mxGeometry height="30" width="620" x="40" y="20" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El docente identifica una situación emocional, académica o conductual que amerita un reporte (RF-REP-01)" vertex="1">
-          <mxGeometry height="110" width="320" x="40" y="70" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El usuario tiene rol Docente y el estudiante está en estatus ACTIVO? (RN-AUT-01, RN-EST-05)" vertex="1">
-          <mxGeometry height="120" width="320" x="40" y="225" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el registro (rol no autorizado o estudiante no ACTIVO) (RN-EST-05)" vertex="1">
-          <mxGeometry height="90" width="300" x="440" y="240" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_2end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;arcSize=20;fontSize=11;" value="FIN — Registro rechazado" vertex="1">
-          <mxGeometry height="55" width="300" x="440" y="110" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Seleccionar tipo de reporte: emocional / académico / conductual (RF-REP-01)" vertex="1">
-          <mxGeometry height="80" width="320" x="40" y="390" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Seleccionar nivel de gravedad y una o más opciones predeterminadas según tipo/gravedad (basadas en el reglamento escolar) (RF-REP-01)" vertex="1">
-          <mxGeometry height="115" width="320" x="40" y="515" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Redactar observación adicional (contador de caracteres visible) (RF-REP-01)" vertex="1">
-          <mxGeometry height="80" width="320" x="40" y="675" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_6" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿La observación tiene entre 50 y 100 caracteres inclusive? (RN-REP-01)" vertex="1">
-          <mxGeometry height="100" width="320" x="300" y="800" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Guardar el reporte con estado = REGISTRADO POR DOCENTE. A partir de este momento, tipo y gravedad quedan bloqueados (no modificables) (RN-REP-02; persistencia RN-TRX-03)" vertex="1">
-          <mxGeometry height="140" width="320" x="40" y="945" as="geometry" />
-        </mxCell>
-        <mxCell id="TagP1_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="P1 → (desde SECCIÓN 3: corrección de un reporte rechazado, referenciado al original)" vertex="1">
-          <mxGeometry height="90" width="320" x="430" y="615" as="geometry" />
-        </mxCell>
-        <mxCell id="R1_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Reporte registrado; disponible para revisión del Prefecto" vertex="1">
-          <mxGeometry height="85" width="320" x="40" y="1265" as="geometry" />
-        </mxCell>
-        <mxCell id="TagP_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ P Continúa en SECCIÓN 2 (Revisión del Prefecto)" vertex="1">
-          <mxGeometry height="85" width="320" x="40" y="1395" as="geometry" />
-        </mxCell>
-        <mxCell id="t2" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 2 — REVISIÓN Y CANALIZACIÓN POR EL PREFECTO" vertex="1">
-          <mxGeometry height="30" width="620" x="860" y="20" as="geometry" />
-        </mxCell>
-        <mxCell id="TagP_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="P → (desde SECCIÓN 1: reporte recién registrado)" vertex="1">
-          <mxGeometry height="80" width="320" x="860" y="70" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El reporte llega a la bandeja del Prefecto (RF-REP-02, RF-REP-03)" vertex="1">
-          <mxGeometry height="90" width="320" x="860" y="195" as="geometry" />
-        </mxCell>
-        <mxCell id="TagR_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="R → (desde SECCIÓN 3: Personal administrativo devuelve el reporte para nueva valoración)" vertex="1">
-          <mxGeometry height="100" width="300" x="450" y="440" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El Prefecto aprueba el reporte para canalizarlo? (RN-REP-03)" vertex="1">
-          <mxGeometry height="110" width="320" x="860" y="330" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el reporte; capturar motivo obligatorio (RN-REP-03)" vertex="1">
-          <mxGeometry height="85" width="300" x="1270" y="390" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_2b" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Marcar el reporte como RECHAZADO; notificar al docente autor (RF-REP-04)" vertex="1">
-          <mxGeometry height="90" width="300" x="1270" y="240" as="geometry" />
-        </mxCell>
-        <mxCell id="TagN_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ N Continúa en SECCIÓN 5 (Corrección mediante reporte nuevo)" vertex="1">
-          <mxGeometry height="85" width="300" x="1270" y="82.5" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como REVISADO POR PREFECTO (RF-REP-04)" vertex="1">
-          <mxGeometry height="75" width="320" x="860" y="485" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Canalizar el reporte hacia Personal administrativo (acción explícita de canalización) (RF-REP-02)" vertex="1">
-          <mxGeometry height="95" width="320" x="860" y="605" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como CANALIZADO (RF-REP-04)" vertex="1">
-          <mxGeometry height="65" width="320" x="860" y="745" as="geometry" />
-        </mxCell>
-        <mxCell id="R2_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Reporte canalizado; disponible para revisión de Personal administrativo" vertex="1">
-          <mxGeometry height="95" width="320" x="860" y="855" as="geometry" />
-        </mxCell>
-        <mxCell id="TagQ_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ Q Continúa en SECCIÓN 4 (Revisión de Personal administrativo)" vertex="1">
-          <mxGeometry height="90" width="320" x="860" y="995" as="geometry" />
-        </mxCell>
-        <mxCell id="t3" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 3 — CORRECCIÓN MEDIANTE REPORTE NUEVO REFERENCIADO (tras rechazo del Prefecto)" vertex="1">
-          <mxGeometry height="30" width="620" x="1280" y="560" as="geometry" />
-        </mxCell>
-        <mxCell id="TagN_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="N → (desde SECCIÓN 2: reporte rechazado por el Prefecto)" vertex="1">
-          <mxGeometry height="85" width="320" x="1280" y="610" as="geometry" />
-        </mxCell>
-        <mxCell id="R3a_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El docente recibe la notificación de rechazo con el motivo registrado" vertex="1">
-          <mxGeometry height="95" width="320" x="1280" y="740" as="geometry" />
-        </mxCell>
-        <mxCell id="R3a_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El docente decide corregir y volver a enviar el reporte?" vertex="1">
-          <mxGeometry height="100" width="320" x="1280" y="880" as="geometry" />
-        </mxCell>
-        <mxCell id="R3a_2a" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;arcSize=20;fontSize=11;" value="FIN El reporte original permanece RECHAZADO; no se genera un nuevo reporte" vertex="1">
-          <mxGeometry height="90" width="320" x="1280" y="1025" as="geometry" />
-        </mxCell>
-        <mxCell id="R3a_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Registrar un reporte NUEVO, referenciado explícitamente al reporte original rechazado. El reporte original permanece sin modificación (archivado) (RN-REP-02, RN-TRX-03)" vertex="1">
-          <mxGeometry height="140" width="320" x="1280" y="1160" as="geometry" />
-        </mxCell>
-        <mxCell id="TagP1_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ P1 Continúa en SECCIÓN 1 (nueva clasificación tipo/ gravedad/observación)" vertex="1">
-          <mxGeometry height="90" width="320" x="1280" y="1345" as="geometry" />
-        </mxCell>
-        <mxCell id="t4" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 4 — REVISIÓN Y AUTORIZACIÓN POR PERSONAL ADMINISTRATIVO" vertex="1">
-          <mxGeometry height="30" width="660" x="2380" y="20" as="geometry" />
-        </mxCell>
-        <mxCell id="TagQ_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="Q → (desde SECCIÓN 2: reporte canalizado por el Prefecto)" vertex="1">
-          <mxGeometry height="85" width="320" x="2380" y="70" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El reporte llega a la bandeja de Personal administrativo (RF-REP-02, RF-REP-03)" vertex="1">
-          <mxGeometry height="100" width="320" x="2380" y="200" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿Personal administrativo aprueba el reporte? (RN-REP-03)" vertex="1">
-          <mxGeometry height="100" width="320" x="2380" y="345" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el reporte; capturar motivo obligatorio (RN-REP-03)" vertex="1">
-          <mxGeometry height="85" width="320" x="2760" y="352.5" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_2b" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Marcar el reporte como RECHAZADO; regresa a revisión del Prefecto [interpretación operativa de &quot;etapa anterior&quot; en RN-REP-03]" vertex="1">
-          <mxGeometry height="115" width="320" x="2760" y="500" as="geometry" />
-        </mxCell>
-        <mxCell id="TagR_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ R Continúa en SECCIÓN 2 (nueva valoración del Prefecto)" vertex="1">
-          <mxGeometry height="90" width="320" x="2760" y="705" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como REVISADO POR ADMINISTRATIVO (RF-REP-04)" vertex="1">
-          <mxGeometry height="80" width="320" x="2380" y="490" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_4" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El caso requiere comunicación a la familia? (RN-REP-04) [el criterio de decisión no está detallado en las reglas de origen; queda a juicio de Personal administrativo]" vertex="1">
-          <mxGeometry height="155" width="320" x="2380" y="615" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Registrar el motivo por el cual no se requiere comunicar a la familia" vertex="1">
-          <mxGeometry height="85" width="320" x="1940" y="650" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Marcar el reporte como RESUELTO (sin comunicación a familia) [estado &quot;resuelto&quot; inferido de RF-REP-04, sin criterio explícito en las reglas de origen]" vertex="1">
-          <mxGeometry height="115" width="320" x="1940" y="830" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_7end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Caso resuelto internamente" vertex="1">
-          <mxGeometry height="70" width="320" x="1940" y="1015" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Autorizar la comunicación a la familia y verificar que exista un contacto familiar válido en el expediente (RN-REP-04, RN-COM-01)" vertex="1">
-          <mxGeometry height="115" width="320" x="2380" y="815" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_5a" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿Existe un contacto familiar válido registrado? (RN-COM-01)" vertex="1">
-          <mxGeometry height="100" width="320" x="2380" y="975" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_5a1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el envío: el reporte queda AUTORIZADO pero pendiente de un contacto válido en el expediente (RN-COM-01)" vertex="1">
-          <mxGeometry height="110" width="320" x="2760" y="970" as="geometry" />
-        </mxCell>
-        <mxCell id="R4_5a1end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;arcSize=20;fontSize=11;" value="FIN — Envío pendiente de contacto válido" vertex="1">
-          <mxGeometry height="65" width="320" x="2760" y="1170" as="geometry" />
-        </mxCell>
-        <mxCell id="TagS_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ S Continúa en SECCIÓN 5 (Comunicación a la familia)" vertex="1">
-          <mxGeometry height="85" width="320" x="2380" y="1120" as="geometry" />
-        </mxCell>
-        <mxCell id="t5" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 5 — COMUNICACIÓN A LA FAMILIA POR CORREO ELECTRÓNICO" vertex="1">
-          <mxGeometry height="30" width="620" x="3140" y="20" as="geometry" />
-        </mxCell>
-        <mxCell id="TagS_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="S → (desde SECCIÓN 4: comunicación autorizada, contacto válido confirmado)" vertex="1">
-          <mxGeometry height="90" width="320" x="3140" y="70" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO Preparar la comunicación por correo electrónico con la información y reportes previamente autorizados (RF-COM-01)" vertex="1">
-          <mxGeometry height="125" width="320" x="3140" y="205" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Limitar el contenido a la información estrictamente autorizada; nunca adjuntar el expediente completo del estudiante (RN-COM-02, RF-COM-03)" vertex="1">
-          <mxGeometry height="115" width="320" x="3140" y="375" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Enviar el correo electrónico al contacto familiar registrado (RF-COM-01)" vertex="1">
-          <mxGeometry height="80" width="320" x="3140" y="535" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Registrar el estado del envío: PENDIENTE / ENVIADO / FALLIDO (no garantiza confirmación de lectura) (RN-COM-03, RF-COM-02)" vertex="1">
-          <mxGeometry height="115" width="320" x="3140" y="660" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_5" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El envío fue exitoso?" vertex="1">
-          <mxGeometry height="80" width="320" x="3140" y="820" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_5a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Conservar estado = FALLIDO; el envío queda disponible para reintento manual (RN-COM-03)" vertex="1">
-          <mxGeometry height="100" width="300" x="3520" y="920" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_5aend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;arcSize=20;fontSize=11;" value="FIN — Envío fallido, pendiente de reintento" vertex="1">
-          <mxGeometry height="65" width="300" x="3520" y="1160" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como COMUNICADO A FAMILIA (RF-REP-04)" vertex="1">
-          <mxGeometry height="70" width="320" x="3140" y="945" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Marcar el reporte como RESUELTO" vertex="1">
-          <mxGeometry height="65" width="320" x="3140" y="1060" as="geometry" />
-        </mxCell>
-        <mxCell id="R5_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Ciclo del reporte completado y expediente actualizado" vertex="1">
-          <mxGeometry height="85" width="320" x="3140" y="1170" as="geometry" />
-        </mxCell>
-        <mxCell id="t6" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 6 — CONSULTA Y BANDEJA DE REPORTES (transversal, cualquier momento)" vertex="1">
-          <mxGeometry height="30" width="640" x="4130" y="60" as="geometry" />
-        </mxCell>
-        <mxCell id="R6_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO Un usuario con rol Docente, Prefecto, Personal administrativo o Administrador consulta el estado de uno o más reportes (RF-REP-03)" vertex="1">
-          <mxGeometry height="130" width="320" x="4130" y="110" as="geometry" />
-        </mxCell>
-        <mxCell id="1dqNazW2meC042gg3IwN-4" edge="1" parent="1" source="R6_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="R6_2a">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="1dqNazW2meC042gg3IwN-5" connectable="0" parent="1dqNazW2meC042gg3IwN-4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;Docente&lt;/b&gt;" vertex="1">
-          <mxGeometry relative="1" x="-0.4558" y="1" as="geometry">
-            <mxPoint y="-16" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="R6_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿Cuál es el rol del usuario?" vertex="1">
-          <mxGeometry height="90" width="320" x="4130" y="320" as="geometry" />
-        </mxCell>
-        <mxCell id="1dqNazW2meC042gg3IwN-6" edge="1" parent="1" source="R6_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;libavoidRouting=1;" target="R6_3">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="3870" y="805" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="R6_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Docente: mostrar únicamente los reportes registrados por ese mismo docente (RN-REP-05)" vertex="1">
-          <mxGeometry height="95" width="320" x="3710" y="460" as="geometry" />
-        </mxCell>
-        <mxCell id="R6_2b" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Prefecto / Personal administrativo / Administrador: mostrar bandeja completa, filtrable por tipo, gravedad, grupo, estudiante y estado (RF-REP-03, RN-REP-05)" vertex="1">
-          <mxGeometry height="130" width="320" x="4680" y="477.5" as="geometry" />
-        </mxCell>
-        <mxCell id="R6_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Aplicar el filtrado de escritura: ninguna acción de canalización o autorización puede ejecutarse desde un rol sin permiso para ello, aunque el reporte sea visible (RN-AUT-02)" vertex="1">
-          <mxGeometry height="140" width="320" x="4130" y="735" as="geometry" />
-        </mxCell>
-        <mxCell id="R6_4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Consulta entregada según los permisos del rol" vertex="1">
-          <mxGeometry height="80" width="320" x="4130" y="920" as="geometry" />
-        </mxCell>
-        <mxCell id="noteRules1" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;fontSize=11;" value="REGLAS CLAVE — REPORTES ESCOLARES (REP)  • RF-REP-01/RN-REP-01: tipo, gravedad, opciones   predeterminadas y observación de 50-100   caracteres. • RN-REP-02: tipo y gravedad se bloquean al enviarse   al Prefecto; corregirlos exige un reporte nuevo   referenciado al original. • RN-REP-03: el flujo Registrado → Revisado(Prefecto)   → Canalizado → Revisado(Administrativo) →   Comunicado no admite saltos ni retrocesos, salvo   rechazo explícito con motivo obligatorio. • RN-REP-04: solo Personal administrativo autoriza   comunicar a la familia; nunca directamente desde   Docente o Prefecto. • RN-REP-05: el Docente solo consulta sus propios   reportes; Administrador y Personal administrativo   ven todos. • RN-REP-06: cada cambio de etapa genera una   entrada de trazabilidad automática." vertex="1">
-          <mxGeometry height="320" width="430" x="520" y="1480" as="geometry" />
-        </mxCell>
-        <mxCell id="noteRules2" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;fontSize=11;" value="REGLAS CLAVE — COMUNICACIÓN CON FAMILIARES (COM)  • RN-COM-01: solo se envía a un contacto marcado   como válido en el expediente del estudiante. • RN-COM-02/RF-COM-03: el contenido enviado se   limita a lo explícitamente autorizado; nunca se   adjunta el expediente completo (minimización de   datos de menores, LFPDPPP). • RN-COM-03/RF-COM-02: todo intento de envío   registra estado (PENDIENTE/ENVIADO/FALLIDO);   la confirmación de lectura nunca puede   garantizarse. • RF-REP-05/RN-MOV-01: el registro desde app móvil   sigue exactamente las mismas reglas, permisos y   datos que la plataforma web, sin importar en qué   etapa del flujo se ejecute." vertex="1">
-          <mxGeometry height="280" width="420" x="980" y="1480" as="geometry" />
-        </mxCell>
-        <mxCell id="noteAudit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;fontSize=11;" value="TRAZABILIDAD (compartida con el resto de SIGE)  • Cada reporte conserva su historial completo de   estados (registrado, revisado, canalizado,   rechazado, comunicado, resuelto) con usuario y   fecha/hora de cada transición (RF-REP-04). • Ningún reporte se elimina físicamente; un rechazo   archiva el reporte original y exige uno nuevo   referenciado, nunca lo sobreescribe   (RN-REP-02, RN-TRX-03). • El historial es consultable de forma diferenciada   según el rol del usuario (RF-REP-04, RN-AUT-02)." vertex="1">
-          <mxGeometry height="220" width="420" x="1440" y="1480" as="geometry" />
-        </mxCell>
-        <mxCell id="noteMethod" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;fontSize=11;" value="NOTAS METODOLÓGICAS Y SUPUESTOS EXPLÍCITOS  • Los conectores ovalados con la misma letra   (P, P1, Q, N, R, S) indican continuidad del flujo   entre secciones distantes; no existe una flecha   física entre ellos, para evitar líneas que crucen   todo el lienzo. • RN-REP-03 dice que un rechazo regresa el reporte   &quot;a una etapa anterior&quot;, sin precisar cuál cuando   el rechazo ocurre en la revisión de Personal   administrativo. Se modeló como retorno a la   revisión del Prefecto (la etapa inmediatamente   anterior); conviene ratificarlo con el equipo. • El estado RESUELTO (RF-REP-04) no tiene un   criterio explícito de activación en las reglas de   origen; se modeló como posible tanto tras la   comunicación a familia como cuando Personal   administrativo determina que el caso no la   requiere. Conviene confirmar este criterio." vertex="1">
-          <mxGeometry height="320" width="460" x="1900" y="1480" as="geometry" />
-        </mxCell>
-        <mxCell id="e1" edge="1" parent="1" source="R1_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_2" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e2" edge="1" parent="1" source="R1_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_2a" value="No">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e3" edge="1" parent="1" source="R1_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_2end" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e4" edge="1" parent="1" source="R1_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_3" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e5" edge="1" parent="1" source="R1_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_4" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e6" edge="1" parent="1" source="R1_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_5" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e7" edge="1" parent="1" source="R1_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_6" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e8" edge="1" parent="1" source="R1_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#d79b00;fontColor=#d79b00;fontSize=11;" target="R1_5" value="No, corregir redacción">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e9" edge="1" parent="1" source="R1_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_7" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e10" edge="1" parent="1" source="TagP1_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;libavoidRouting=1;" target="R1_3" value="continúa aquí (nueva clasificación)">
-          <mxGeometry relative="1" x="0.1111" y="-20" as="geometry">
-            <mxPoint as="offset" />
-            <Array as="points">
-              <mxPoint x="395" y="660" />
-              <mxPoint x="395" y="430" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="e11" edge="1" parent="1" source="R1_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_8" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e12" edge="1" parent="1" source="R1_8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagP_out" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e13" edge="1" parent="1" source="TagP_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_1" value="continúa aquí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e14" edge="1" parent="1" source="R2_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e15" edge="1" parent="1" source="TagR_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2" value="continúa aquí (nueva valoración)">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e16" edge="1" parent="1" source="R2_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2a" value="No">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e17" edge="1" parent="1" source="R2_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2b" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e18" edge="1" parent="1" source="R2_2b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagN_out" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e19" edge="1" parent="1" source="R2_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_3" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e20" edge="1" parent="1" source="R2_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_4" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e21" edge="1" parent="1" source="R2_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_5" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e22" edge="1" parent="1" source="R2_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_6" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e23" edge="1" parent="1" source="R2_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagQ_out" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e24" edge="1" parent="1" source="TagN_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_1" value="continúa aquí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e25" edge="1" parent="1" source="R3a_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_2" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e26" edge="1" parent="1" source="R3a_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_2a" value="No">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e27" edge="1" parent="1" source="R3a_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_3" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e28" edge="1" parent="1" source="R3a_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagP1_out" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e29" edge="1" parent="1" source="TagQ_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_1" value="continúa aquí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e30" edge="1" parent="1" source="R4_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_2" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e31" edge="1" parent="1" source="R4_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_2a" value="No">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e32" edge="1" parent="1" source="R4_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_2b" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e33" edge="1" parent="1" source="R4_2b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagR_out" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e34" edge="1" parent="1" source="R4_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_3" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e35" edge="1" parent="1" source="R4_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_4" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e36" edge="1" parent="1" source="R4_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_6" value="No">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e37" edge="1" parent="1" source="R4_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_7" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e38" edge="1" parent="1" source="R4_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_7end" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e39" edge="1" parent="1" source="R4_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e40" edge="1" parent="1" source="R4_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5a" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e41" edge="1" parent="1" source="R4_5a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5a1" value="No">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e42" edge="1" parent="1" source="R4_5a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5a1end" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e43" edge="1" parent="1" source="R4_5a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagS_out" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e44" edge="1" parent="1" source="TagS_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_1" value="continúa aquí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e45" edge="1" parent="1" source="R5_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_2" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e46" edge="1" parent="1" source="R5_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_3" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e47" edge="1" parent="1" source="R5_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_4" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e48" edge="1" parent="1" source="R5_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_5" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e49" edge="1" parent="1" source="R5_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_5a" value="No">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e50" edge="1" parent="1" source="R5_5a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_5aend" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e51" edge="1" parent="1" source="R5_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_6" value="Sí">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e52" edge="1" parent="1" source="R5_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_7" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e53" edge="1" parent="1" source="R5_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_8" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e54" edge="1" parent="1" source="R6_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R6_2" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e56" edge="1" parent="1" source="R6_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R6_2b" value="Prefecto / Pers. administrativo / Administrador">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e59" edge="1" parent="1" source="R6_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R6_4" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="1dqNazW2meC042gg3IwN-7" edge="1" parent="1" source="R6_2b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.997;entryY=0.555;entryDx=0;entryDy=0;entryPerimeter=0;libavoidRouting=1;" target="R6_3">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="4840" y="813" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>
+<mxGraphModel dx="3647" dy="1903" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="t1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 1 — REGISTRO DEL REPORTE POR EL DOCENTE" vertex="1">
+      <mxGeometry height="30" width="620" x="40" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El docente identifica una situación emocional, académica o conductual que amerita un reporte (RF-REP-01)" vertex="1">
+      <mxGeometry height="110" width="320" x="40" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El usuario tiene rol Docente vinculado a un docente ACTIVO (RN-AST-30), el estudiante está ACTIVO y pertenece a un grupo asignado al docente? (RN-AUT-01, RN-EST-05, RN-REP-09)" vertex="1">
+      <mxGeometry height="160" width="320" x="40" y="225" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el registro (rol no autorizado, docente sin vínculo ACTIVO, estudiante no ACTIVO, o grupo no asignado al docente) (RN-EST-05, RN-AST-30, RN-REP-09)" vertex="1">
+      <mxGeometry height="130" width="320" x="440" y="240" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_2end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;arcSize=20;fontSize=11;" value="FIN — Registro rechazado" vertex="1">
+      <mxGeometry height="55" width="300" x="440" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Seleccionar tipo de reporte: emocional / académico / conductual (RF-REP-01)" vertex="1">
+      <mxGeometry height="80" width="320" x="40" y="390" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Seleccionar nivel de gravedad y una o más opciones predeterminadas según tipo/gravedad (basadas en el reglamento escolar) (RF-REP-01)" vertex="1">
+      <mxGeometry height="115" width="320" x="40" y="515" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Redactar observación adicional (contador de caracteres visible) (RF-REP-01)" vertex="1">
+      <mxGeometry height="80" width="320" x="40" y="675" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_6" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿La observación tiene entre 50 y 100 caracteres inclusive? (RN-REP-01)" vertex="1">
+      <mxGeometry height="100" width="320" x="300" y="800" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Guardar el reporte con estado = REGISTRADO POR DOCENTE. A partir de este momento, tipo y gravedad quedan bloqueados (no modificables) (RN-REP-02; persistencia RN-TRX-03)" vertex="1">
+      <mxGeometry height="140" width="320" x="40" y="945" as="geometry" />
+    </mxCell>
+    <mxCell id="TagP1_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="P1 → (desde SECCIÓN 3: corrección de un reporte rechazado, referenciado al original)" vertex="1">
+      <mxGeometry height="90" width="320" x="430" y="615" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_7b" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El grupo del estudiante tiene un Prefecto asignado? (RN-REP-09)" vertex="1">
+      <mxGeometry height="100" width="320" x="40" y="1115" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_7c" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Enviar el reporte directamente a la bandeja de Personal administrativo y Administrador; generar alerta de grupo sin Prefecto asignado (RN-REP-09)" vertex="1">
+      <mxGeometry height="100" width="300" x="440" y="1115" as="geometry" />
+    </mxCell>
+    <mxCell id="TagT_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ T Continúa en SECCIÓN 4 (bandeja de Personal administrativo, sin Prefecto asignado)" vertex="1">
+      <mxGeometry height="90" width="300" x="440" y="1230" as="geometry" />
+    </mxCell>
+    <mxCell id="R1_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Reporte registrado; disponible para revisión de los Prefectos asignados al grupo del estudiante (RN-REP-09)" vertex="1">
+      <mxGeometry height="85" width="320" x="40" y="1265" as="geometry" />
+    </mxCell>
+    <mxCell id="TagP_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ P Continúa en SECCIÓN 2 (Revisión del Prefecto)" vertex="1">
+      <mxGeometry height="85" width="320" x="40" y="1395" as="geometry" />
+    </mxCell>
+    <mxCell id="t2" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 2 — REVISIÓN Y CANALIZACIÓN POR EL PREFECTO" vertex="1">
+      <mxGeometry height="30" width="620" x="860" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="TagP_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="P → (desde SECCIÓN 1: reporte recién registrado)" vertex="1">
+      <mxGeometry height="80" width="320" x="860" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El reporte llega a la bandeja del Prefecto (RF-REP-02, RF-REP-03)" vertex="1">
+      <mxGeometry height="90" width="320" x="860" y="195" as="geometry" />
+    </mxCell>
+    <mxCell id="TagR_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="R → (desde SECCIÓN 3: Personal administrativo devuelve el reporte para nueva valoración)" vertex="1">
+      <mxGeometry height="100" width="300" x="450" y="440" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El Prefecto aprueba el reporte para canalizarlo? (RN-REP-03)" vertex="1">
+      <mxGeometry height="110" width="320" x="860" y="330" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el reporte; capturar motivo obligatorio (RN-REP-03)" vertex="1">
+      <mxGeometry height="85" width="300" x="1270" y="390" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_2b" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Marcar el reporte como RECHAZADO (fin del flujo del reporte original); notificar al docente autor para que registre uno nuevo referenciado (RF-REP-04, RN-REP-08)" vertex="1">
+      <mxGeometry height="105" width="300" x="1270" y="235" as="geometry" />
+    </mxCell>
+    <mxCell id="TagN_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ N Continúa en SECCIÓN 5 (Corrección mediante reporte nuevo)" vertex="1">
+      <mxGeometry height="85" width="300" x="1270" y="82.5" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como REVISADO POR PREFECTO (RF-REP-04)" vertex="1">
+      <mxGeometry height="75" width="320" x="860" y="485" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Canalizar el reporte hacia Personal administrativo (acción explícita de canalización) (RF-REP-02)" vertex="1">
+      <mxGeometry height="95" width="320" x="860" y="605" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como CANALIZADO (RF-REP-04)" vertex="1">
+      <mxGeometry height="65" width="320" x="860" y="745" as="geometry" />
+    </mxCell>
+    <mxCell id="R2_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Reporte canalizado; disponible para revisión de Personal administrativo" vertex="1">
+      <mxGeometry height="95" width="320" x="860" y="855" as="geometry" />
+    </mxCell>
+    <mxCell id="TagQ_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ Q Continúa en SECCIÓN 4 (Revisión de Personal administrativo)" vertex="1">
+      <mxGeometry height="90" width="320" x="860" y="995" as="geometry" />
+    </mxCell>
+    <mxCell id="t3" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 3 — CORRECCIÓN MEDIANTE REPORTE NUEVO REFERENCIADO (tras rechazo del Prefecto)" vertex="1">
+      <mxGeometry height="30" width="620" x="1280" y="560" as="geometry" />
+    </mxCell>
+    <mxCell id="TagN_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="N → (desde SECCIÓN 2: reporte rechazado por el Prefecto)" vertex="1">
+      <mxGeometry height="85" width="320" x="1280" y="610" as="geometry" />
+    </mxCell>
+    <mxCell id="R3a_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El docente recibe la notificación de rechazo con el motivo registrado" vertex="1">
+      <mxGeometry height="95" width="320" x="1280" y="740" as="geometry" />
+    </mxCell>
+    <mxCell id="R3a_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El docente decide corregir y volver a enviar el reporte?" vertex="1">
+      <mxGeometry height="100" width="320" x="1280" y="880" as="geometry" />
+    </mxCell>
+    <mxCell id="R3a_2a" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;arcSize=20;fontSize=11;" value="FIN El reporte original permanece RECHAZADO; no se genera un nuevo reporte" vertex="1">
+      <mxGeometry height="90" width="320" x="1280" y="1025" as="geometry" />
+    </mxCell>
+    <mxCell id="R3a_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Registrar un reporte NUEVO, referenciado explícitamente al reporte original rechazado. El reporte original permanece sin modificación (archivado) (RN-REP-02, RN-REP-08, RN-TRX-03)" vertex="1">
+      <mxGeometry height="140" width="320" x="1280" y="1160" as="geometry" />
+    </mxCell>
+    <mxCell id="TagP1_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ P1 Continúa en SECCIÓN 1 (nueva clasificación tipo/ gravedad/observación)" vertex="1">
+      <mxGeometry height="90" width="320" x="1280" y="1345" as="geometry" />
+    </mxCell>
+    <mxCell id="t4" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 4 — REVISIÓN Y AUTORIZACIÓN POR PERSONAL ADMINISTRATIVO" vertex="1">
+      <mxGeometry height="30" width="660" x="2380" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="TagQ_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="Q → (desde SECCIÓN 2: reporte canalizado por el Prefecto)" vertex="1">
+      <mxGeometry height="85" width="320" x="2380" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="TagT_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="T → (desde SECCIÓN 1: grupo del estudiante sin Prefecto asignado)" vertex="1">
+      <mxGeometry height="90" width="300" x="1990" y="195" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO El reporte llega a la bandeja de Personal administrativo (RF-REP-02, RF-REP-03)" vertex="1">
+      <mxGeometry height="100" width="320" x="2380" y="200" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿Personal administrativo aprueba el reporte? (RN-REP-03)" vertex="1">
+      <mxGeometry height="100" width="320" x="2380" y="345" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el reporte; capturar motivo obligatorio (RN-REP-03)" vertex="1">
+      <mxGeometry height="85" width="320" x="2760" y="352.5" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_2b" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Marcar el reporte como RECHAZADO; regresa a revisión del Prefecto (RN-REP-03)" vertex="1">
+      <mxGeometry height="95" width="320" x="2760" y="500" as="geometry" />
+    </mxCell>
+    <mxCell id="TagR_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ R Continúa en SECCIÓN 2 (nueva valoración del Prefecto)" vertex="1">
+      <mxGeometry height="90" width="320" x="2760" y="705" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como REVISADO POR ADMINISTRATIVO (RF-REP-04)" vertex="1">
+      <mxGeometry height="80" width="320" x="2380" y="490" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_4" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El caso requiere comunicación a la familia? A juicio de Personal administrativo (RN-REP-04)" vertex="1">
+      <mxGeometry height="110" width="320" x="2380" y="615" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Registrar el motivo por el cual no se requiere comunicar a la familia" vertex="1">
+      <mxGeometry height="85" width="320" x="1940" y="650" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Marcar el reporte como RESUELTO (sin comunicación a familia) (RN-REP-07)" vertex="1">
+      <mxGeometry height="90" width="320" x="1940" y="830" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_7end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Caso resuelto internamente" vertex="1">
+      <mxGeometry height="70" width="320" x="1940" y="1015" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Autorizar la comunicación a la familia y verificar que exista un contacto familiar válido en el expediente (RN-REP-04, RN-COM-01)" vertex="1">
+      <mxGeometry height="115" width="320" x="2380" y="815" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_5a" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿Existe un contacto familiar válido registrado? (RN-COM-01)" vertex="1">
+      <mxGeometry height="100" width="320" x="2380" y="975" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_5a1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Rechazar el envío: el reporte queda AUTORIZADO pero pendiente de un contacto válido en el expediente (RN-REP-07, RN-COM-01)" vertex="1">
+      <mxGeometry height="110" width="320" x="2760" y="970" as="geometry" />
+    </mxCell>
+    <mxCell id="R4_5a1end" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;arcSize=20;fontSize=11;" value="FIN — Envío pendiente de contacto válido" vertex="1">
+      <mxGeometry height="65" width="320" x="2760" y="1170" as="geometry" />
+    </mxCell>
+    <mxCell id="TagS_out" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="→ S Continúa en SECCIÓN 5 (Comunicación a la familia)" vertex="1">
+      <mxGeometry height="85" width="320" x="2380" y="1120" as="geometry" />
+    </mxCell>
+    <mxCell id="t5" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 5 — COMUNICACIÓN A LA FAMILIA POR CORREO ELECTRÓNICO" vertex="1">
+      <mxGeometry height="30" width="620" x="3140" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="TagS_in" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" value="S → (desde SECCIÓN 4: comunicación autorizada, contacto válido confirmado)" vertex="1">
+      <mxGeometry height="90" width="320" x="3140" y="70" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO Preparar la comunicación por correo electrónico con la información y reportes previamente autorizados (RF-COM-01)" vertex="1">
+      <mxGeometry height="125" width="320" x="3140" y="205" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Limitar el contenido a la información estrictamente autorizada; nunca adjuntar el expediente completo del estudiante (RN-COM-02, RF-COM-03)" vertex="1">
+      <mxGeometry height="115" width="320" x="3140" y="375" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Enviar el correo electrónico al contacto familiar registrado (RF-COM-01)" vertex="1">
+      <mxGeometry height="80" width="320" x="3140" y="535" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Registrar el estado del envío: PENDIENTE / ENVIADO / FALLIDO (no garantiza confirmación de lectura) (RN-COM-03, RF-COM-02)" vertex="1">
+      <mxGeometry height="115" width="320" x="3140" y="660" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_5" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿El envío fue exitoso?" vertex="1">
+      <mxGeometry height="80" width="320" x="3140" y="820" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_5a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="Conservar estado = FALLIDO; el envío queda disponible para reintento manual (RN-COM-03)" vertex="1">
+      <mxGeometry height="100" width="300" x="3520" y="920" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_5aend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;arcSize=20;fontSize=11;" value="FIN — Envío fallido, pendiente de reintento" vertex="1">
+      <mxGeometry height="65" width="300" x="3520" y="1160" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Marcar el reporte como COMUNICADO A FAMILIA (RF-REP-04)" vertex="1">
+      <mxGeometry height="70" width="320" x="3140" y="945" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Marcar el reporte como RESUELTO (RN-REP-07)" vertex="1">
+      <mxGeometry height="65" width="320" x="3140" y="1060" as="geometry" />
+    </mxCell>
+    <mxCell id="R5_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Ciclo del reporte completado y expediente actualizado" vertex="1">
+      <mxGeometry height="85" width="320" x="3140" y="1170" as="geometry" />
+    </mxCell>
+    <mxCell id="t6" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=5;fontSize=15;fontColor=#333333;" value="SECCIÓN 6 — CONSULTA Y BANDEJA DE REPORTES (transversal, cualquier momento)" vertex="1">
+      <mxGeometry height="30" width="640" x="4130" y="60" as="geometry" />
+    </mxCell>
+    <mxCell id="R6_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="INICIO Un usuario con rol Docente, Prefecto, Personal administrativo o Administrador consulta el estado de uno o más reportes (RF-REP-03)" vertex="1">
+      <mxGeometry height="130" width="320" x="4130" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="1dqNazW2meC042gg3IwN-4" edge="1" parent="1" source="R6_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="R6_2a">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="1dqNazW2meC042gg3IwN-5" connectable="0" parent="1dqNazW2meC042gg3IwN-4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;Docente&lt;/b&gt;" vertex="1">
+      <mxGeometry relative="1" x="-0.4558" y="1" as="geometry">
+        <mxPoint y="-16" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="R6_2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="¿Cuál es el rol del usuario?" vertex="1">
+      <mxGeometry height="90" width="320" x="4130" y="320" as="geometry" />
+    </mxCell>
+    <mxCell id="1dqNazW2meC042gg3IwN-6" edge="1" parent="1" source="R6_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;libavoidRouting=1;" target="R6_3">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="3870" y="805" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="R6_2a" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Docente: mostrar únicamente los reportes registrados por ese mismo docente (RN-REP-05)" vertex="1">
+      <mxGeometry height="95" width="320" x="3710" y="460" as="geometry" />
+    </mxCell>
+    <mxCell id="R6_2b" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Prefecto: mostrar la bandeja de los reportes de los grupos que tiene asignados, filtrable por tipo, gravedad, grupo, estudiante y estado (RF-REP-03, RN-REP-05, RN-REP-09)" vertex="1">
+      <mxGeometry height="130" width="320" x="4680" y="477.5" as="geometry" />
+    </mxCell>
+    <mxCell id="R6_2c" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Personal administrativo / Administrador: mostrar la bandeja completa (todos los reportes), filtrable por tipo, gravedad, grupo, estudiante y estado (RF-REP-03, RN-REP-05)" vertex="1">
+      <mxGeometry height="130" width="320" x="4680" y="650" as="geometry" />
+    </mxCell>
+    <mxCell id="R6_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Aplicar el filtrado de escritura: ninguna acción de canalización o autorización puede ejecutarse desde un rol sin permiso para ello, aunque el reporte sea visible (RN-AUT-02)" vertex="1">
+      <mxGeometry height="140" width="320" x="4130" y="735" as="geometry" />
+    </mxCell>
+    <mxCell id="R6_4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;arcSize=20;fontSize=11;" value="FIN Consulta entregada según los permisos del rol" vertex="1">
+      <mxGeometry height="80" width="320" x="4130" y="920" as="geometry" />
+    </mxCell>
+    <mxCell id="noteRules1" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;fontSize=11;" value="REGLAS CLAVE — REPORTES ESCOLARES (REP)  • RF-REP-01/RN-REP-01: tipo, gravedad, opciones   predeterminadas y observación de 50-100   caracteres. • RN-REP-02: tipo y gravedad se bloquean al enviarse   al Prefecto; corregirlos exige un reporte nuevo   referenciado al original. • RN-REP-03: el flujo Registrado → Revisado(Prefecto)   → Canalizado → Revisado(Administrativo) →   Comunicado/Resuelto no admite saltos; el rechazo   del Prefecto deja RECHAZADO (fin del original,   RN-REP-08); el rechazo de Personal administrativo   regresa a revisión del Prefecto. • RN-REP-04: solo Personal administrativo autoriza   comunicar a la familia; nunca directamente desde   Docente o Prefecto. • RN-REP-05: el Docente solo consulta sus propios   reportes; el Prefecto, los de sus grupos asignados   (RN-REP-09); Administrador y Personal   administrativo ven todos. • RN-REP-06: cada cambio de etapa genera una   entrada de trazabilidad automática. • RN-REP-09: el docente solo reporta estudiantes de   sus grupos asignados; si el grupo no tiene Prefecto   asignado, el reporte va a Personal administrativo y   Administrador con alerta." vertex="1">
+      <mxGeometry height="400" width="430" x="520" y="1480" as="geometry" />
+    </mxCell>
+    <mxCell id="noteRules2" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;fontSize=11;" value="REGLAS CLAVE — COMUNICACIÓN CON FAMILIARES (COM)  • RN-COM-01: solo se envía a un contacto marcado   como válido en el expediente del estudiante. • RN-COM-02/RF-COM-03: el contenido enviado se   limita a lo explícitamente autorizado; nunca se   adjunta el expediente completo (minimización de   datos de menores, LFPDPPP). • RN-COM-03/RF-COM-02: todo intento de envío   registra estado (PENDIENTE/ENVIADO/FALLIDO);   la confirmación de lectura nunca puede   garantizarse. • RF-REP-05/RN-MOV-01: el registro desde app móvil   sigue exactamente las mismas reglas, permisos y   datos que la plataforma web, sin importar en qué   etapa del flujo se ejecute." vertex="1">
+      <mxGeometry height="280" width="420" x="980" y="1480" as="geometry" />
+    </mxCell>
+    <mxCell id="noteAudit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;fontSize=11;" value="TRAZABILIDAD (compartida con el resto de SIGE)  • Cada reporte conserva su historial completo de   estados (registrado, revisado, canalizado,   rechazado, autorizado, comunicado, resuelto) con   usuario y fecha/hora de cada transición (RF-REP-04,   RN-REP-07). • Ningún reporte se elimina físicamente; un rechazo   archiva el reporte original y exige uno nuevo   referenciado, nunca lo sobreescribe   (RN-REP-02, RN-REP-08, RN-TRX-03). • El historial es consultable de forma diferenciada   según el rol del usuario (RF-REP-04, RN-AUT-02)." vertex="1">
+      <mxGeometry height="250" width="420" x="1440" y="1480" as="geometry" />
+    </mxCell>
+    <mxCell id="noteMethod" parent="1" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;size=16;fontSize=11;" value="NOTAS METODOLÓGICAS  • Los conectores ovalados con la misma letra   (P, P1, Q, T, N, R, S) indican continuidad del flujo   entre secciones distantes del diagrama; no existe una   flecha física entre ellos, para evitar líneas que crucen   todo el lienzo. • El conector T representa el caso en que el grupo   del estudiante no tiene Prefecto asignado: el   reporte se envía directamente a la bandeja de   Personal administrativo y Administrador, con   alerta (RN-REP-09). • El rechazo del Prefecto deja el reporte RECHAZADO   (fin del flujo del original) y exige un reporte nuevo   referenciado (RN-REP-08, Sección 3); el rechazo de   Personal administrativo regresa el reporte a la   revisión del Prefecto (RN-REP-03). • El estado RESUELTO se alcanza tras el envío exitoso   a la familia o cuando Personal administrativo   determina que no se requiere comunicarla   (RN-REP-07)." vertex="1">
+      <mxGeometry height="360" width="460" x="1900" y="1480" as="geometry" />
+    </mxCell>
+    <mxCell id="e1" edge="1" parent="1" source="R1_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_2" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e2" edge="1" parent="1" source="R1_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_2a" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3" edge="1" parent="1" source="R1_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_2end" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e4" edge="1" parent="1" source="R1_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_3" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e5" edge="1" parent="1" source="R1_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_4" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e6" edge="1" parent="1" source="R1_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_5" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e7" edge="1" parent="1" source="R1_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_6" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e8" edge="1" parent="1" source="R1_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#d79b00;fontColor=#d79b00;fontSize=11;" target="R1_5" value="No, corregir redacción">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e9" edge="1" parent="1" source="R1_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_7" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e10" edge="1" parent="1" source="TagP1_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;libavoidRouting=1;" target="R1_3" value="continúa aquí (nueva clasificación)">
+      <mxGeometry relative="1" x="0.1111" y="-20" as="geometry">
+        <mxPoint as="offset" />
+        <Array as="points">
+          <mxPoint x="395" y="660" />
+          <mxPoint x="395" y="430" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e11" edge="1" parent="1" source="R1_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_7b" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e11_si" edge="1" parent="1" source="R1_7b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_8" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e11_no" edge="1" parent="1" source="R1_7b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R1_7c" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e11_t" edge="1" parent="1" source="R1_7c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagT_out" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e12" edge="1" parent="1" source="R1_8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagP_out" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e13" edge="1" parent="1" source="TagP_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_1" value="continúa aquí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e14" edge="1" parent="1" source="R2_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e15" edge="1" parent="1" source="TagR_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2" value="continúa aquí (nueva valoración)">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e16" edge="1" parent="1" source="R2_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2a" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e17" edge="1" parent="1" source="R2_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_2b" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e18" edge="1" parent="1" source="R2_2b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagN_out" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e19" edge="1" parent="1" source="R2_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_3" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e20" edge="1" parent="1" source="R2_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_4" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e21" edge="1" parent="1" source="R2_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_5" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e22" edge="1" parent="1" source="R2_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R2_6" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e23" edge="1" parent="1" source="R2_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagQ_out" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e24" edge="1" parent="1" source="TagN_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_1" value="continúa aquí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e25" edge="1" parent="1" source="R3a_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_2" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e26" edge="1" parent="1" source="R3a_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_2a" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e27" edge="1" parent="1" source="R3a_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R3a_3" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e28" edge="1" parent="1" source="R3a_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagP1_out" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e29" edge="1" parent="1" source="TagQ_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_1" value="continúa aquí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e29_t" edge="1" parent="1" source="TagT_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_1" value="continúa aquí (sin Prefecto)">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e30" edge="1" parent="1" source="R4_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_2" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e31" edge="1" parent="1" source="R4_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_2a" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e32" edge="1" parent="1" source="R4_2a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_2b" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e33" edge="1" parent="1" source="R4_2b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagR_out" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e34" edge="1" parent="1" source="R4_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_3" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e35" edge="1" parent="1" source="R4_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_4" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e36" edge="1" parent="1" source="R4_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_6" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e37" edge="1" parent="1" source="R4_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_7" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e38" edge="1" parent="1" source="R4_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_7end" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e39" edge="1" parent="1" source="R4_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e40" edge="1" parent="1" source="R4_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5a" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e41" edge="1" parent="1" source="R4_5a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5a1" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e42" edge="1" parent="1" source="R4_5a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R4_5a1end" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e43" edge="1" parent="1" source="R4_5a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="TagS_out" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e44" edge="1" parent="1" source="TagS_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_1" value="continúa aquí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e45" edge="1" parent="1" source="R5_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_2" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e46" edge="1" parent="1" source="R5_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_3" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e47" edge="1" parent="1" source="R5_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_4" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e48" edge="1" parent="1" source="R5_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_5" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e49" edge="1" parent="1" source="R5_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_5a" value="No">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e50" edge="1" parent="1" source="R5_5a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_5aend" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e51" edge="1" parent="1" source="R5_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_6" value="Sí">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e52" edge="1" parent="1" source="R5_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_7" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e53" edge="1" parent="1" source="R5_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R5_8" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e54" edge="1" parent="1" source="R6_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R6_2" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e56" edge="1" parent="1" source="R6_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R6_2b" value="Prefecto">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e56b" edge="1" parent="1" source="R6_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R6_2c" value="Personal administrativo / Administrador">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e59" edge="1" parent="1" source="R6_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="R6_4" value="">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="1dqNazW2meC042gg3IwN-7" edge="1" parent="1" source="R6_2b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.997;entryY=0.555;entryDx=0;entryDy=0;entryPerimeter=0;libavoidRouting=1;" target="R6_3">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="4840" y="813" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_r6_2c" edge="1" parent="1" source="R6_2c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.75;entryDx=0;entryDy=0;entryPerimeter=0;libavoidRouting=1;" target="R6_3">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="4900" y="710" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>
