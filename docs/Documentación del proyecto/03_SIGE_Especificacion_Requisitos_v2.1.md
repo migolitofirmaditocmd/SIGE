@@ -80,11 +80,12 @@ Y para los No Funcionales, la idea detrás de cada categoría:
 
 **RF-EST-01 — Expediente digital del estudiante** *(reemplaza y expande RF-02)*
 El sistema DEBE mantener una ficha centralizada y única por estudiante con los siguientes datos:
-> - **Mínimos (obligatorios para guardar):** nombre completo, matrícula, grado, grupo, ciclo escolar, estatus (`ACTIVO`, `BAJA`, `EGRESADO`) y al menos un tutor con contacto válido (RN-EST-03, RN-EST-11).
-> - **Obligatorios diferidos (pueden completarse después; su ausencia genera un registro INCOMPLETO, RN-EST-10):** fecha de nacimiento y fotografía.
-> - **Opcionales (sujetos a justificación de necesidad, RN-TRX-01):** domicilio, sexo y CURP.
-El sistema DEBE mostrar los campos faltantes de un registro incompleto y DEBE documentar, para cada campo recolectado, el módulo que lo requiere. Los campos opcionales que ningún módulo del alcance requiera DEBEN retirarse del modelo de datos.
-- *Criterios de aceptación:* 100 % de estudiantes de prueba con expediente completo y estatus consistente (KPI-07, KPI-09).
+- **Mínimos (obligatorios para guardar):** nombre completo, matrícula, grado, grupo, ciclo escolar, turno, estatus (`ACTIVO`, `BAJA`, `EGRESADO`) y al menos un tutor con contacto válido (RN-EST-03, RN-EST-11).
+- **Obligatorios diferidos:** fecha de nacimiento y fotografía (RN-EST-10).
+- **Opcionales (dirección):** calle, colonia, municipio, estado, código postal, sexo y CURP.
+- **Opcionales (salud, acceso restringido):** tipo de sangre, alergias.
+- **Opcionales (situación administrativa, acceso restringido):** indicador de adeudo de pago, materias pendientes ("debe materias").
+El sistema DEBE aplicar la restricción de acceso de RN-EST-12 a los campos de salud y situación administrativa.
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02 · KPI-07, KPI-09.
 
 **RF-EST-02 — Transiciones de estatus del estudiante**
@@ -92,7 +93,7 @@ El sistema DEBE restringir las transiciones de estatus a un conjunto válido (`A
 - *Prioridad:* Should. **Trazabilidad:** OE-02 · Hito 02 · RN-EST-04, RN-EST-06, RN-EST-09.
 
 **RF-EST-03 — Asociación de familiares/tutores**
-El sistema DEBE permitir asociar uno o más tutores por estudiante, cada uno con nombre, relación, teléfono y correo, y DEBE permitir marcar un tutor como "contacto principal" para efectos de notificación. Un tutor tiene **contacto válido** cuando cuenta con nombre, relación y correo con formato válido (RN-EST-11); el sistema DEBE marcarlo automáticamente y permitir al Personal administrativo o Administrador invalidarlo con motivo. Un estudiante no puede guardarse sin al menos un tutor con contacto válido.
+El sistema DEBE permitir asociar uno o más tutores por estudiante, cada uno con nombre, relación, teléfono y correo, y DEBE permitir marcar un tutor como "contacto principal" para efectos de notificación. Un tutor tiene contacto válido cuando cuenta con nombre, relación y al menos correo o teléfono con formato válido (RN-EST-11); el correo sigue siendo el único canal habilitado para comunicaciones automatizadas (RN-COM-01); el sistema DEBE marcarlo automáticamente y permitir al Personal administrativo o Administrador invalidarlo con motivo. Un estudiante no puede guardarse sin al menos un tutor con contacto válido.
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02.
 
 **RF-EST-04 — Consulta y filtrado de expedientes**
@@ -104,6 +105,10 @@ El sistema DEBE permitir registrar, para cada tutor/familiar asociado a un estud
 > El sistema DEBE advertir al personal autorizado, al consultar el expediente, cuando algún tutor tenga consentimiento `PENDIENTE` o `REVOCADO`, sin bloquear la operación escolar (RN-EST-08), y NO DEBE enviar comunicaciones a un tutor con consentimiento `REVOCADO` (RN-COM-04). El estatus puede documentarse fuera de SIGE (RN-EST-07).
 - *Prioridad:* Must (regulatorio). **Trazabilidad:** OE-02 · Hito 02 · Protección de datos de menores (acta) · KPI-07, KPI-09, KPI-75 (tutores con estatus de consentimiento registrado, 100 %; ver sección 6).
 
+**RF-EST-06 — Datos de salud y situación administrativa**
+El sistema DEBE permitir registrar, de forma opcional, tipo de sangre, alergias, adeudo de pago y materias pendientes por estudiante, y DEBE restringir su consulta conforme a RN-EST-12.
+- *Prioridad:* Should. **Trazabilidad:** OE-02 · Protección de datos de menores (acta, sujeto a P3-A-01) · LFPDPPP.
+
 **RF-IMP-01 — Importación masiva de estudiantes (CSV/XLSX)** *(expande RF-01)*
 El sistema DEBE permitir cargar archivos CSV y XLSX basados estrictamente en un diccionario de datos publicado por el equipo de desarrollo, ejecutando el proceso en modo transaccional por fila (una fila inválida no bloquea a las demás) y emitiendo, al finalizar, un reporte descargable con: total de filas procesadas, filas insertadas, filas con error y el detalle del error por fila (columna y motivo).
 - *Fuera de alcance (heredado del acta):* limpieza o transformación de datos históricos no estructurados — la institución debe entregar los archivos ya conformes al diccionario de datos. Tampoco se contempla la importación masiva de docentes (la matriz de alcance del acta limita la carga masiva a estudiantes); el alta de docentes es individual, por interfaz web.
@@ -111,6 +116,8 @@ El sistema DEBE permitir cargar archivos CSV y XLSX basados estrictamente en un 
 > - Toda importación DEBE pasar por una vista previa (*dry-run*) sin persistencia; solo la confirmación explícita persiste los registros válidos (RN-IMP-04).
 > - Las filas sin datos mínimos se descartan; las filas con datos obligatorios diferidos vacíos se insertan como INCOMPLETO (RN-IMP-06).
 > - Si al confirmar una matrícula ya fue creada por otro proceso, solo esa fila se rechaza (RN-IMP-07).
+> - El grado, grupo, ciclo escolar y turno se seleccionan una sola vez por lote, no van en el archivo (RN-IMP-08).
+> - El diccionario de datos de importación DEBE incluir columnas opcionales para tipo de sangre, alergias, adeudo de pago y materias pendientes, sujetas a la misma restricción de acceso que en RF-EST-06.
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02 · Fuera de alcance §7.
 
 **RF-IMP-02 — Plantilla de importación descargable**

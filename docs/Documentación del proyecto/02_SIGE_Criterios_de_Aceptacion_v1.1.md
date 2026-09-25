@@ -133,6 +133,8 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-008-05 · Neg** — **Dado que** dos altas simultáneas usan la misma matrícula, **cuando** se procesan, **entonces** solo una se persiste y la otra se rechaza por unicidad.
 - **CA-008-06 · Perm** — **Dado que** el usuario es DOC, PRE o SL, **cuando** intenta crear un estudiante (menú, URL o API), **entonces** se deniega.
 - **CA-008-07 · Aud** — **Dado que** el alta se completa, **cuando** se consulta el expediente, **entonces** registra quién y cuándo la realizó.
+- **CA-008-08 · Feliz** — **Dado que** el PAD captura tipo de sangre y alergias, **cuando** un PRE consulta el expediente, **entonces** los ve; **cuando** consulta el adeudo de pago o materias pendientes, **entonces** no los ve. |
+- **CA-008-09 · Perm** — **Dado que** un DOC o SL consulta un expediente, **cuando** se muestra, **entonces** no ve ningún campo de salud ni de situación administrativa. |
 
 ### SIGE-US-009 — Guardar y completar un registro incompleto
 - **CA-009-01 · Alt** — **Dado que** faltan la fecha de nacimiento o la fotografía pero existen nombre, matrícula, grado, grupo, ciclo y un tutor con contacto válido, **cuando** el PAD guarda, **entonces** el registro se guarda como INCOMPLETO, permanece `ACTIVO` y la ficha lista los campos faltantes.
@@ -147,9 +149,11 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-010-01 · Feliz** — **Dado que** un estudiante tiene ficha, **cuando** el PAD agrega un tutor con nombre, relación, teléfono y correo válidos, **entonces** queda asociado al estudiante.
 - **CA-010-02 · Feliz** — **Dado que** hay dos tutores, **cuando** el PAD marca uno como contacto principal, **entonces** solo uno queda como principal.
 - **CA-010-03 · Neg** — **Dado que** el estudiante `ACTIVO` tiene un único tutor válido, **cuando** se intenta eliminarlo o invalidarlo, **entonces** se rechaza.
-- **CA-010-04 · Neg** — **Dado que** el correo tiene formato inválido, **cuando** se guarda, **entonces** se señala el error.
+- **CA-010-04 · Neg** — **Dado que** el correo tiene formato inválido y no hay teléfono capturado, **cuando** se guarda, **entonces** se señala el error (falta al menos un dato de contacto válido).
 - **CA-010-05 · Perm** — **Dado que** el usuario no es PAD/ADM, **cuando** intenta modificar tutores, **entonces** se deniega; los roles sin acceso al expediente tampoco los consultan.
 - **CA-010-06 · Neg** — **Dado que** una comunicación va dirigida a un tutor no marcado como válido, **cuando** se intenta enviar, **entonces** se rechaza (RN-COM-01).
+- **CA-010-07 · Feliz** — **Dado que** un tutor solo tiene teléfono (sin correo), **cuando** se guarda, **entonces** queda marcado como contacto válido.
+- **CA-010-08 · Neg** — **Dado que** un estudiante `ACTIVO` solo tiene un tutor con únicamente teléfono, **cuando** se intenta enviar una comunicación automatizada de un reporte, **entonces** se rechaza por falta de correo (RN-COM-01), aunque el tutor sea "contacto válido".
 
 ### SIGE-US-011 — Consultar y filtrar expedientes
 - **CA-011-01 · Feliz** — **Dado que** un PRE/PAD/ADM abre el listado, **cuando** filtra por nombre, matrícula, grupo, grado o estatus, **entonces** obtiene resultados paginados que cumplen.
@@ -216,6 +220,8 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-018-04 · Neg** — **Dado que** el formato de archivo no es CSV ni XLSX, **cuando** se intenta cargar, **entonces** se rechaza.
 - **CA-018-05 · Neg** — **Dado que** la estructura es inválida, **cuando** se rechaza el archivo, **entonces** no se persiste ningún registro.
 - **CA-018-06 · Perm** — **Dado que** el rol no es PAD/ADM, **cuando** intenta cargar un archivo, **entonces** se deniega (RN-IMP-05).
+- **CA-018-07 · Feliz** — **Dado que** el usuario elige grado, grupo, ciclo y turno antes de cargar el archivo, **cuando** confirma la importación, **entonces** todas las filas válidas quedan asociadas a ese grupo.
+- **CA-018-08 · Neg** — **Dado que** el archivo trae estudiantes que en realidad pertenecen a más de un grupo, **cuando** se procesa bajo un solo grupo seleccionado, **entonces** SIGE no tiene forma de detectarlo (queda como responsabilidad operativa de quien importa dividir el archivo por grupo).
 
 ### SIGE-US-019 — Procesar cada fila de forma independiente
 - **CA-019-01 · Feliz** — **Dado que** el archivo tiene filas válidas e inválidas, **cuando** se procesa, **entonces** las válidas quedan listas para insertar y las inválidas se descartan sin afectar a las demás.

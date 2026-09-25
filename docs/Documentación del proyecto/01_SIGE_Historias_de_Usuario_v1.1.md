@@ -180,9 +180,10 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 - **Contexto:** vía individual del F-EST (la vía masiva está en EP-03).
 - **Precondiciones:** catálogos de grupo/ciclo/grado disponibles (US-054).
-- **Reglas de negocio:** RN-EST-01 (un solo estatus: `ACTIVO`, `BAJA` o `EGRESADO`) · RN-EST-02 (matrícula única e inmutable) · RN-EST-03 (al menos un tutor con contacto válido) · RN-EST-10 (registro incompleto: mínimos y diferidos) · RN-EST-11 (contacto válido) · RN-TRX-01 (minimización: `domicilio`, `sexo` y `CURP` son opcionales) · RN-API-01.
+- **Reglas de negocio:** RN-EST-01 (un solo estatus: `ACTIVO`, `BAJA` o `EGRESADO`) · RN-EST-02 (matrícula única e inmutable) · RN-EST-03 (al menos un tutor con contacto válido) · RN-EST-10 (registro incompleto: mínimos y diferidos) · RN-EST-11 (contacto válido) · RN-TRX-01 (minimización: `domicilio`, `sexo` y `CURP` son opcionales) · RN-API-01 · RN-EST-12 (salud y situación administrativa, acceso restringido).
 - **Permisos:** PAD, ADM.
-- **Datos:** *mínimos:* nombre completo, matrícula, grado, grupo, ciclo escolar, estatus y tutor(es); *obligatorios diferidos:* fecha de nacimiento y fotografía; *opcionales:* domicilio, sexo y CURP (RF-EST-01).
+- **Datos:** *mínimos:* nombre completo, matrícula, grado, grupo, ciclo escolar, turno, estatus y tutor(es); *obligatorios diferidos:* tipo de sangre, alergias, adeudo de pago, materias pendientes (opcionales, visibilidad según RN-EST-12), fecha de nacimiento y fotografía; *opcionales:* dirección (calle, colonia, municipio, estado, C.P. — opcional), sexo y CURP (RF-EST-01).
+- **Reglas de negocio:** agregar ``.
 - **UX/UI y estados (F-EST):** captura → validación de campos y formato → verificación de tutor → validación final de consistencia y unicidad de matrícula → creación → asignación de grupo/ciclo → ficha activa. Estados: guardando, éxito, errores por campo, matrícula duplicada, faltan datos.
 - **Flujos alternativos:** sin tutor → no se guarda; matrícula existente → se rechaza y se indica el conflicto; faltan la fecha de nacimiento o la fotografía, pero existen los datos mínimos → se guarda como INCOMPLETO (US-009, RN-EST-10).
 - **Dependencias:** US-010, US-054.
@@ -203,8 +204,8 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Épica:** EP-02 · **Módulo:** EST · **Actor:** PAD (y ADM) · **Prioridad:** Must · **Hito:** 02
 > **Como** personal administrativo, **quiero** registrar uno o varios tutores por estudiante y marcar uno como contacto principal, **para** poder notificar a la familia correcta.
 
-- **Reglas de negocio:** RN-EST-03 (al menos un tutor con contacto válido antes de estar `ACTIVO`) · RN-EST-11 (contacto válido) · RN-COM-01 (solo se comunica a un contacto marcado como válido) · RN-TRX-06 (herencia de restricciones de acceso) · RN-TRX-01.
-- **Datos:** nombre (obl.), relación (`padre`, `madre`, `tutor legal`, `otro`; obl.), teléfono, correo (formato válido; el canal de comunicación es correo), indicador de contacto principal, indicador de contacto válido (nombre, relación y correo con formato válido; se marca automáticamente y el PAD o ADM puede invalidarlo con motivo, RN-EST-11).
+- **Reglas de negocio:** RN-EST-03 (al menos un tutor con contacto válido antes de estar `ACTIVO`) · RN-EST-11 (contacto válido) · RN-COM-01 (solo se comunica a un contacto marcado como válido) · RN-TRX-06 (herencia de restricciones de acceso) · RN-TRX-01 · RN-EST-11 (contacto válido: correo o teléfono).
+- **Datos:** nombre (obl.), relación (`padre`, `madre`, `tutor legal`, `otro`; obl.), teléfono, correo o teléfono (al menos uno con formato válido); el correo sigue siendo el único canal de comunicación automatizada (RN-COM-01), indicador de contacto principal, indicador de contacto válido (nombre, relación y correo con formato válido; se marca automáticamente y el PAD o ADM puede invalidarlo con motivo, RN-EST-11).
 - **UX/UI y estados:** lista de tutores en la ficha con etiqueta "Principal"; no se puede eliminar al único tutor válido de un estudiante `ACTIVO`.
 - **Flujos alternativos:** correo con formato inválido → error en línea.
 - **Dependencias:** US-008 · **Trazabilidad:** RF-EST-03 · OE-02 · KPI-07.
@@ -216,7 +217,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 - **Reglas de negocio:** RN-TRX-02 (acceso solo por rol) · RN-EST-04 (los expedientes de `BAJA`/`EGRESADO` siguen consultables por rol autorizado) · RN-EST-08 (advertencia si algún tutor tiene consentimiento `PENDIENTE` o `REVOCADO`).
 - **Permisos:** ADM, PRE, PAD. DOC y SL no consultan expedientes.
 - **Datos:** filtros: nombre, matrícula, grupo, grado, estatus; resultados paginados; ficha con datos, tutores, asistencia e incidencias asociadas.
-- **UX/UI y estados:** buscador + filtros combinables; tabla en escritorio, tarjetas en móvil; estados: cargando, sin resultados, error, permiso denegado.
+- **UX/UI y estados:** buscador + filtros combinables; tabla en escritorio, tarjetas en móvil; estados: cargando, sin resultados, error, permiso denegado. Los campos de salud se muestran a ADM, PAD y PRE; los de adeudo de pago y materias pendientes solo a ADM y PAD (RN-EST-12).
 - **Trazabilidad:** RF-EST-04, RF-EST-05 · OE-02 · KPI-07.
 
 ### SIGE-US-012 — Modificar los datos de un estudiante
@@ -274,7 +275,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Épica:** EP-03 · **Módulo:** IMP · **Actor:** ADM, PAD · **Prioridad:** Should · **Hito:** 02
 > **Como** personal administrativo, **quiero** descargar una plantilla CSV/XLSX con las columnas exactas del diccionario de datos y ejemplos válidos, **para** reducir errores al preparar el archivo.
 
-- **Reglas de negocio:** RN-IMP-01 (el archivo debe cumplir exactamente el diccionario vigente).
+- **Reglas de negocio:** RN-IMP-01 (el archivo debe cumplir exactamente el diccionario vigente, la plantilla incluye columnas opcionales de salud y situación administrativa (RF-EST-06)).
 - **UX/UI y estados:** el botón de plantilla aparece **antes** de seleccionar el archivo (F-EST); descarga inmediata.
 - **Trazabilidad:** RF-IMP-02 · OE-02 · F-EST.
 
@@ -284,7 +285,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 - **Reglas de negocio:** RN-IMP-01 (se rechaza el archivo completo antes de procesar filas si columnas, tipos o formato no corresponden) · RN-IMP-05 (solo ADM y PAD importan) · fuera de alcance: limpieza/transformación de datos históricos (acta §7).
 - **Datos:** archivo `.csv` o `.xlsx`.
-- **UX/UI y estados (F-EST):** seleccionar archivo → "SIGE procesa y valida la estructura" → si no coincide, **detener toda la importación** con mensaje que indica qué columnas fallan.
+- **UX/UI y estados (F-EST):** seleccionar archivo → "SIGE procesa y valida la estructura" → si no coincide, **detener toda la importación** con mensaje que indica qué columnas fallan. Antes de seleccionar el archivo, el usuario elige grado, grupo, ciclo y turno para todo el lote (RN-IMP-08)
 - **Trazabilidad:** RF-IMP-01 · OE-02 · F-EST.
 
 ### SIGE-US-019 — Procesar cada fila de forma independiente
@@ -300,7 +301,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Épica:** EP-03 · **Módulo:** IMP · **Actor:** PAD, ADM · **Prioridad:** Must · **Hito:** 02
 > **Como** personal administrativo, **quiero** ver una vista previa de qué registros se insertarán y cuáles se rechazarán y confirmarla explícitamente, **para** evitar cargar datos por error.
 
-- **Reglas de negocio:** RN-IMP-04 (toda importación se ejecuta primero en *dry-run*: las filas se validan y se preparan, incluida su asignación a grupo y ciclo, sin persistir; la vista previa muestra registros a insertar y rechazados, y solo la confirmación explícita los persiste; si se cancela, no se guarda nada) · RN-IMP-07 (conflicto de matrícula al confirmar: solo se rechaza esa fila) · RN-EST-04/05 (los estudiantes importados quedan `ACTIVO`) · F-EST (asignación a grupo/ciclo).
+- **Reglas de negocio:** RN-IMP-04 (toda importación se ejecuta primero en *dry-run*: las filas se validan y se preparan, incluida su asignación a grupo y ciclo, sin persistir; la vista previa muestra registros a insertar y rechazados, y solo la confirmación explícita los persiste; si se cancela, no se guarda nada) · RN-IMP-07 (conflicto de matrícula al confirmar: solo se rechaza esa fila) · RN-EST-04/05 (los estudiantes importados quedan `ACTIVO`) · F-EST (asignación a grupo/ciclo) · RN-IMP-08.
 - **UX/UI y estados:** resumen (a insertar / rechazados) + botones "Confirmar importación definitiva" y "Cancelar"; al cancelar, la importación termina sin persistir datos; al confirmar, se generan las fichas activas.
 - **Dependencias:** US-019 · **Trazabilidad:** RF-IMP-01 · OE-02 · F-EST.
 
