@@ -29,7 +29,7 @@ El sistema requiere una línea base de información para que los flujos puedan o
    - `ACCOUNT_LOCKOUT_MAX_ATTEMPTS`: "5"
    - `ACCOUNT_LOCKOUT_DURATION_MINUTES`: "15"
 2. **Ciclo Escolar Activo:** Debe inyectarse un registro de prueba de `ACADEMIC_CYCLE` con la bandera `is_active=True`, dado que ninguna alta estudiantil o docente puede procesarse sin un ciclo vigente.
-3. **Roles y Privilegios:** En caso de que se utilicen grupos base para roles (ej. Administrador, Prefecto), se sembrarán en este paso.
+3. **Roles:** El rol de cada usuario vive en la columna `USER.role` (`ENUM`), verificada mediante clases de permisos de Django REST Framework (RN-AUT-06). Este proyecto **no** usa `django.contrib.auth.models.Group` ni `Permission` para RBAC; no hace falta sembrar grupos de Django en esta migración.
 
 ## 5. Cambios Restrictivos en Tablas Pobladas
 Al evolucionar el sistema, si un campo opcional se convierte en obligatorio (restricción `NOT NULL`), la migración automática de Django fallará en tablas que ya contengan filas nulas. La estrategia es:

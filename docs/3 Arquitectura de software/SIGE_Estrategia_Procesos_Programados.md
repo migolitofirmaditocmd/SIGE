@@ -17,7 +17,8 @@ Para el ecosistema basado en Django, se estipula el uso de **Celery** como frame
 
 ### 2.1 Verificación Diaria de Ausencias (Estudiantes)
 *   **Frecuencia:** Diaria (de lunes a viernes).
-*   **Hora de Ejecución:** Dictada dinámicamente consultando la tabla `OPERATIONAL_PARAMETER` por la llave `STUDENT_ABSENCE_CHECK_TIME` (ej. 10:00 AM).
+*   **Hora de Ejecución:** El job corre con una frecuencia corta (cada 15-30 minutos) durante todo el horario escolar, no a una sola hora fija. En cada corrida, evalúa **grupo por grupo**: un grupo entra a evaluación de ausencias solo cuando ya transcurrió su propia `GROUP.cutoff_time` más el margen configurado en `OPERATIONAL_PARAMETER['STUDENT_ABSENCE_CHECK_OFFSET_MINUTES']` (nuevo parámetro; sustituye a `STUDENT_ABSENCE_CHECK_TIME` como hora única). Esto respeta que la hora de verificación debe ser posterior a la hora de corte de cada grupo y jornada (RN-ADM-02), incluso cuando distintos grupos tienen turnos distintos.
+*   **Idempotencia reforzada:** al correr cada 15-30 minutos, el `WHERE` de la consulta debe excluir explícitamente a los estudiantes que ya tienen cualquier registro de asistencia hoy (no solo `FALTO`), para no reevaluar grupos ya procesados en la corrida anterior.
 *   **Lógica Principal:**
     1. Identifica a todos los alumnos (`status='ACTIVO'`) cuyo `GROUP` coincida con el turno escolar correspondiente.
     2. Compara el censo contra los registros existentes hoy en `ATTENDANCE_STUDENT`.
@@ -36,7 +37,7 @@ Para el ecosistema basado en Django, se estipula el uso de **Celery** como frame
 *   **Frecuencia:** Diaria (Típicamente en horas valle, ej. 02:00 AM).
 *   **Lógica Principal:**
     1. Ejecuta vía subproceso un *dump* completo (ej. `pg_dump`) de PostgreSQL.
-    2. Comprime el volcado y lo transfiere a una ruta externa (un bucket tipo S3, o a un volumen de almacenamiento en frío).
+    2. Comprime el volcado y lo guarda primero en un **volumen local** del servidor institucional (obligatorio, no depende de Internet, RN-INF-01). Si hay conectividad disponible, intenta adicionalmente una copia a un destino externo (S3 u otro) como respaldo secundario; el éxito o fallo de esta copia externa **no** determina el `status` del `BACKUP_LOG`, que se marca `EXITOSO` con solo la copia local confirmada.
     3. Genera un registro final de bitácora en la tabla `BACKUP_LOG`.
 *   **Manejo de Fallos:** Si falla la exportación al volumen externo por errores de red, la tarea reintenta exponencialmente un máximo de 3 veces. Si todos los reintentos fallan, el `BACKUP_LOG` se graba con `status='FALLIDO'` y se notifica al Administrador.
 
@@ -44,6 +45,7 @@ Para el ecosistema basado en Django, se estipula el uso de **Celery** como frame
 *   **Frecuencia:** Orientada a eventos. Celery delega la función `send_notification_email.delay(report_id)` inmediatamente en cuanto ocurre un registro de incidencia. 
 *   **Job Recolector (Sweeper):** Cada hora, un pequeño cron revisa la tabla `COMMUNICATION_LOG` en busca de filas olvidadas en `status='PENDIENTE'` o `status='FALLIDO'` (que aún sean reintentables) e intenta despacharlas.
 *   **Lógica Principal:**
+    0. Antes de reintentar, verifica que el `STUDENT_GUARDIAN.consent_status` del destinatario no sea `REVOCADO` (RN-COM-04); si lo es, marca la fila como `FALLIDO` de forma permanente (sin más reintentos) y no la vuelve a tomar el sweeper.
     1. Extrae el `content_snapshot` exacto y lo envía por SMTP sin mutar información.
     2. Actualiza exitosamente a `ENVIADO`.
 

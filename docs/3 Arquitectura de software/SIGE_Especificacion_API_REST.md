@@ -50,7 +50,10 @@ Todo endpoint de la API que devuelva un error debe cumplir con esta estructura b
 *   **Reglas Validadas (422):**
     *   **RN-QR-04:** Valida que el token escaneado exista y tenga `status='VIGENTE'`.
     *   **RN-AST-01:** Calcula si la hora del escaneo está dentro de la tolerancia respecto al `cutoff_time` del `GROUP` del alumno. Retorna `LLEGO_TARDE` o `ASISTIO`.
-    *   **RN-AST-07:** Si ya existe un registro de asistencia para este alumno hoy, el nuevo escaneo se guarda silenciosamente en `ATTENDANCE_STUDENT_EVENT` sin alterar el estatus original (ventana de rebote).
+    *   **RN-AST-02/RN-AST-03:** Si el escaneo ocurre dentro de la ventana de rebote (configurable, 5 min por defecto) contada desde el último escaneo procesado del mismo estudiante, se **rechaza silenciosamente** (204, sin crear ningún registro) y se notifica al operador.
+    *   **RN-AST-07:** Si el escaneo ocurre fuera de la ventana de rebote pero el estudiante ya tiene un estado determinado (`ASISTIO`, `LLEGO_TARDE` o un estado `MANUAL`) para hoy, se guarda en `ATTENDANCE_STUDENT_EVENT` sin alterar el estado ya determinado.
+    *   **RN-AST-09:** Si el estudiante ya tiene `FALTO` de origen `AUTOMATICO` para hoy, este escaneo lo **reclasifica** (`ASISTIO`/`LLEGO_TARDE`) comparando la hora efectiva contra `cutoff_time`; un `FALTA_JUSTIFICADA` (origen `MANUAL`) nunca se reclasifica.
+    *   **RN-EST-05:** Rechaza (422) si el estudiante no está `ACTIVO
     *   **RN-TRX-04:** Si el scan proviene de un dispositivo offline sincronizado, usa la hora capturada; si es online en vivo, usa la del servidor.
 
 #### POST `/api/v1/attendance/students/{id}/justify/`
@@ -59,7 +62,7 @@ Todo endpoint de la API que devuelva un error debe cumplir con esta estructura b
 *   **Response (200 OK):** `{ "status": "FALTA_JUSTIFICADA" }`
 *   **Reglas Validadas (403 / 422):**
     *   **RN-AST-06:** No elimina el registro anterior, hace un update de estado.
-    *   **RN-AST-10:** Verifica que el usuario que ejecuta (JWT) sea `Administrador` o `Personal Administrativo`.
+    *   **RN-AST-04:** Verifica que el usuario que ejecuta (JWT) sea Administrador o Personal Administrativo (el Prefecto NO está autorizado a justificar). **RN-AST-05:** exige `justification_reason` y conserva el valor anterior. **RN-AST-22:** solo puede justificarse un registro en estado `FALTO`; si el estado actual no es `FALTO`, rechazar con 422.`
 
 ---
 
@@ -67,12 +70,12 @@ Todo endpoint de la API que devuelva un error debe cumplir con esta estructura b
 
 #### POST `/api/v1/credentials/tokens/`
 *   **Capacidad:** Emitir un nuevo QR para un estudiante o docente (por alta o reemplazo).
-*   **Request:** `{ "entity_type": "STUDENT", "entity_id": "uuid", "origin": "REEMPLAZO" }`
-*   **Response (201 Created):** `{ "token_id": "uuid", "qr_image_url": "https://..." }`
-*   **Reglas Validadas (422):**
-    *   **RN-QR-01:** Revoca automáticamente cualquier otro token que estuviese `VIGENTE` para esta misma persona.
-    *   **RN-QR-03:** Garantiza mediante UUIDv4 aleatorio que el token nunca haya existido en la tabla (no se reciclan).
-    *   **RN-QR-05:** Verifica la restricción de que se asigna o a un alumno o a un docente, pero nunca a ambos.
+*   **Request:** `{ "entity_type": "STUDENT" | "TEACHER", "entity_id": "uuid", "reason": "PERDIDA|ROBO|DANO|DUPLICIDAD" }` (`reason` obligatorio solo si la persona ya tiene un token `VIGENTE`)
+*   **Reglas Validadas (403 / 422):**
+    *   **RN-QR-01/05:** Si la persona **no** tiene token vigente, cualquier `ADM` o `PAD` puede emitir uno nuevo (alta inicial).
+    *   **RN-QR-03:** Si la persona **ya** tiene un token vigente, la operación es una revocación + reemplazo y se rechaza (403) si el solicitante no es `ADM`; el campo `reason` es obligatorio en este caso y queda registrado en `AUDIT_LOG`.
+    *   **RN-EST-05 / RN-AST-23:** Rechaza si el estudiante no está `ACTIVO` o el docente no está `ACTIVO`.
+    *   **RN-QR-02:** El token generado no debe poder derivar datos personales.
 
 ---
 
@@ -82,8 +85,11 @@ Todo endpoint de la API que devuelva un error debe cumplir con esta estructura b
 *   **Capacidad:** Obtener el expediente del alumno.
 *   **Request:** (N/A)
 *   **Response (200 OK):** Datos del estudiante anidados con su información de `STUDENT_GUARDIAN`.
-*   **Reglas Validadas (Payload Condicional):**
-    *   **RN-EST-12:** (Control de Privacidad). Si el JWT pertenece a un `DOCENTE` o `PREFECTO`, los campos `blood_type`, `allergies`, `has_payment_debt` y `STUDENT_PENDING_SUBJECT` se remueven completamente del JSON de respuesta.
+*   **Reglas Validadas:**
+    *   **Permisos:** Solo `ADM`, `PRE` y `PAD` pueden llamar este endpoint; `DOC` y `SL` reciben 403 (US-011).
+    *   **RN-EST-12 (filtrado condicional del payload):**
+        *   `blood_type`, `allergies`: visibles para `ADM`, `PAD` y `PRE`.
+        *   `has_payment_debt`, `payment_debt_amount`, `pending_subjects`: visibles únicamente para `ADM` y `PAD`; se remueven del JSON para `PRE`.
 
 #### POST `/api/v1/students/`
 *   **Capacidad:** Crear un nuevo estudiante manualmente.
@@ -109,9 +115,14 @@ Todo endpoint de la API que devuelva un error debe cumplir con esta estructura b
 #### PATCH `/api/v1/reports/{id}/`
 *   **Capacidad:** Modificar un reporte existente (ej. Prefecto autoriza o rechaza).
 *   **Request:** `{ "status": "RECHAZADO", "rejection_reason": "Falta firma..." }`
-*   **Reglas Validadas:**
-    *   **RN-REP-06:** Crea automáticamente una fila en `REPORT_TRANSITION_LOG` documentando el cambio de estado.
-    *   **RN-REP-08:** Si el status es `RECHAZADO`, se exige el campo `rejection_reason`.
+*   **Reglas Validadas (403 / 422):**
+    *   **RN-REP-03:** El backend valida que la transición solicitada sea válida desde el estado actual del reporte (`REGISTRADO → REVISADO_PREFECTO → CANALIZADO → REVISADO_ADMINISTRATIVO → AUTORIZADO/COMUNICADO/RESUELTO`); cualquier salto se rechaza con 422, sin importar lo que el cliente haya mostrado.
+    *   Transición a `REVISADO_PREFECTO` o `RECHAZADO` (desde `REGISTRADO`): solo `PRE`. Un rechazo aquí **no** admite reintento sobre el mismo reporte (RN-REP-08): se cierra y exige un `POST /reports/` nuevo con `replaces_report_id`.
+    *   Transición a `CANALIZADO`: solo `PRE`, y solo desde `REVISADO_PREFECTO`.
+    *   Transición a `REVISADO_ADMINISTRATIVO` o `RECHAZADO` (desde `CANALIZADO`): solo `PAD`. Un rechazo aquí regresa el reporte a `REVISADO_PREFECTO` (RN-REP-03), no lo cierra.
+    *   Transición a `AUTORIZADO`/`RESUELTO` (comunicar o no comunicar a la familia): **solo `PAD`** (RN-REP-04); nunca `PRE` ni `DOC`, sin excepción.
+    *   `rejection_reason` obligatorio en cualquier transición a `RECHAZADO` (RN-REP-08); `no_communication_reason` obligatorio si se marca `RESUELTO` sin pasar por `COMUNICADO`.
+    *   **RN-REP-06:** toda transición aceptada crea una fila en `REPORT_TRANSITION_LOG`.
 
 ---
 
@@ -124,8 +135,11 @@ Todo endpoint de la API que devuelva un error debe cumplir con esta estructura b
 *   **Reglas Validadas:**
     *   **RN-IMP-01 & RN-IMP-03:** Corre las validaciones de negocio en memoria, detecta repetidos (RN-EST-02) y genera filas en `IMPORT_ROW_ERROR`. No inserta en la base de datos de producción (RN-IMP-04).
     *   **RN-IMP-08:** Obliga a asignar el grupo, turno y ciclo a todo el bloque desde este momento.
+    *   **RN-IMP-05:** solo ADM y PAD pueden llamar este endpoint (403 para los demás roles).
+    *   **RN-IMP-06:** las filas con datos mínimos pero sin fecha de nacimiento o fotografía se cuentan aparte en la respuesta.
 
 #### POST `/api/v1/imports/{batch_id}/confirm/`
 *   **Capacidad:** Inyecta la vista previa a la base de datos real.
 *   **Reglas Validadas:**
     *   **RN-IMP-04:** Verifica que el batch siga en estatus `VISTA_PREVIA` y realiza la inserción de las filas marcadas como limpias, omitiendo los errores irresolubles. Muta el estado a `CONFIRMADO`.
+    *   **RN-IMP-07:** si al confirmar, la matrícula de una fila ya fue creada por otro proceso desde que se generó la vista previa, esa fila (y solo esa) se rechaza y se agrega a IMPORT_ROW_ERROR; el resto del lote se inserta con normalidad.

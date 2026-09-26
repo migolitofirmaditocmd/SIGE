@@ -12,14 +12,20 @@ Muestra al sistema SIGE en el centro y las interacciones directas con sus usuari
 C4Context
     title Diagrama de Contexto de SIGE
     
-    Person(admin, "Administrador/Prefecto", "Gestiona la escuela, reportes, usuarios y catálogos.")
-    Person(teacher, "Docente", "Consulta horarios y registra asistencias.")
+    Person(admin, "Administrador", "Control total: usuarios, catálogos, parámetros, auditoría, respaldo.")
+    Person(prefect, "Prefecto", "Escanea asistencia estudiantil, consulta expedientes, revisa y canaliza reportes.")
+    Person(teacher, "Docente", "Registra reportes escolares de sus grupos asignados.")
+    Person(admin_staff, "Personal administrativo", "Escanea asistencia, gestiona estudiantes y docentes, autoriza comunicación a familias.")
+    Person(auditor, "Solo lectura", "Consulta estadísticas e información consolidada.")
+    
     
     System(sige, "SIGE", "Sistema Integral de Gestión Escolar. Administra la comunidad escolar, control de asistencia vía QR y reportes de incidencias.")
     
     System_Ext(email_sys, "Proveedor de Correo Electrónico", "Envía notificaciones oficiales a los tutores (SMTP).")
     System_Ext(local_net, "Intranet Escolar / Red Local", "Provee infraestructura de red para sincronización PWA offline de dispositivos en la entrada.")
+    System_Ext(internet, "Internet (opcional)", "Requerido únicamente para el envío de correo a tutores y para acceso remoto; su ausencia no afecta las funciones internas (RN-INF-01/02).")
 
+    Rel(sige, internet, "Depende de, solo para correo y acceso remoto")
     Rel(admin, sige, "Administra, configura e importa datos en")
     Rel(teacher, sige, "Interactúa y consulta")
     Rel(sige, email_sys, "Delega correos de incidencias a")
@@ -42,7 +48,8 @@ C4Container
         Container(backend, "API Backend", "Python, Django, DRF", "Provee la lógica de negocio central, seguridad y exposición de servicios REST.")
         ContainerDb(db, "Base de Datos Relacional", "PostgreSQL 15+", "Almacena de forma persistente e inmutable todos los datos del sistema, logs y auditorías.")
         Container(worker, "Worker de Tareas Programadas", "Celery / Django-Q", "Ejecuta tareas en segundo plano (reintentos de correo, consolidación de asistencia automática).")
-        Container(qr_engine, "Motor de Generación QR", "Pillow, qrcode", "Genera las representaciones gráficas PNG/Base64 de los tokens UUIDv4 cifrados por HMAC.")
+        Container(qr_engine, "Motor de Generación QR", "Pillow, qrcode", "Genera las representaciones gráficas PNG/Base64 del token UUIDv4 opaco (RN-QR-02); no incluye datos personales en el payload.")
+        Container(broker, "Cola de Mensajes", "Redis", "Broker de Celery y almacén de resultados/locks para tareas programadas.")
     }
 
     System_Ext(email_sys, "Servidor SMTP Externo", "Envía correos electrónicos.")
@@ -54,6 +61,8 @@ C4Container
     Rel(backend, qr_engine, "Solicita generación de imagen para token", "In-memory/Local")
     Rel(worker, db, "Actualiza estados de transacciones y logs", "SQL/TCP")
     Rel(worker, email_sys, "Transmite correos programados", "SMTP")
+    Rel(worker, broker, "Consume tareas de", "Redis protocol")
+    Rel(backend, broker, "Encola tareas en", "Redis protocol")
 ```
 
 ---
@@ -70,7 +79,7 @@ C4Component
     Container_Boundary(backend_api, "API Backend (Django)") {
         Component(aut, "Módulo AUT (Autenticación)", "Django Auth, JWT", "Maneja el inicio de sesión, bloqueo por fallos (RN-AUT) y control de acceso.")
         Component(est, "Módulo EST (Estudiantes)", "Django App", "Gestión de alumnos, grupos y tutores (RN-EST).")
-        Component(ast, "Módulo AST (Asistencias)", "Django App", "Procesamiento y validación de asistencias y sus ventanas de rebote (RN-AST).")
+        Component(ast, "Módulo AST (Asistencias)", "Django App", Gestión de la ficha del personal docente (alta, edición, desactivación/reactivación, vínculo con cuenta de usuario) y procesamiento y validación de asistencias, estudiantil y docente, incluidas sus ventanas de rebote (RN-AST-01 a 30).")
         Component(qr, "Módulo QR/CRE (Credenciales)", "Django App", "Emisión, validación y revocación de tokens QR únicos (RN-QR).")
         Component(rep, "Módulo REP (Reportes)", "Django App", "Registro de incidencias, canalización y catálogos de faltas (RN-REP).")
         Component(com, "Módulo COM (Comunicaciones)", "Django App", "Motor de plantillas y envío de notificaciones a tutores (RN-COM).")
@@ -93,7 +102,7 @@ C4Component
     Rel(imp, est, "Delega inserción limpia de alumnos tras validación")
     Rel(rep, com, "Dispara notificación de incidencia grave")
     Rel(com, db, "Registra COMMUNICATION_LOG")
-    Rel(adm, db, "Guarda AUDIT_LOG global")
+    Rel(adm, db, "Consulta y administra la retención de AUDIT_LOG")
 ```
 
 ---

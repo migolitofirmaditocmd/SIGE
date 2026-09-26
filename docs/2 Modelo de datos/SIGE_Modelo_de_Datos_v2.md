@@ -463,10 +463,10 @@ Mapea a la columna `DEBE MAT.` del Excel, normalizada: una fila por materia pend
 | `IMPORT_ROW_ERROR` | Una fila por error, con columna y motivo (RN-IMP-01/03) |
 
 ### 3.13 `AUDIT_LOG` (app `audit`)
-Tabla de solo inserción (`INSERT`-only a nivel de permisos de base de datos). Registra cambios de rol, modificaciones de asistencia, de reportes y de estatus de estudiante/docente (RN-AUT-05).
+Tabla de solo inserción (`INSERT`-only a nivel de permisos de base de datos). Registra cambios de rol, modificaciones de asistencia, de reportes y de estatus de estudiante/docente (RN-AUT-05). `user_id` pasa a ser **NULLABLE**; cuando `origin='AUTOMATICO'`, `user_id` es `NULL` y el proceso que lo generó se identifica por el campo `action` (p. ej. `'job:absence_check_students'`).
 
 ### 3.14 `OPERATIONAL_PARAMETER` (app `settings`)
-Filas iniciales (semilla): `REBOUND_WINDOW_MINUTES` (5), `STUDENT_ABSENCE_CHECK_TIME` (10:00), `TEACHER_ABSENCE_CHECK_TIME`, `TEACHER_DEFAULT_TOLERANCE_MINUTES` (0), `ACCOUNT_LOCKOUT_MAX_ATTEMPTS` (5), `ACCOUNT_LOCKOUT_DURATION_MINUTES` (15). Editable únicamente por `Administrador` (RN-ADM-02); todo cambio pasa por `AUDIT_LOG`.
+Filas iniciales (semilla): `REBOUND_WINDOW_MINUTES` (5), `STUDENT_ABSENCE_CHECK_OFFSET_MINUTES` (valor semilla sugerido: `30`), `TEACHER_ABSENCE_CHECK_TIME`, `TEACHER_DEFAULT_TOLERANCE_MINUTES` (0), `ACCOUNT_LOCKOUT_MAX_ATTEMPTS` (5), `ACCOUNT_LOCKOUT_DURATION_MINUTES` (15). Editable únicamente por `Administrador` (RN-ADM-02); todo cambio pasa por `AUDIT_LOG`.
 
 ### 3.15 `BACKUP_LOG` (app `ops`)
 Un registro por corrida del respaldo automático (RN-API-03), consultable por el Administrador.

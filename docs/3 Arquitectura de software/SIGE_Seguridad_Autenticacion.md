@@ -30,18 +30,25 @@ El Control de Acceso Basado en Roles (RBAC) dicta qué operaciones pueden realiz
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **AUT:** Resetear claves / Desbloquear | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **ADM:** Cambiar Parámetros y Catálogos | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **ADM:** Consultar bitácora de auditoría / respaldos | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **EST:** Alta/Edición de Estudiantes | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **EST:** Ver datos médicos y financieros | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **AST:** Registro automático (Escáner QR) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **AST:** Justificar Inasistencia | ✅ | ✅ | ❌ | ✅ | ❌ |
-| **AST:** Registro manual de docente | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **REP:** Levantar reporte de incidencias | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **REP:** Autorizar/Rechazar reporte | ✅ | ✅ | ❌ | ✅ | ❌ |
-| **COM:** Reintentar envío de correo | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **EST:** Consultar expediente (datos generales) | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **EST:** Ver datos de salud (tipo de sangre, alergias) | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **EST:** Ver adeudo de pago / materias pendientes | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **AST:** Escanear asistencia estudiantil | ❌ | ✅ | ❌ | ✅ | ❌ |
+| **AST:** Justificar/modificar asistencia estudiantil | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **AST:** Alta y programación de docentes | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **AST:** Registrar entrada/salida de docente | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **AST:** Reactivar docente / vincular con cuenta | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **REP:** Registrar un reporte nuevo | ❌ | ❌ | ✅ (solo sus grupos asignados) | ❌ | ❌ |
+| **REP:** Consultar reportes | ✅ (todos) | ✅ (sus grupos asignados) | ✅ (solo los que él registró) | ✅ (todos) | ❌ |
+| **REP:** Revisar / canalizar (etapa Prefecto) | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **REP:** Revisar / autorizar comunicación a familia (etapa administrativa) | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **COM:** Reintentar envío de correo | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **IMP:** Carga Masiva de Alumnos | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **QR:** Revocar y Emitir QR | ✅ | ✅ | ❌ | ✅ | ❌ |
-| **Consultas Globales (Solo Lectura)** | ✅ | ✅ | ✅ (Sólo sus grupos) | ✅ | ✅ |
-
+| **QR:** Emitir QR (alta inicial, estudiante o docente) | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **QR:** Revocar y regenerar QR | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Información consolidada / indicadores** | ✅ | ❌ | ❌ | ✅ | ✅ |
 ---
 
 ## 4. Checklist OWASP ASVS (Aplicado)
@@ -61,7 +68,7 @@ A continuación se detalla la aplicación de controles del Application Security 
 - [x] **V5.3.3 (Principio de Menor Privilegio):** La consulta de reportes bloquea la visibilidad a actores externos no autorizados.
 
 ### 4.4 Endpoints de Estudiantes (`/students/*`)
-- [x] **V4.1.3 (Fugas de Información):** Eliminación por diseño de campos sensibles (`blood_type`, `has_payment_debt`) en el serializador de Django REST Framework cuando el solicitante es Docente o Prefecto (RN-EST-12).
+- [x] **V4.1.3 (Fugas de Información):** Eliminación por diseño de has_payment_debt y pending_subjects cuando el solicitante es Prefecto; eliminación de blood_type, allergies, has_payment_debt y pending_subjects cuando el solicitante es Docente o cualquier otro rol sin acceso al expediente (RN-EST-12).
 
 ### 4.5 Endpoints de Credenciales QR (`/credentials/tokens/*`)
 - [x] **V6.2.1 (Criptografía Básica):** Los tokens generados son UUIDv4 puros (aleatoriedad criptográficamente segura, no secuencial).
