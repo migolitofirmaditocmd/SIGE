@@ -1,0 +1,146 @@
+ID,WBS Nivel 2 / Tarea Nivel 3,Tipo,Duración (Valor),Unidad (Días/Semanas/Meses),Responsable / Equipo,29/08/2026,Fecha Fin,Estado,Dependencia,Entregables Asociados
+1,INICIO Y PLANIFICACIÓN,Entregable Nivel 2,9,Días,Ambos,29/08/2026,2026-09-06,Completado,—,Base de planificación
+"1,1",Definir metodología de trabajo,Tarea Nivel 3,1,Días,Miguel,29/08/2026,2026-08-29,Completado,—,Metodología acordada
+"1,2",Definir herramientas y repositorios,Tarea Nivel 3,1,Días,Saul,31/08/2026,2026-08-31,Completado,CC 1.1,Herramientas configuradas
+"1,3",Elaborar mapa de interesados,Tarea Nivel 3,1,Días,Miguel,31/08/2026,2026-08-31,Completado,FC 1.1,Mapa de interesados
+"1,4","Revisar propósito, objetivos y alcance",Tarea Nivel 3,1,Días,Ambos,01/09/2026,2026-09-01,Completado,FC 1.1,Alcance validado
+"1,5",Definir esquema de comunicación del equipo,Tarea Nivel 3,1,Días,Saul,01/09/2026,2026-09-01,Completado,CC 1.3,Esquema de comunicación
+"1,6",Preparar estructura documental del proyecto,Tarea Nivel 3,1,Días,Miguel,02/09/2026,2026-09-02,Completado,CC 1.4,Estructura documental
+"1,7",Preparar ambiente inicial de desarrollo,Tarea Nivel 3,2,Días,Saul,03/09/2026,2026-09-04,Completado,FC 1.2,Entorno inicial
+"1,8",Revisión de planificación inicial,Tarea Nivel 3,1,Días,Ambos,03/09/2026,2026-09-03,Completado,"FF 1.5, 1.6, 1.7",Planificación inicial
+2,REQUISITOS Y DISEÑO FUNCIONAL,Entregable Nivel 2,16,Días,Ambos,04/09/2026,2026-09-19,Completado,FC 1.8,Especificación funcional
+"2,1",Levantamiento de requisitos funcionales,Tarea Nivel 3,3,Días,Miguel,04/09/2026,2026-09-06,Completado,FC 1.8,Requisitos funcionales
+"2,2",Levantamiento de requisitos no funcionales,Tarea Nivel 3,3,Días,Saul,04/09/2026,2026-09-06,Completado,CC 2.1,Requisitos no funcionales
+"2,3",Definir reglas de negocio,Tarea Nivel 3,2,Días,Ambos,07/09/2026,2026-09-08,Completado,CC 2.1,Reglas de negocio
+"2,4",Definir flujo de registro de estudiantes,Tarea Nivel 3,1,Días,Miguel,08/09/2026,2026-09-08,Completado,CC 2.1,Flujo de registro de estudiantes
+"2,5",Definir flujo de creación de qr,Tarea Nivel 3,2,Días,Saul,08/09/2026,2026-09-09,Completado,CC 2.3,Flujo creación del QR
+"2,6","Definir flujo de asistencia de estudiantes, docentes y personal administrativo",Tarea Nivel 3,2,Días,Saul,09/09/2026,2026-09-10,Completado,FC 2.5,Flujo de asistencia por tipo de usuario
+"2,7",Definir flujo de incidencias y clasificacion de reportes,Tarea Nivel 3,2,Días,Miguel,10/09/2026,2026-09-11,Completado,CC 2.4,Flujo de incidencias y clasificación
+"2,8",Definir flujo y reglas de reportes escolares,Tarea Nivel 3,3,Días,Miguel,11/09/2026,2026-09-13,Completado,CC 2.7,Flujo y reglas de reportes
+"2,9",Definir flujo de comunicación con familiares a partir de reportes autorizados,Tarea Nivel 3,2,Días,Saul,13/09/2026,2026-09-14,Completado,FC 2.3,Flujo de comunicación
+"2,10",Elaborar historias de usuario,Tarea Nivel 3,3,Días,Miguel,15/09/2026,2026-09-17,Completado,"FC 2.1, 2.3",Historias de usuario
+"2,11",Definir criterios de aceptación específicos,Tarea Nivel 3,2,Días,Ambos,18/09/2026,2026-09-19,Completado,FC 2.10,Criterios de aceptación
+"2,12",Validar requisitos con institución,Tarea Nivel 3,2,Días,Ambos,19/09/2026,2026-09-20,Completado,FC 2.11,Requisitos aprobados
+3,BASE FUNCIONAL Y GENERACIÓN DE QR,Entregable Nivel 2,25,Días,Ambos,2026-09-21,2026-10-15,En Proceso,FC actividades H1,Sistema QR funcional + códigos validados
+3.1,Diseñar arquitectura inicial,Tarea Nivel 3,2,Días,Saul,22/09/2026,2026-09-23,Completado,FC 2.12,Arquitectura inicial
+3.2,Diseñar modelo de datos inicial,Tarea Nivel 3,2,Días,Saul,22/09/2026,2026-09-23,Completado,CC 3.1,Modelo de datos
+3.3,Configurar proyecto Next.js/TypeScript,Tarea Nivel 3,2,Días,Miguel,24/09/2026,2026-09-25,No Iniciado,FC 3.1,Proyecto base
+3.4,Configurar PostgreSQL,Tarea Nivel 3,2,Días,Saul,24/09/2026,2026-09-25,Completado,FC 3.2,BD inicial
+3.5,Implementar backend/API base,Tarea Nivel 3,3,Días,Saul,27/09/2026,2026-09-29,Completado,"FC 3.3, 3.4",API base
+3.6,Implementar modelo de estudiantes,Tarea Nivel 3,2,Días,Saul,29/09/2026,2026-09-30,Completado,FC 3.4,Modelo de estudiantes
+3.7,Implementar CRUD de estudiantes,Tarea Nivel 3,3,Días,Miguel,30/09/2026,2026-10-02,Completado,CC 3.6,Gestión de estudiantes
+3.8,Implementar generación de QR,Tarea Nivel 3,2,Días,Saul,10/01/2026,2026-10-02,Completado,FC 3.6,Generador QR
+3.9,Asociar QR con estudiante,Tarea Nivel 3,1,Días,Saul,10/01/2026,2026-10-01,Completado,FC 3.8,Asociación QR
+3.10,Implementar validación de unicidad,Tarea Nivel 3,1,Días,Saul,10/02/2026,2026-10-02,Completado,FC 3.9,Validación de unicidad
+3.11,Implementar exportación de QR,Tarea Nivel 3,1,Días,Miguel,10/02/2026,2026-10-02,En Proceso,CC 3.8,Archivos QR
+3.12,Pruebas de legibilidad,Tarea Nivel 3,1,Días,Miguel,10/05/2026,2026-10-05,En Proceso,FC 3.8,Evidencias de lectura
+3.13,Pruebas de asociación y duplicados,Tarea Nivel 3,1,Días,Saul,10/06/2026,2026-10-06,Completado,FC 3.10,Evidencias de integridad
+3.14,Corrección de errores H01,Tarea Nivel 3,2,Días,Ambos,10/08/2026,2026-10-09,En Proceso,"FC 3.12, 3.13",Versión corregida
+3.15,Validación institucional QR,Tarea Nivel 3,2,Días,Ambos,10/10/2026,2026-10-11,No Iniciado,FC 3.14,Validación institucional
+3.16,Preparar lote inicial de códigos,Tarea Nivel 3,2,Días,Miguel,13/10/2026,2026-10-14,En Proceso,FC 3.15,Lote QR
+3.17,Verificación final de KPI-01 a KPI-06,Tarea Nivel 3,1,Días,Ambos,14/10/2026,2026-10-14,En Proceso,FC 3.16,Evidencias H01
+H01,HITO 01 — Base funcional y generación de QR,Hito,,,Ambos,15/10/2026,,No completado,FC H1,KPI-01 a KPI-06 validados
+4,SISTEMA WEB INTEGRADO,Entregable Nivel 2,3,Semanas,Ambos,2026-10-17,2026-11-06,No Iniciado,FC H1,Plataforma web integrada
+"4,1",Diseñar autenticación,Tarea Nivel 3,2,Días,Miguel,17/10/2026,2026-10-18,No Iniciado,FC 4.1,Diseño de autenticación
+"4,2",Implementar autenticación,Tarea Nivel 3,2,Días,Miguel,20/10/2026,2026-10-21,No Iniciado,FC 4.2,Login funcional
+"4,3",Implementar roles y permisos,Tarea Nivel 3,3,Días,Saul,23/10/2026,2026-10-25,No Iniciado,CC 4.3,Control de acceso
+"4,4",Diseñar modelo de familiares,Tarea Nivel 3,2,Días,Miguel,23/10/2026,2026-10-24,No Iniciado,FC 4.4,Modelo familiares
+"4,5",Implementar familiares,Tarea Nivel 3,2,Días,Saul,27/10/2026,2026-10-28,No Iniciado,FC H1,Gestión familiares
+"4,6",Diseñar panel administrativo,Tarea Nivel 3,2,Días,Miguel,27/10/2026,2026-10-28,No Iniciado,FC 4.6,Diseño panel
+"4,7",Implementar panel administrativo,Tarea Nivel 3,3,Días,Miguel,30/10/2026,2026-11-01,No Iniciado,"FC 4.3, 4.5, 4.7",Panel funcional
+"4,8","Integrar estudiantes, usuarios y familiares",Tarea Nivel 3,3,Días,Saul,31/10/2026,2026-11-02,No Iniciado,FC 4.8,Sistema integrado
+"4,9",Pruebas de integración web,Tarea Nivel 3,2,Días,Miguel,11/03/2026,2026-11-04,No Iniciado,FC 4.9,Evidencias web
+"4,1",Correcciones H02,Tarea Nivel 3,2,Días,Ambos,11/05/2026,,No completado,FC 4.10,Versión corregida
+"4,11",Verificación de KPI-07 a KPI-11,Tarea Nivel 3,1,Días,Ambos,11/06/2026,2026-11-06,No Iniciado,FC H2,Evidencias H02
+"4,12",Validación final del sistema web,Tarea Nivel 3,1,Días,Ambos,11/07/2026,2026-11-07,No Iniciado,FC H2,Web validada
+H02,HITO 02 — Sistema web integrado,Hito,,,Ambos,11/08/2026,,No completado,FC 5.1,KPI-07 a KPI-11 validados
+5,"BACKEND, API Y CONTROL DE ASISTENCIA",Entregable Nivel 2,1,Meses,Ambos,2026-11-10,2026-12-09,No Iniciado,FC 5.2,Sistema de asistencia funcional
+"5,1",Diseñar modelo de asistencia diaria por grupo,Tarea Nivel 3,2,Días,Miguel,11/10/2026,2026-11-11,No Iniciado,FC 5.3,Modelo de asistencia
+"5,2",Definir estados de asistencia,Tarea Nivel 3,2,Días,Miguel,11/10/2026,2026-11-11,No Iniciado,FC 5.2,Reglas de estados
+"5,3",Implementar modelo de asistencia,Tarea Nivel 3,3,Días,Saul,14/11/2026,2026-11-16,No Iniciado,FC 5.3,Tablas/modelos
+"5,4",Implementar registro de asistencia mediante QR,Tarea Nivel 3,3,Días,Saul,18/11/2026,2026-11-20,No Iniciado,"FC 5.4, 5.5, 5.6",Registro de asistencia
+"5,5",Implementar identificación automática de estudiante y grupo,Tarea Nivel 3,2,Días,Saul,18/11/2026,2026-11-19,No Iniciado,FC 5.7,Asociación estudiante-grupo
+"5,6",Implementar reglas de duplicados,Tarea Nivel 3,2,Días,Miguel,20/11/2026,2026-11-21,No Iniciado,"FC 5.7, 5.8",Control de duplicados
+"5,7","Implementar estados asistió, falta y llegada tarde",Tarea Nivel 3,2,Días,Ambos,2026-11-21,2026-11-22,No Iniciado,,Estados de asistencia
+"5,8",Implementar registro diario por grupo,Tarea Nivel 3,2,Días,Saul,2026-11-24,2026-11-25,No Iniciado,,Registro diario
+"5,9",Implementar consulta de asistencia por grupo y fecha,Tarea Nivel 3,2,Días,Ambos,2026-11-25,2026-11-26,No Iniciado,,Consulta grupal
+"5,1",Implementar consulta histórica individual,Tarea Nivel 3,2,Días,Miguel,2026-11-27,2026-11-28,No Iniciado,,Historial estudiante
+"5,11",Integrar registro de asistencia con API,Tarea Nivel 3,2,Días,Saul,2026-11-28,2026-11-29,No Iniciado,,API asistencia
+"5,12",Pruebas funcionales de asistencia,Tarea Nivel 3,2,Días,Ambos,12/01/2026,2026-12-02,No Iniciado,,Evidencias
+"5,13",Pruebas de lectura y rendimiento,Tarea Nivel 3,1,Días,Saul,12/02/2026,2026-12-02,No Iniciado,,Resultados lectura
+"5,14",Correcciones del módulo de asistencia,Tarea Nivel 3,1,Días,Ambos,12/03/2026,2026-12-03,No Iniciado,FC 5.9,Versión corregida
+"5,15",Validación de asistencia con institución,Tarea Nivel 3,1,Semanas,Ambos,12/04/2026,2026-12-10,No Iniciado,FC H3,Validación institucional
+"5,16",Verificación de KPI-12 a KPI-18,Tarea Nivel 3,1,Días,Ambos,12/05/2026,2026-12-05,No Iniciado,FC H3,Evidencias H03
+H03,"HITO 03 — Backend, API y control de asistencia",Hito,,,Ambos,12/06/2026,,No completado,CC 6.1,KPI-12 a KPI-18 validados
+6,APLICACIÓN MÓVIL,Entregable Nivel 2,40,Días,Ambos,2026-12-08,2027-01-16,No Iniciado,CC 6.1,Aplicación móvil integrada con SIGE
+"6,1",Definir arquitectura de la aplicación móvil,Tarea Nivel 3,2,Días,Miguel,12/08/2026,2026-12-09,No Iniciado,"FC 6.2, 6.3",Arquitectura móvil
+"6,2",Definir navegación y estructura de pantallas,Tarea Nivel 3,3,Días,Saul,12/11/2026,2026-12-13,No Iniciado,FC 6.4,Flujo UX móvil
+"6,3",Configurar proyecto móvil,Tarea Nivel 3,2,Días,Miguel,2026-12-15,2026-12-16,No Iniciado,CC 6.5,Proyecto móvil base
+"6,4",Integrar autenticación,Tarea Nivel 3,2,Días,Ambos,2026-12-17,2026-12-18,No Iniciado,"FC 6.4, 6.5, 6.6",Autenticación móvil
+"6,5",Integrar comunicación con API,Tarea Nivel 3,2,Días,Ambos,2026-12-19,2026-12-20,No Iniciado,FC 6.7,Cliente API
+"6,6",Implementar permisos por rol,Tarea Nivel 3,2,Días,Saul,2026-12-22,2026-12-23,No Iniciado,FC 6.8,Control de acceso móvil
+"6,7",Implementar lector QR móvil,Tarea Nivel 3,3,Días,Miguel,2026-12-25,2026-12-27,No Iniciado,,Escáner QR
+"6,8",Implementar registro de asistencia mediante QR,Tarea Nivel 3,3,Días,Ambos,2026-12-30,2027-01-01,No Iniciado,,Asistencia móvil
+"6,9",Implementar confirmación del registro,Tarea Nivel 3,1,Días,Ambos,2026-12-31,2026-12-31,No Iniciado,,Confirmación asistencia
+"6,1",Pruebas de integración QR-API-DB,Tarea Nivel 3,2,Días,Ambos,01/03/2027,2027-01-04,No Iniciado,,Integración validada
+"6,11",Corrección del flujo de asistencia móvil,Tarea Nivel 3,2,Días,Ambos,01/05/2027,2027-01-06,No Iniciado,,Versión móvil v1
+"6,12",Diseñar módulo móvil de reportes,Tarea Nivel 3,2,Días,Miguel,01/07/2027,2027-01-08,No Iniciado,,Diseño reportes móvil
+"6,13",Implementar registro de reportes docente,Tarea Nivel 3,2,Días,Miguel,01/09/2027,2027-01-10,No Iniciado,,Reportes desde móvil
+"6,14",Implementar consulta de reportes para prefectos,Tarea Nivel 3,2,Días,Saul,01/12/2027,2027-01-13,No Iniciado,,Bandeja prefectura
+"6,15",Implementar filtros de reportes,Tarea Nivel 3,1,Días,Miguel,01/12/2027,2027-01-12,No Iniciado,,Filtros móviles
+"6,16",Implementar canalización hacia administración,Tarea Nivel 3,1,Días,Saul,2027-01-13,2027-01-13,No Iniciado,,Flujo prefecto-administración
+"6,17",Integrar trazabilidad de reportes,Tarea Nivel 3,1,Días,Miguel,2027-01-13,2027-01-13,No Iniciado,,Historial del reporte
+"6,18",Pruebas funcionales de aplicación móvil,Tarea Nivel 3,1,Días,Saul,2027-01-14,2027-01-14,No Iniciado,,Evidencias móviles
+"6,19",Pruebas en dispositivos representativos,Tarea Nivel 3,1,Días,Ambos,2027-01-14,2027-01-14,No Iniciado,FC H3,Compatibilidad móvil
+"6,2",Correcciones de aplicación móvil,Tarea Nivel 3,1,Días,Saul,2027-01-15,2027-01-15,No Iniciado,,Versión candidata
+H04,HITO 04 — Aplicación móvil operativa,Hito,,,Ambos,2027-01-15,,No completado,,KPI-19 a KPI-28 validados
+7,SERVIDOR LOCAL E INFRAESTRUCTURA INSTITUCIONAL,Entregable Nivel 2,1,Meses,Ambos,2027-01-19,2027-02-18,No Iniciado,,Infraestructura local operativa
+"7,1",Levantar especificaciones del equipo servidor,Tarea Nivel 3,2,Días,Saul,2027-01-19,2027-01-20,No Iniciado,,Especificaciones documentadas
+"7,2",Verificar conectividad de red institucional,Tarea Nivel 3,2,Días,Ambos,2027-01-21,2027-01-22,No Iniciado,,Conectividad validada
+"7,3",Definir arquitectura de despliegue local,Tarea Nivel 3,2,Días,Saul,2027-01-23,2027-01-24,No Iniciado,,Arquitectura de despliegue
+"7,4",Preparar sistema operativo del servidor,Tarea Nivel 3,2,Días,Miguel,2027-01-26,2027-01-27,No Iniciado,,Entorno preparado
+"7,5",Configurar PostgreSQL en servidor local,Tarea Nivel 3,2,Días,Miguel,2027-01-28,2027-01-29,No Iniciado,,BD local operativa
+"7,6",Configurar backend/API en servidor,Tarea Nivel 3,2,Días,Saul,2027-01-30,2027-01-31,No Iniciado,,Backend local operativo
+"7,7",Configurar frontend web para red local,Tarea Nivel 3,2,Días,Miguel,02/02/2027,2027-02-03,No Iniciado,,Web LAN operativa
+"7,8",Integrar aplicación móvil con servidor local,Tarea Nivel 3,2,Días,Ambos,02/04/2027,2027-02-05,No Iniciado,,App conectada a LAN
+"7,9",Configurar control de acceso al servidor,Tarea Nivel 3,1,Días,Saul,02/05/2027,2027-02-05,No Iniciado,,Acceso controlado
+"7,1",Configurar respaldos automáticos,Tarea Nivel 3,2,Días,Miguel,02/07/2027,2027-02-08,No Iniciado,,Sistema de respaldos
+"7,11",Probar recuperación de respaldos,Tarea Nivel 3,2,Días,Saul,02/09/2027,2027-02-10,No Iniciado,,Recuperación validada
+"7,12",Probar operación sin Internet,Tarea Nivel 3,2,Días,Ambos,02/11/2027,2027-02-12,No Iniciado,,Operación LAN validada
+"7,13",Documentar instalación y recuperación del servidor,Tarea Nivel 3,1,Días,Saul,02/12/2027,2027-02-12,No Iniciado,,Documentación técnica
+"7,14",Verificación de KPI-29 a KPI-34,Tarea Nivel 3,1,Días,Ambos,2027-02-13,2027-02-13,No Iniciado,,Evidencias H05
+H05,HITO 05 — Servidor local e infraestructura institucional,Hito,,,Ambos,2027-02-13,,No completado,,KPI-29 a KPI-34 validados
+8,INTEGRACIÓN Y OPERACIÓN PILOTO,Entregable Nivel 2,19,Días,Ambos,2027-02-17,2027-03-07,No Iniciado,FC H3,Operación piloto integrada
+"8,1",Diseñar plan de pruebas con usuarios,Tarea Nivel 3,2,Días,Miguel,2027-02-17,2027-02-18,No Iniciado,CC 6.1,Plan piloto
+"8,2",Preparar datos y escenarios de prueba,Tarea Nivel 3,2,Días,Saul,2027-02-19,2027-02-20,No Iniciado,CC 6.1,Datos de prueba
+"8,3",Preparar instrumentos de usabilidad,Tarea Nivel 3,1,Días,Miguel,2027-02-20,2027-02-20,No Iniciado,"FC 6.2, 6.3",Instrumentos
+"8,4",Ejecutar pruebas con estudiantes,Tarea Nivel 3,2,Días,Ambos,2027-02-23,2027-02-24,No Iniciado,FC 6.4,Resultados estudiantes
+"8,5",Ejecutar pruebas con personal escolar,Tarea Nivel 3,2,Días,Ambos,2027-02-25,2027-02-26,No Iniciado,CC 6.5,Resultados personal
+"8,6",Simular jornadas de asistencia,Tarea Nivel 3,2,Días,Saul,2027-02-27,2027-02-28,No Iniciado,"FC 6.4, 6.5, 6.6",Evidencia piloto
+"8,7",Analizar resultados y retroalimentación,Tarea Nivel 3,2,Días,Miguel,03/02/2027,2027-03-03,No Iniciado,FC 6.7,Informe de resultados
+"8,8",Corregir problemas detectados,Tarea Nivel 3,2,Días,Ambos,03/04/2027,2027-03-05,No Iniciado,FC 6.8,Versión corregida
+"8,9",Segunda ronda de validación,Tarea Nivel 3,1,Días,Ambos,03/05/2027,2027-03-05,No Iniciado,,Segunda validación
+"8,1",Verificar operación con pérdida de Internet,Tarea Nivel 3,1,Días,Ambos,03/06/2027,2027-03-06,No Iniciado,,Evidencia de continuidad
+H06,HITO 06 — Integración y operación piloto,Hito,,,Ambos,03/06/2027,,No completado,,KPI-35 a KPI-44 validados
+9,VALIDACIÓN INTEGRAL Y CALIDAD FINAL,Entregable Nivel 2,13,Días,Ambos,2027-03-09,2027-03-21,No Iniciado,,Plataforma integral validada
+"9,1",Integración final de módulos,Tarea Nivel 3,2,Días,Ambos,03/09/2027,2027-03-10,No Iniciado,,Plataforma integrada
+"9,2",Ejecutar pruebas end-to-end,Tarea Nivel 3,2,Días,Ambos,03/11/2027,2027-03-12,No Iniciado,FC 6.9,Evidencias E2E
+"9,3",Ejecutar pruebas de regresión,Tarea Nivel 3,1,Días,Saul,03/12/2027,2027-03-12,No Iniciado,FC H4,Evidencias de regresión
+"9,4",Validar flujo de reportes,Tarea Nivel 3,1,Días,Miguel,2027-03-13,2027-03-13,No Iniciado,FC H4,Flujo de reportes validado
+"9,5",Validar comunicación por correo electrónico,Tarea Nivel 3,1,Días,Saul,2027-03-15,2027-03-15,No Iniciado,FC 7.1,Comunicación validada
+"9,6",Validar historial y control de asistencia,Tarea Nivel 3,1,Días,Ambos,2027-03-16,2027-03-16,No Iniciado,FC 7.2,Asistencia validada
+"9,7","Validar roles, permisos y trazabilidad",Tarea Nivel 3,1,Días,Saul,2027-03-17,2027-03-17,No Iniciado,FC 7.3,Seguridad funcional validada
+"9,8",Correcciones de integración,Tarea Nivel 3,1,Días,Ambos,2027-03-18,2027-03-18,No Iniciado,FC H4,Versión candidata
+"9,9",Verificación final de KPIs,Tarea Nivel 3,1,Días,Ambos,2027-03-19,2027-03-19,No Iniciado,FC 7.5,Matriz KPI validada
+"9,1",Preparar versión candidata a entrega,Tarea Nivel 3,1,Días,Ambos,2027-03-20,2027-03-20,No Iniciado,FC H4,Release candidate
+H07,HITO 07 — Plataforma integral validada,Hito,,,Ambos,2027-03-20,,No completado,FC 7.7,KPI-45 a KPI-64 validados
+10,PREPARACIÓN PARA OPERACIÓN Y ENTREGA,Entregable Nivel 2,7,Días,Ambos,2027-03-21,2027-03-27,No Iniciado,FC 7.8,Versión final entregable
+"10,1",Validar respaldos y recuperación finales,Tarea Nivel 3,1,Días,Saul,2027-03-21,2027-03-21,No Iniciado,FC 7.9,Evidencia final
+"10,2",Completar documentación técnica,Tarea Nivel 3,1,Días,Saul,2027-03-22,2027-03-22,No Iniciado,"FC 7.2, 7.4, 7.6, 7.10",Documentación técnica final
+"10,3",Completar manual de usuario,Tarea Nivel 3,1,Días,Miguel,2027-03-22,2027-03-22,No Iniciado,FC 7.11,Manual de usuario
+"10,4",Documentar pruebas y evidencias,Tarea Nivel 3,1,Días,Miguel,2027-03-23,2027-03-23,No Iniciado,FC 7.12,Expediente de pruebas
+"10,5",Preparar entorno definitivo de operación,Tarea Nivel 3,1,Días,Saul,2027-03-24,2027-03-24,No Iniciado,FC 7.13,Entorno preparado
+"10,6",Capacitación inicial,Tarea Nivel 3,1,Días,Ambos,2027-03-25,2027-03-25,No Iniciado,FC H5,Registro de capacitación
+"10,7",Demostración integral y aceptación,Tarea Nivel 3,1,Días,Ambos,2027-03-26,2027-03-26,No Iniciado,FC H5,Sistema demostrado
+"10,8",Preparar acta de entrega y cierre,Tarea Nivel 3,1,Días,Miguel,2027-03-27,2027-03-27,No Iniciado,FC H5,Acta de entrega
+H08,HITO 08 — Preparación para operación y entrega,Hito,,,Ambos,2027-03-27,,No completado,FC 8.2,KPI-65 a KPI-71 validados
