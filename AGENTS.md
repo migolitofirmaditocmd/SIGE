@@ -14,7 +14,7 @@ Antes de crear, modificar, refactorizar o eliminar cualquier archivo o código e
 
 ## 🏗️ Stack Tecnológico
 * **Backend**: Python 3.13 + Django 5.1 + Django REST Framework + PostgreSQL (con fallback SQLite local) + Pytest.
-* **Frontend**: Next.js / React / TypeScript / PWA.
+* **Frontend**: Next.js (React, TypeScript, Tailwind CSS, Squircle UI, PWA con Service Worker para soporte offline).
 * **Criptografía**: Tokens opacos UUIDv4 con firma HMAC-SHA256 y renderizado PNG (qrcode + Pillow).
 
 ## 🛠️ Comandos Principales
