@@ -1,8 +1,8 @@
 # Criterios de Aceptación — SIGE
 ### Sistema Integral de Gestión Escolar
 **Documento complementario de:** `SIGE_Historias_de_Usuario_v1.md`
-**Derivado de:** Catálogo de Reglas de Negocio v2.1 · Especificación de Requisitos v2.1 (RF/RNF) · Diagramas de flujo · Acta Constitutiva v9
-**Versión:** 1.1 | **Estado:** Para revisión del equipo
+**Derivado de:** Catálogo de Reglas de Negocio v3 · Especificación de Requisitos v3 (RF/RNF) · Diagramas de flujo · Acta Constitutiva v10
+**Versión:** 2 | **Estado:** Para revisión del equipo
 
 ---
 
@@ -82,11 +82,12 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-002-08 · Alt** — **Dado que** el bloqueo dura 15 minutos por defecto, **cuando** transcurren 15 minutos desde el bloqueo, **entonces** la cuenta vuelve a aceptar intentos.
 
 ### SIGE-US-003 — Dar de alta una cuenta de usuario con rol
-- **CA-003-01 · Feliz** — **Dado que** un ADM captura nombre, usuario único, correo, rol y contraseña válida, **cuando** guarda, **entonces** se crea la cuenta con exactamente un rol y queda auditada.
+- **CA-003-01 · Feliz** — **Dado que** un ADM captura nombre(s), apellido paterno, usuario único, correo, rol y contraseña válida, **cuando** guarda, **entonces** se crea la cuenta con exactamente un rol y queda auditada.
 - **CA-003-02 · Neg** — **Dado que** el usuario o el correo ya existen, **cuando** el ADM guarda, **entonces** se rechaza con indicación del campo duplicado.
 - **CA-003-03 · Neg** — **Dado que** la contraseña no cumple la política mínima, **cuando** el ADM guarda, **entonces** se rechaza indicando qué requisito falta.
 - **CA-003-04 · Perm** — **Dado que** el usuario autenticado no es ADM, **cuando** accede a la sección de altas (por menú o por URL/API), **entonces** recibe permiso denegado.
 - **CA-003-05 · Neg** — **Dado que** se intenta asignar dos roles a la misma cuenta, **cuando** se guarda, **entonces** se rechaza: solo un rol activo (RN-AUT-01).
+- **CA-003-06 · Neg** — **Dado que** falta el nombre(s) o el apellido paterno, **cuando** el ADM guarda, **entonces** se rechaza indicando el campo faltante.
 
 ### SIGE-US-004 — Desactivar cuentas y reasignar rol
 - **CA-004-01 · Feliz** — **Dado que** un ADM selecciona una cuenta activa, **cuando** confirma la desactivación, **entonces** la cuenta queda `DESACTIVADA`, sus tokens de renovación se invalidan y no se elimina ningún registro.
@@ -103,6 +104,8 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-005-04 · Neg** — **Dado que** el enlace ya se usó, **cuando** se abre otra vez, **entonces** se rechaza.
 - **CA-005-05 · Feliz** — **Dado que** el usuario define una nueva contraseña que cumple la política, **cuando** confirma, **entonces** se actualiza y las sesiones anteriores quedan invalidadas.
 - **CA-005-06 · Alt** — **Dado que** no hay Internet, **cuando** se solicita el enlace, **entonces** SIGE informa que el servicio de correo no está disponible sin afectar el resto de funciones.
+- **CA-005-07 · Feliz** — **Dado que** un usuario ya tiene un enlace de restablecimiento vigente sin usar, **cuando** solicita uno nuevo, **entonces** recibe el nuevo enlace y el anterior deja de funcionar aunque no haya expirado.
+- **CA-005-08 · Neg** — **Dado que** un enlace fue invalidado por la emisión de uno nuevo, **cuando** el usuario intenta abrirlo, **entonces** se rechaza igual que un enlace expirado.
 
 ### SIGE-US-006 — Restringir funciones y datos según el rol
 - **CA-006-01 · Perm** — **Dado que** cada rol tiene permisos definidos, **cuando** se ejecuta la batería de pruebas de autorización negativa (cada rol contra cada función no permitida), **entonces** el 100 % de los intentos se rechaza en la API.
@@ -133,11 +136,17 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-008-05 · Neg** — **Dado que** dos altas simultáneas usan la misma matrícula, **cuando** se procesan, **entonces** solo una se persiste y la otra se rechaza por unicidad.
 - **CA-008-06 · Perm** — **Dado que** el usuario es DOC, PRE o SL, **cuando** intenta crear un estudiante (menú, URL o API), **entonces** se deniega.
 - **CA-008-07 · Aud** — **Dado que** el alta se completa, **cuando** se consulta el expediente, **entonces** registra quién y cuándo la realizó.
-- **CA-008-08 · Feliz** — **Dado que** el PAD captura tipo de sangre y alergias, **cuando** un PRE consulta el expediente, **entonces** los ve; **cuando** consulta el adeudo de pago o materias pendientes, **entonces** no los ve. |
-- **CA-008-09 · Perm** — **Dado que** un DOC o SL consulta un expediente, **cuando** se muestra, **entonces** no ve ningún campo de salud ni de situación administrativa. |
+- **CA-008-08 · Feliz** — **Dado que** el PAD captura tipo de sangre y alergias, **cuando** un PRE consulta el expediente, **entonces** los ve; **cuando** consulta el adeudo de pago o materias pendientes, **entonces** no los ve.
+- **CA-008-09 · Perm** — **Dado que** un DOC o SL consulta un expediente, **cuando** se muestra, **entonces** no ve ningún campo de salud ni de situación administrativa.
+- **CA-008-10 · Feliz** — **Dado que** el PAD captura nombre(s) «María José», apellido paterno «De la Cruz» y apellido materno vacío, **cuando** guarda, **entonces** el registro se guarda con esos campos tal como se capturaron y el apellido materno queda vacío.
+- **CA-008-11 · Neg** — **Dado que** falta el nombre(s) o el apellido paterno, **cuando** el PAD guarda, **entonces** no se guarda nada y se señala el campo faltante.
+- **CA-008-12 · Neg** — **Dado que** un campo de nombre contiene dígitos o símbolos no permitidos (p. ej. «Ana3», «Pérez@»), **cuando** el PAD guarda, **entonces** se rechaza señalando el campo.
+- **CA-008-13 · Neg** — **Dado que** un campo de nombre trae un valor sustituto («N/A», «SIN APELLIDO», «-»), **cuando** el PAD guarda, **entonces** se rechaza indicando que el apellido materno se deja vacío si no existe.
+- **CA-008-14 · Alt** — **Dado que** un nombre se captura con espacios al inicio, al final o repetidos («  Juan   Carlos »), **cuando** el PAD guarda, **entonces** se almacena sin espacios sobrantes («Juan Carlos») y sin alterar mayúsculas ni acentos.
+- **CA-008-15 · Límite** — **Dado que** un campo de nombre tiene 1, 2, 60 o 61 caracteres, **cuando** el PAD guarda, **entonces** se rechazan 1 y 61 y se aceptan 2 y 60.
 
 ### SIGE-US-009 — Guardar y completar un registro incompleto
-- **CA-009-01 · Alt** — **Dado que** faltan la fecha de nacimiento o la fotografía pero existen nombre, matrícula, grado, grupo, ciclo y un tutor con contacto válido, **cuando** el PAD guarda, **entonces** el registro se guarda como INCOMPLETO, permanece `ACTIVO` y la ficha lista los campos faltantes.
+- **CA-009-01 · Alt** — **Dado que** faltan la fecha de nacimiento o la fotografía pero existen nombre(s), apellido paterno, matrícula, grado, grupo, ciclo y un tutor con contacto válido, **cuando** el PAD guarda, **entonces** el registro se guarda como INCOMPLETO, permanece `ACTIVO` y la ficha lista los campos faltantes.
 - **CA-009-02 · Neg** — **Dado que** no se cumplen los requisitos mínimos, **cuando** el PAD intenta guardar, **entonces** no se guarda nada.
 - **CA-009-03 · UX** — **Dado que** un registro es incompleto, **cuando** aparece en listas o en su ficha, **entonces** muestra la insignia "Incompleto".
 - **CA-009-04 · Feliz** — **Dado que** el PAD completa el último campo faltante, **cuando** guarda, **entonces** la insignia desaparece.
@@ -154,6 +163,14 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-010-06 · Neg** — **Dado que** una comunicación va dirigida a un tutor no marcado como válido, **cuando** se intenta enviar, **entonces** se rechaza (RN-COM-01).
 - **CA-010-07 · Feliz** — **Dado que** un tutor solo tiene teléfono (sin correo), **cuando** se guarda, **entonces** queda marcado como contacto válido.
 - **CA-010-08 · Neg** — **Dado que** un estudiante `ACTIVO` solo tiene un tutor con únicamente teléfono, **cuando** se intenta enviar una comunicación automatizada de un reporte, **entonces** se rechaza por falta de correo (RN-COM-01), aunque el tutor sea "contacto válido".
+- **CA-010-09 · Neg** — **Dado que** el PAD captura un tutor sin apellido paterno, **cuando** guarda, **entonces** se rechaza indicando el campo faltante.
+- **CA-010-10 · Feliz** — **Dado que** el PAD captura un tutor con nombre(s) y apellido paterno pero sin apellido materno, **cuando** guarda, **entonces** el tutor se guarda con el apellido materno vacío.
+- **CA-010-11 · Feliz** — **Dado que** ya existe el tutor «Juan Pérez López» con el mismo correo, **cuando** el PAD da de alta a un hermano y captura un tutor con el mismo nombre y correo, **entonces** SIGE lo detecta como coincidencia fuerte y ofrece reutilizarlo.
+- **CA-010-12 · Neg** — **Dado que** dos tutores solo comparten el mismo teléfono pero tienen nombres distintos, **cuando** se captura el segundo, **entonces** SIGE NO los reconoce como el mismo tutor y crea un `GUARDIAN` independiente.
+- **CA-010-13 · Feliz** — **Dado que** un tutor está vinculado a 3 estudiantes, **cuando** el PAD edita su teléfono, **entonces** ve el aviso "Este cambio afectará a 3 estudiantes" con sus nombres antes de guardar.
+- **CA-010-14 · Feliz** — **Dado que** el PAD confirma el cambio de teléfono de un tutor compartido, **cuando** se guarda, **entonces** los 3 vínculos reflejan el nuevo teléfono de inmediato.
+- **CA-010-15 · Feliz** — **Dado que** un tutor tenía su teléfono marcado como inválido manualmente y el PAD lo corrige, **cuando** se guarda el nuevo teléfono, **entonces** la invalidación manual se retira y el indicador de contacto válido se recalcula.
+- **CA-010-16 · Feliz** — **Dado que** el PAD separa a un tutor vinculado por error a un estudiante, **cuando** confirma, **entonces** se crea un `GUARDIAN` independiente solo para ese estudiante y los demás vínculos del tutor original no cambian.
 
 ### SIGE-US-011 — Consultar y filtrar expedientes
 - **CA-011-01 · Feliz** — **Dado que** un PRE/PAD/ADM abre el listado, **cuando** filtra por nombre, matrícula, grupo, grado o estatus, **entonces** obtiene resultados paginados que cumplen.
@@ -162,6 +179,8 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-011-04 · Perm** — **Dado que** el usuario es DOC o SL, **cuando** intenta consultar expedientes, **entonces** se deniega.
 - **CA-011-05 · UX** — **Dado que** el consentimiento de un tutor está `PENDIENTE`, **cuando** un rol autorizado abre el expediente, **entonces** ve una advertencia sin que se bloquee la consulta.
 - **CA-011-06 · UX** — **Dado que** no hay coincidencias, **cuando** se aplica el filtro, **entonces** se muestra un estado vacío; en móvil los resultados se presentan como tarjetas.
+- **CA-011-07 · Feliz** — **Dado que** existe el estudiante «María José De la Cruz Pérez», **cuando** un PRE/PAD/ADM busca «jose de la cruz» o «PEREZ», **entonces** el estudiante aparece en los resultados (sin distinguir acentos, mayúsculas ni el campo de nombre).
+- **CA-011-08 · Feliz** — **Dado que** se abre el listado sin ordenar, **cuando** se muestra, **entonces** el orden es apellido paterno, apellido materno y nombre(s).
 
 ### SIGE-US-012 — Modificar los datos de un estudiante
 - **CA-012-01 · Feliz** — **Dado que** el PAD edita un dato no inmutable, **cuando** guarda, **entonces** se actualiza la ficha.
@@ -169,6 +188,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-012-03 · Alt** — **Dado que** hay un error de matrícula, **cuando** un PAD/ADM usa la corrección excepcional con motivo, **entonces** se aplica y queda en bitácora con valor anterior y nuevo.
 - **CA-012-04 · Neg** — **Dado que** la matrícula corregida ya existe en otro estudiante, **cuando** se guarda, **entonces** se rechaza.
 - **CA-012-05 · Perm** — **Dado que** el usuario no es PAD/ADM, **cuando** intenta modificar datos, **entonces** se deniega.
+- **CA-012-06 · Neg** — **Dado que** el PAD edita el nombre de un estudiante, **cuando** deja vacío el apellido paterno o incluye caracteres no permitidos, **entonces** la API rechaza el cambio y la ficha no se modifica.
 
 ### SIGE-US-013 — Cambiar grupo o ciclo conservando el historial
 - **CA-013-01 · Feliz** — **Dado que** un estudiante `ACTIVO` está en un grupo, **cuando** el PAD lo cambia a otro con fecha efectiva, **entonces** la ficha refleja el grupo nuevo.
@@ -212,6 +232,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-017-03 · UX** — **Dado que** se muestra la pantalla de importación, **cuando** el usuario aún no selecciona archivo, **entonces** la opción de plantilla está visible antes del selector.
 - **CA-017-04 · Aud** — **Dado que** se actualiza el diccionario, **cuando** se descarga la plantilla, **entonces** refleja la versión vigente.
 - **CA-017-05 · Perm** — **Dado que** el rol no es PAD/ADM, **cuando** intenta acceder a la importación, **entonces** se deniega.
+- **CA-017-06 · Feliz** — **Dado que** el usuario descarga la plantilla, **cuando** la abre, **entonces** trae columnas separadas de nombre(s), apellido paterno y apellido materno para el estudiante y para cada tutor, y no una columna única de nombre.
 
 ### SIGE-US-018 — Cargar un archivo y validar su estructura
 - **CA-018-01 · Feliz** — **Dado que** el archivo `.csv` o `.xlsx` cumple exactamente el diccionario (columnas, tipos, formato), **cuando** se carga, **entonces** SIGE continúa al procesamiento de filas.
@@ -222,6 +243,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-018-06 · Perm** — **Dado que** el rol no es PAD/ADM, **cuando** intenta cargar un archivo, **entonces** se deniega (RN-IMP-05).
 - **CA-018-07 · Feliz** — **Dado que** el usuario elige grado, grupo, ciclo y turno antes de cargar el archivo, **cuando** confirma la importación, **entonces** todas las filas válidas quedan asociadas a ese grupo.
 - **CA-018-08 · Neg** — **Dado que** el archivo trae estudiantes que en realidad pertenecen a más de un grupo, **cuando** se procesa bajo un solo grupo seleccionado, **entonces** SIGE no tiene forma de detectarlo (queda como responsabilidad operativa de quien importa dividir el archivo por grupo).
+- **CA-018-09 · Neg** — **Dado que** el archivo trae una sola columna de nombre completo en lugar de las columnas separadas, **cuando** se carga, **entonces** se rechaza el archivo completo indicando qué columnas faltan y no se persiste ningún registro.
 
 ### SIGE-US-019 — Procesar cada fila de forma independiente
 - **CA-019-01 · Feliz** — **Dado que** el archivo tiene filas válidas e inválidas, **cuando** se procesa, **entonces** las válidas quedan listas para insertar y las inválidas se descartan sin afectar a las demás.
@@ -231,6 +253,8 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-019-05 · Neg** — **Dado que** una fila tiene un campo con formato inválido, **cuando** se procesa, **entonces** el reporte registra fila, campo, tipo de error y descripción.
 - **CA-019-06 · Alt** — **Dado que** el proceso termina la última fila, **cuando** existen filas descartadas, **entonces** se muestra el reporte de filas descartadas al terminar.
 - **CA-019-07 · Alt** — **Dado que** una fila trae los mínimos pero no la fotografía, **cuando** se procesa, **entonces** se inserta como INCOMPLETO.
+- **CA-019-08 · Neg** — **Dado que** una fila no trae nombre(s) o apellido paterno del estudiante, **cuando** se procesa, **entonces** se descarta y el reporte registra fila, columna y motivo.
+- **CA-019-09 · Alt** — **Dado que** una fila trae el apellido materno vacío, **cuando** se procesa, **entonces** es válida y se inserta.
 
 ### SIGE-US-020 — Revisar la vista previa y confirmar la importación
 - **CA-020-01 · Feliz** — **Dado que** el procesamiento terminó, **cuando** SIGE muestra la vista previa, **entonces** indica cuántos registros se insertarán y cuántos se rechazarán.
@@ -413,7 +437,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-038-07 · Perm** — **Dado que** solo el ADM puede revocar, **cuando** un PAD intenta revocar el QR de un docente, **entonces** se rechaza.
 - **CA-038-08 · Feliz** — **Dado que** existen docentes `ACTIVO` de prueba, **cuando** se verifica el lote, **entonces** el 100 % tiene un único QR vigente y 0 identificadores repetidos (KPI-72).
 - **CA-038-09 · Neg** — **Dado que** ya existe un docente (activo o `INACTIVO`) con el mismo identificador, **cuando** el PAD guarda un alta nueva, **entonces** se rechaza y no se crea ni modifica ninguna ficha.
-- **CA-038-10 · Neg** — **Dado que** falta el nombre completo o el identificador, **cuando** el PAD guarda, **entonces** no se guarda nada.
+- **CA-038-10 · Neg** — **Dado que** falta el nombre(s), el apellido paterno o el identificador, **cuando** el PAD guarda, **entonces** no se guarda nada.
 - **CA-038-11 · Feliz** — **Dado que** el PAD captura solo los datos mínimos, **cuando** guarda, **entonces** el docente queda `ACTIVO` sin marca de incompleto, aunque no tenga fotografía, correo ni teléfono.
 - **CA-038-12 · Alt** — **Dado que** un docente `ACTIVO` con QR vigente no tiene fotografía, **cuando** se exporta su QR, **entonces** se incluye como sticker y se excluye (con motivo) de la credencial completa.
 
@@ -469,12 +493,13 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-044-05 · UX** — **Dado que** no hay registros en el periodo, **cuando** se consulta, **entonces** se muestra estado vacío.
 
 ### SIGE-US-059 — Editar la ficha de un docente
-- **CA-059-01 · Feliz** — **Dado que** el PAD edita el nombre, la fotografía, el correo o el teléfono de un docente, **cuando** guarda, **entonces** la ficha se actualiza y la edición queda auditada.
+- **CA-059-01 · Feliz** — **Dado que** el PAD edita el nombre (nombre(s), apellido paterno o apellido materno), la fotografía, el correo o el teléfono de un docente, **cuando** guarda, **entonces** la ficha se actualiza y la edición queda auditada.
 - **CA-059-02 · Neg** — **Dado que** la ficha ya tiene identificador, **cuando** el usuario intenta cambiarlo por la edición normal, **entonces** el campo está bloqueado y la API rechaza el cambio.
 - **CA-059-03 · Alt** — **Dado que** hay un error de identificador, **cuando** un PAD/ADM usa la corrección excepcional con motivo, **entonces** se aplica y la bitácora guarda valor anterior, valor nuevo, usuario, fecha/hora y motivo.
 - **CA-059-04 · Neg** — **Dado que** el identificador corregido ya existe en otra ficha (activa o `INACTIVO`), **cuando** se guarda, **entonces** se rechaza.
 - **CA-059-05 · Perm** — **Dado que** el usuario no es PAD ni ADM, **cuando** intenta editar una ficha (UI o API), **entonces** se deniega.
 - **CA-059-06 · Neg** — **Dado que** se intenta borrar un campo mínimo, **cuando** se guarda, **entonces** se rechaza.
+- **CA-059-07 · Neg** — **Dado que** el PAD edita el nombre de un docente, **cuando** deja vacío el apellido paterno o incluye caracteres no permitidos, **entonces** se rechaza y la ficha no se modifica.
 
 ### SIGE-US-060 — Desactivar y reactivar a un docente
 - **CA-060-01 · Feliz** — **Dado que** un docente está `ACTIVO`, **cuando** un PAD/ADM lo desactiva con motivo, **entonces** pasa a `INACTIVO` y el cambio queda auditado con usuario, fecha/hora, estatus anterior, nuevo y motivo.
@@ -594,11 +619,13 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 # EP-09 — Panel administrativo
 
 ### SIGE-US-054 — Administrar catálogos institucionales
-- **CA-054-01 · Feliz** — **Dado que** el ADM abre catálogos, **cuando** agrega o edita un grupo, grado, ciclo, tipo o nivel de gravedad, **entonces** el cambio queda disponible para el resto del sistema.
+- **CA-054-01 · Feliz** — **Dado que** el ADM abre catálogos, **cuando** agrega o edita un grupo, grado o ciclo, **entonces** el cambio queda disponible para el resto del sistema.
 - **CA-054-02 · Perm** — **Dado que** el usuario no es ADM, **cuando** intenta modificar un catálogo, **entonces** se rechaza.
 - **CA-054-03 · Alt** — **Dado que** un elemento tiene historial asociado, **cuando** el ADM intenta eliminarlo, **entonces** se ofrece desactivarlo y el historial no se altera.
 - **CA-054-04 · Neg** — **Dado que** ya existe un elemento con el mismo nombre en el catálogo, **cuando** se guarda otro igual, **entonces** se rechaza.
 - **CA-054-05 · UX** — **Dado que** el ADM va a desactivar un elemento en uso, **cuando** confirma, **entonces** ve una advertencia de uso.
+- **CA-054-06 · Perm** — **Dado que** el ADM abre la sección de catálogos, **cuando** busca una opción para crear, editar o desactivar un tipo de reporte, un nivel de gravedad o una opción del reglamento, **entonces** no existe ninguna interfaz para hacerlo.
+- **CA-054-07 · Perm** — **Dado que** cualquier usuario intenta modificar `REPORT_TYPE`, `REPORT_SEVERITY` o `REPORT_PRESET_OPTION` directamente por API, **cuando** se envía la solicitud, **entonces** se rechaza sin importar el rol.
 
 ### SIGE-US-055 — Configurar los parámetros operativos de asistencia
 - **CA-055-01 · Feliz** — **Dado que** el ADM abre parámetros, **cuando** modifica ventana de rebote, hora de corte u hora de verificación, **entonces** el valor se guarda y aplica desde el momento del cambio.
@@ -607,8 +634,10 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-055-04 · Aud** — **Dado que** se cambió un parámetro, **cuando** se consulta la bitácora, **entonces** aparece con usuario, fecha/hora, valor anterior y nuevo.
 - **CA-055-05 · Neg** — **Dado que** se modificó un parámetro, **cuando** se consultan registros históricos ya determinados, **entonces** no cambian.
 - **CA-055-06 · Perm** — **Dado que** el usuario no es ADM, **cuando** intenta modificar, **entonces** se rechaza.
-- **CA-055-07 · Feliz** — **Dado que** no se ha configurado, **cuando** el sistema inicia, **entonces** usa 5 min de rebote y 10:00 de verificación por defecto.
+- **CA-055-07 · Feliz** — **Dado que** no se ha configurado, **cuando** el sistema inicia, **entonces** usa 5 min de rebote, 10:00 de verificación para el turno matutino y 16:00 de verificación para el turno vespertino por defecto.
 - **CA-055-08 · Neg** — **Dado que** el ADM configura una hora de verificación anterior o igual a la de corte, **cuando** guarda, **entonces** se rechaza.
+- **CA-055-09 · Neg** — **Dado que** el turno vespertino tiene grupos con hora de corte a las 16:30, **cuando** el ADM configura la verificación vespertina a las 16:00 (anterior o igual al corte de un grupo activo de ese turno), **entonces** se rechaza.
+- **CA-055-10 · Neg** — **Dado que** la hora de verificación vespertina vigente es 16:00, **cuando** el ADM crea o edita un grupo vespertino con hora de corte de 16:15, **entonces** se rechaza (dejaría la verificación sin ser posterior al corte).
 
 ### SIGE-US-056 — Ver el panel de indicadores operativos
 - **CA-056-01 · Feliz** — **Dado que** el ADM abre el panel, **cuando** carga, **entonces** ve asistencia del día, reportes abiertos y credenciales pendientes.
@@ -653,4 +682,4 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 | EP-10 Continuidad | 2 | 11 |
 | **Total** | **62** | **407** (más los 16 transversales, que no cambian). |
 
-> Los hallazgos del Anexo A del documento de historias quedaron resueltos en RN v2.1 y RF v2.1; ya no hay criterios pendientes de validación por esa causa.
+> Los hallazgos del Anexo A del documento de historias quedaron resueltos en RN v2.1 y RF v2.1; La asistencia del personal administrativo (Acta OE-04) está en espera (CC-02); no tiene historias ni criterios en esta versión.

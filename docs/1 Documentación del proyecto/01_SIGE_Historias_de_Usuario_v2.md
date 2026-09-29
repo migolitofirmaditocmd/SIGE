@@ -1,7 +1,7 @@
 # Historias de Usuario — SIGE
 ### Sistema Integral de Gestión Escolar
-**Documento derivado de:** Acta Constitutiva v9 · Especificación de Requisitos v2.1 (RF/RNF) · Catálogo de Reglas de Negocio v2.1 · Diagramas de flujo (asistencia, registro de estudiante, ciclo QR, reportes escolares) · Guía de buenas prácticas de historias de usuario
-**Versión:** 1.1 | **Estado:** Para revisión del equipo
+**Documento derivado de:** Acta Constitutiva v10 · Especificación de Requisitos v3 (RF/RNF) · Catálogo de Reglas de Negocio v3 · Diagramas de flujo (asistencia, registro de estudiante, ciclo QR, reportes escolares) · Guía de buenas prácticas de historias de usuario
+**Versión:** 2 | **Estado:** Para revisión del equipo
 **Documento complementario:** `SIGE_Criterios_de_Aceptacion_v1.1.md` (criterios Dado/Cuando/Entonces por historia, criterios transversales, DoR y DoD)
 
 ---
@@ -62,6 +62,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 | **EP-09** | Administrar el sistema | Catálogos · Parámetros · Indicadores | US-054 a US-056 |
 | **EP-10** | Continuidad y operación local | Respaldo y recuperación · Operación sin Internet | US-057 a US-058 |
 
+> **Alcance de sujetos de asistencia (fase actual):** EP-05 (estudiantes) y EP-06 (docentes). La asistencia del personal administrativo está en espera (Acta §7.1, CC-02) y no tiene historias en esta versión.
 ---
 
 ## 4. Historias de usuario
@@ -102,7 +103,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 - **Precondiciones:** sesión de ADM.
 - **Reglas de negocio:** RN-AUT-01 (exactamente un rol activo) · RN-AUT-05 (alta y asignación de rol auditadas) · RNF-SEG-03 (política de contraseñas mínima configurable).
 - **Permisos:** solo ADM.
-- **Datos:** nombre completo (obl.), usuario único (obl.), correo institucional (obl., formato válido; se usa para recuperación US-005), rol (obl.: ADM, PRE, DOC, PAD, SL), contraseña inicial que cumpla la política (obl.).
+- **Datos:** nombre(s) (obl.), apellido paterno (obl.), apellido materno (opcional), usuario único (obl.), correo institucional (obl., formato válido; se usa para recuperación US-005), rol (obl.: ADM, PRE, DOC, PAD, SL), contraseña inicial que cumpla la política (obl.).
 - **UX/UI y estados:** formulario con validación en línea; éxito con confirmación; error de usuario/correo duplicado; permisos insuficientes si otro rol intenta acceder (ni por URL).
 - **Flujos alternativos:** contraseña que no cumple la política → se rechaza con el detalle de lo que falta.
 - **Dependencias:** US-006.
@@ -124,10 +125,10 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Épica:** EP-01 · **Módulo:** AUT · **Actor:** Usuario con cuenta · **Prioridad:** Should · **Hito:** 02
 > **Como** usuario que olvidó su contraseña, **quiero** restablecerla mediante un enlace enviado a mi correo institucional, **para** recuperar el acceso sin depender de un administrador.
 
-- **Reglas de negocio:** RF-AUT-04 (enlace de un solo uso con expiración configurable) · RN-INF-02 (el envío de correo depende de Internet; su ausencia no afecta las funciones internas) · RNF-SEG-03.
+- **Reglas de negocio:** RF-AUT-04 (enlace de un solo uso con expiración configurable) · RN-AUT-07 (un solo enlace vigente por usuario; el anterior se invalida al emitir uno nuevo) · RN-INF-02 (el envío de correo depende de Internet; su ausencia no afecta las funciones internas) · RNF-SEG-03.
 - **Datos:** correo/usuario; token de restablecimiento; nueva contraseña (política vigente).
 - **UX/UI y estados:** el mensaje tras solicitar el enlace es el mismo exista o no la cuenta (evita enumeración de usuarios, criterio OWASP); estados: enlace enviado, enlace expirado, enlace ya usado, sin Internet (se informa que el servicio de correo no está disponible y que puede pedir apoyo al ADM).
-- **Flujos alternativos:** enlace reutilizado o expirado → se rechaza y se ofrece solicitar otro; al completar el cambio se invalidan las sesiones previas.
+- **Flujos alternativos:** enlace reutilizado o expirado → se rechaza y se ofrece solicitar otro; solicitar un enlace nuevo invalida cualquier enlace previo vigente del mismo usuario (RN-AUT-07); al completar el cambio se invalidan las sesiones previas.
 - **Dependencias:** US-003 · **Trazabilidad:** RF-AUT-04 · OE-03.
 
 ### SIGE-US-006 — Restringir funciones y datos según el rol **[Habilitadora]**
@@ -180,10 +181,8 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 - **Contexto:** vía individual del F-EST (la vía masiva está en EP-03).
 - **Precondiciones:** catálogos de grupo/ciclo/grado disponibles (US-054).
-- **Reglas de negocio:** RN-EST-01 (un solo estatus: `ACTIVO`, `BAJA` o `EGRESADO`) · RN-EST-02 (matrícula única e inmutable) · RN-EST-03 (al menos un tutor con contacto válido) · RN-EST-10 (registro incompleto: mínimos y diferidos) · RN-EST-11 (contacto válido) · RN-TRX-01 (minimización: `domicilio`, `sexo` y `CURP` son opcionales) · RN-API-01 · RN-EST-12 (salud y situación administrativa, acceso restringido).
-- **Permisos:** PAD, ADM.
-- **Datos:** *mínimos:* nombre completo, matrícula, grado, grupo, ciclo escolar, turno, estatus y tutor(es); *obligatorios diferidos:* tipo de sangre, alergias, adeudo de pago, materias pendientes (opcionales, visibilidad según RN-EST-12), fecha de nacimiento y fotografía; *opcionales:* dirección (calle, colonia, municipio, estado, C.P. — opcional), sexo y CURP (RF-EST-01).
-- **Reglas de negocio:** agregar ``.
+- **Reglas de negocio:** RN-EST-01 (un solo estatus: `ACTIVO`, `BAJA` o `EGRESADO`) · RN-EST-02 (matrícula única e inmutable) · RN-EST-03 (al menos un tutor con contacto válido) · RN-EST-10 (registro incompleto: mínimos y diferidos) · RN-EST-11 (contacto válido) · RN-TRX-01 (minimización: `domicilio`, `sexo` y `CURP` son opcionales) · RN-API-01 · RN-EST-12 (salud y situación administrativa, acceso restringido) · RN-TRX-08/09/10 (estructura, formato y presentación del nombre).
+- **Datos:** *mínimos:* nombre(s), apellido paterno, matrícula, grado, grupo, ciclo escolar, turno, estatus y tutor(es); *obligatorios diferidos:* fecha de nacimiento y fotografía; *opcionales con acceso restringido (RN-EST-12):* tipo de sangre, alergias, indicador de adeudo de pago y materias pendientes; *opcionales:* apellido materno, dirección (calle, colonia, municipio, estado, C.P.), sexo y CURP (RF-EST-01).
 - **UX/UI y estados (F-EST):** captura → validación de campos y formato → verificación de tutor → validación final de consistencia y unicidad de matrícula → creación → asignación de grupo/ciclo → ficha activa. Estados: guardando, éxito, errores por campo, matrícula duplicada, faltan datos.
 - **Flujos alternativos:** sin tutor → no se guarda; matrícula existente → se rechaza y se indica el conflicto; faltan la fecha de nacimiento o la fotografía, pero existen los datos mínimos → se guarda como INCOMPLETO (US-009, RN-EST-10).
 - **Dependencias:** US-010, US-054.
@@ -195,7 +194,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 - **Contexto:** anotación del F-EST: los datos incompletos sí pueden existir como *registro incompleto* si están presentes los campos mínimos para crearlo.
 - **Reglas de negocio:** F-EST (los campos faltantes deben quedar identificados) · RN-EST-03 (el tutor sigue siendo obligatorio) · RN-EST-05 (solo `ACTIVO` recibe asistencia y reportes) · RN-EST-10 (el incompleto conserva el estatus `ACTIVO`, puede recibir asistencia y reportes, y no genera credencial hasta completarse).
-- **Datos:** lista de campos faltantes visible en la ficha. Mínimos: nombre, matrícula, grado, grupo, ciclo y tutor válido. Diferidos: fecha de nacimiento y fotografía.
+- **Datos:** lista de campos faltantes visible en la ficha. Mínimos: nombre(s), apellido paterno, matrícula, grado, grupo, ciclo y tutor válido.
 - **UX/UI y estados:** indicador "Incompleto" en listas y ficha, con checklist de faltantes; al completar el último campo el indicador desaparece; guardado parcial con confirmación.
 - **Flujos alternativos:** si no se cumplen los requisitos mínimos, el registro no se guarda.
 - **Dependencias:** US-008 · **Trazabilidad:** RF-EST-01 · OE-02 · F-EST.
@@ -204,11 +203,21 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Épica:** EP-02 · **Módulo:** EST · **Actor:** PAD (y ADM) · **Prioridad:** Must · **Hito:** 02
 > **Como** personal administrativo, **quiero** registrar uno o varios tutores por estudiante y marcar uno como contacto principal, **para** poder notificar a la familia correcta.
 
-- **Reglas de negocio:** RN-EST-03 (al menos un tutor con contacto válido antes de estar `ACTIVO`) · RN-EST-11 (contacto válido) · RN-COM-01 (solo se comunica a un contacto marcado como válido) · RN-TRX-06 (herencia de restricciones de acceso) · RN-TRX-01 · RN-EST-11 (contacto válido: correo o teléfono).
-- **Datos:** nombre (obl.), relación (`padre`, `madre`, `tutor legal`, `otro`; obl.), teléfono, correo o teléfono (al menos uno con formato válido); el correo sigue siendo el único canal de comunicación automatizada (RN-COM-01), indicador de contacto principal, indicador de contacto válido (nombre, relación y correo con formato válido; se marca automáticamente y el PAD o ADM puede invalidarlo con motivo, RN-EST-11).
+- **Reglas de negocio:** RN-EST-03 (al menos un tutor con contacto válido antes de estar `ACTIVO`) · RN-EST-11 (contacto válido) · RN-COM-01 (solo se comunica a un contacto marcado como válido) · RN-TRX-06 (herencia de restricciones de acceso) · RN-TRX-01 · RN-EST-11 (contacto válido: correo o teléfono) · RN-EST-13 (reconocimiento de un tutor ya existente por nombre + correo/teléfono) · RN-EST-14 (aviso y sincronización al editar un tutor compartido).
+- **Datos:** nombre(s) (obl.), apellido paterno (obl.), apellido materno (opcional), relación (`padre`, `madre`, `tutor legal`, `otro`; obl.), teléfono, correo o teléfono (al menos uno con formato válido); el correo sigue siendo el único canal de comunicación automatizada (RN-COM-01), indicador de contacto principal, indicador de contacto válido (nombre, relación y correo con formato válido; se marca automáticamente y el PAD o ADM puede invalidarlo con motivo, RN-EST-11).
 - **UX/UI y estados:** lista de tutores en la ficha con etiqueta "Principal"; no se puede eliminar al único tutor válido de un estudiante `ACTIVO`.
-- **Flujos alternativos:** correo con formato inválido → error en línea.
+- **Flujos alternativos:** correo con formato inválido → error en línea; al capturar un nuevo tutor, si SIGE encuentra una coincidencia fuerte con uno existente (RN-EST-13), ofrece "¿Es el mismo tutor de [nombre del/los hermano(s)]?" con opciones "Usar tutor existente" o "Crear tutor separado"; al editar el correo o el teléfono de un tutor vinculado a más de un estudiante, se muestra "Este cambio también afectará a N estudiante(s): [lista]" antes de guardar (RN-EST-14); el PAD/ADM puede separar a un tutor reconocido por error desde su ficha, sin afectar a los demás estudiantes.
 - **Dependencias:** US-008 · **Trazabilidad:** RF-EST-03 · OE-02 · KPI-07.
+
+### SIGE-US-063 — Separar a un tutor reconocido por error
+**Épica:** EP-02 · **Módulo:** EST · **Actor:** PAD (y ADM) · **Prioridad:** Should · **Hito:** 02
+> **Como** personal administrativo, **quiero** separar a un tutor que el sistema vinculó por error a un estudiante que no es su familiar, **para** corregir el expediente sin afectar a los estudiantes correctamente vinculados.
+
+- **Reglas de negocio:** RN-EST-13 (coincidencia fuerte no es infalible; requiere corrección manual) · RN-AUT-05 (auditoría).
+- **Datos:** estudiante y tutor a separar; motivo (opcional).
+- **UX/UI y estados:** acción "Separar tutor" en la ficha del vínculo; confirmación explicando que se creará un `GUARDIAN` independiente solo para ese estudiante, sin tocar a los demás.
+- **Flujos alternativos:** el tutor separado conserva su propio historial de consentimiento a partir del momento de la separación.
+- **Dependencias:** US-010 · **Trazabilidad:** RF-EST-07 · RN-EST-13 · OE-02.
 
 ### SIGE-US-011 — Consultar y filtrar expedientes
 **Épica:** EP-02 · **Módulo:** EST · **Actor:** ADM, PRE, PAD · **Prioridad:** Must · **Hito:** 02
@@ -216,15 +225,15 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 - **Reglas de negocio:** RN-TRX-02 (acceso solo por rol) · RN-EST-04 (los expedientes de `BAJA`/`EGRESADO` siguen consultables por rol autorizado) · RN-EST-08 (advertencia si algún tutor tiene consentimiento `PENDIENTE` o `REVOCADO`).
 - **Permisos:** ADM, PRE, PAD. DOC y SL no consultan expedientes.
-- **Datos:** filtros: nombre, matrícula, grupo, grado, estatus; resultados paginados; ficha con datos, tutores, asistencia e incidencias asociadas.
+- **Datos:** filtros: nombre (nombre(s), apellido paterno o materno; sin distinguir acentos ni mayúsculas), matrícula, grupo, grado, estatus; resultados paginados y ordenados por apellido paterno, apellido materno y nombre(s) (RN-TRX-10);
 - **UX/UI y estados:** buscador + filtros combinables; tabla en escritorio, tarjetas en móvil; estados: cargando, sin resultados, error, permiso denegado. Los campos de salud se muestran a ADM, PAD y PRE; los de adeudo de pago y materias pendientes solo a ADM y PAD (RN-EST-12).
 - **Trazabilidad:** RF-EST-04, RF-EST-05 · OE-02 · KPI-07.
 
 ### SIGE-US-012 — Modificar los datos de un estudiante
 **Épica:** EP-02 · **Módulo:** EST · **Actor:** PAD (y ADM) · **Prioridad:** Must · **Hito:** 02
 > **Como** personal administrativo, **quiero** corregir o actualizar los datos de un estudiante, **para** mantener el expediente vigente sin romper su identidad en el sistema.
-
 - **Reglas de negocio:** RN-EST-02 (la matrícula es inmutable; solo corrección excepcional por PAD/ADM con registro en bitácora) · F-EST (modificación manual solo por personal administrativo con permisos suficientes) · RN-AUT-05 (registro de auditoría).
+- **Datos:** el nombre(s), el apellido paterno y el apellido materno se editan con las mismas reglas del alta (RN-TRX-08/09).
 - **UX/UI y estados:** el campo matrícula aparece bloqueado; una acción separada "Corrección excepcional de matrícula" exige motivo y confirmación.
 - **Flujos alternativos:** nueva matrícula ya existente → se rechaza.
 - **Dependencias:** US-008 · **Trazabilidad:** RF-EST-01 · RN-EST-02 · OE-02 · F-EST.
@@ -275,7 +284,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Épica:** EP-03 · **Módulo:** IMP · **Actor:** ADM, PAD · **Prioridad:** Should · **Hito:** 02
 > **Como** personal administrativo, **quiero** descargar una plantilla CSV/XLSX con las columnas exactas del diccionario de datos y ejemplos válidos, **para** reducir errores al preparar el archivo.
 
-- **Reglas de negocio:** RN-IMP-01 (el archivo debe cumplir exactamente el diccionario vigente, la plantilla incluye columnas opcionales de salud y situación administrativa (RF-EST-06)).
+- **Reglas de negocio:** RN-IMP-01 (el archivo debe cumplir exactamente el diccionario vigente, la plantilla incluye columnas opcionales de salud y situación administrativa (RF-EST-06)) · RN-IMP-09 (el nombre del estudiante y de cada tutor va en columnas separadas: nombre(s), apellido paterno y apellido materno)..
 - **UX/UI y estados:** el botón de plantilla aparece **antes** de seleccionar el archivo (F-EST); descarga inmediata.
 - **Trazabilidad:** RF-IMP-02 · OE-02 · F-EST.
 
@@ -286,13 +295,14 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 - **Reglas de negocio:** RN-IMP-01 (se rechaza el archivo completo antes de procesar filas si columnas, tipos o formato no corresponden) · RN-IMP-05 (solo ADM y PAD importan) · fuera de alcance: limpieza/transformación de datos históricos (acta §7).
 - **Datos:** archivo `.csv` o `.xlsx`.
 - **UX/UI y estados (F-EST):** seleccionar archivo → "SIGE procesa y valida la estructura" → si no coincide, **detener toda la importación** con mensaje que indica qué columnas fallan. Antes de seleccionar el archivo, el usuario elige grado, grupo, ciclo y turno para todo el lote (RN-IMP-08)
+- **Flujos alternativos:** archivo con una sola columna de nombre completo (formato anterior) → se rechaza el archivo completo indicando qué columnas de nombre faltan (RN-IMP-09); SIGE no intenta separar el nombre.
 - **Trazabilidad:** RF-IMP-01 · OE-02 · F-EST.
 
 ### SIGE-US-019 — Procesar cada fila de forma independiente
 **Épica:** EP-03 · **Módulo:** IMP · **Actor:** SIS (iniciado por PAD/ADM) · **Prioridad:** Must · **Hito:** 02
 > **Como** personal administrativo, **quiero** que cada fila se valide por separado y que una fila inválida no impida procesar las demás, **para** cargar todo lo correcto y corregir solo lo defectuoso.
 
-- **Reglas de negocio:** RN-IMP-02 (filas independientes; inserción parcial + reporte de errores) · RN-IMP-03 (matrícula existente → fila rechazada como duplicada, nunca sobrescribe) · RN-EST-02, RN-EST-03 (cada fila debe traer al menos un tutor válido) · RN-IMP-06 (datos mínimos en cada fila; los obligatorios diferidos pueden venir vacíos y crean un registro INCOMPLETO) · F-EST (la fila con error se descarta y se pasa a la siguiente; ninguno de sus datos se guarda).
+- **Reglas de negocio:** RN-IMP-02 (filas independientes; inserción parcial + reporte de errores) · RN-IMP-03 (matrícula existente → fila rechazada como duplicada, nunca sobrescribe) · RN-EST-02, RN-EST-03 (cada fila debe traer al menos un tutor válido) · RN-IMP-06 (datos mínimos en cada fila; los obligatorios diferidos pueden venir vacíos y crean un registro INCOMPLETO) · F-EST (la fila con error se descarta y se pasa a la siguiente; ninguno de sus datos se guarda) · RN-IMP-09 (nombre(s) y apellido paterno del estudiante obligatorios; el apellido materno puede quedar vacío).
 - **Datos del error por fila:** fila afectada, campo, tipo de error, descripción.
 - **Flujos alternativos:** si al confirmar la matrícula ya fue creada por otro proceso, solo esa fila se rechaza y se reporta como duplicada (RN-IMP-07).
 - **Dependencias:** US-018 · **Trazabilidad:** RF-IMP-01 · OE-02 · F-EST.
@@ -486,7 +496,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 - **Contexto:** cubre RF-AST-11 (registro de docentes) y RF-QR-04 (QR del personal docente), que sustentan RN-QR-05 y RN-AST-11.
 - **Reglas de negocio:** RN-AST-11 (cada docente debe tener un QR vigente asociado inequívocamente a su identidad) · RN-QR-05 (máximo un QR vigente por persona y tipo de registro; estudiantes y docentes tienen identificadores independientes) · RN-QR-02/03 (mismas reglas de token que US-022) · RF-AST-08 (el docente no requiere cuenta) · RN-AST-23 (docente con datos mínimos y estatus `ACTIVO`/`INACTIVO`; el inactivo conserva su historial) · RN-QR-06 (solo el ADM revoca o regenera el QR docente) · RN-AST-26 (identificador único e inmutable, también frente a docentes `INACTIVO`) · RN-AST-27 (datos mínimos y opcionales).
-- **Datos:** *mínimos:* nombre completo, identificador interno (clave institucional) y estatus; *opcionales:* fotografía, correo y teléfono (RN-AST-27); QR.
+- **Datos:** *mínimos:* nombre(s), apellido paterno, identificador interno (clave institucional) y estatus; *opcionales:* apellido materno, fotografía, correo y teléfono (RN-AST-27); QR.
 - **Flujos alternativos:** identificador ya existente → se rechaza el alta; faltan datos mínimos → no se guarda.
 - **UX/UI y estados:** reutiliza el subproceso de token de F-QR T.
 - **Trazabilidad:** RF-AST-11, RF-QR-04 · RN-AST-11, RN-AST-23, RN-QR-05, RN-QR-06 · OE-01, OE-04 · KPI-72 · RN-AST-26, RN-AST-27.
@@ -548,7 +558,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
  
 - **Reglas de negocio:** RN-AST-26 (identificador inmutable; corrección excepcional por PAD/ADM con motivo y bitácora) · RN-AST-27 (datos mínimos y opcionales) · RN-AUT-05 (toda edición se audita) · RN-TRX-01.
 - **Permisos:** PAD, ADM.
-- **Datos:** nombre completo, fotografía, correo, teléfono; el identificador aparece bloqueado.
+- **Datos:** nombre(s), apellido paterno, apellido materno, fotografía, correo, teléfono; el identificador aparece bloqueado.`
 - **UX/UI y estados:** una acción separada "Corrección excepcional de identificador" exige motivo y confirmación; estados: guardando, éxito, error de validación, identificador duplicado.
 - **Flujos alternativos:** un identificador nuevo que ya existe se rechaza.
 - **Dependencias:** US-038.
@@ -571,7 +581,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Como** personal administrativo, **quiero** buscar docentes por nombre, identificador y estatus y ver su ficha, **para** localizar a un docente y consultar su programación, su QR y su historial.
  
 - **Reglas de negocio:** RN-AUT-06 (solo ADM y PAD) · RN-TRX-02 · RN-AST-23.
-- **Datos:** filtros por nombre, identificador y estatus; resultados paginados. La ficha muestra datos, estatus, estado del QR (`VIGENTE`, `REVOCADO` o sin QR), programación vigente y acceso al historial (US-044).
+- **Datos:** filtros por nombre (RN-TRX-10), identificador y estatus; resultados paginados. La ficha muestra datos, estatus, estado del QR (`VIGENTE`, `REVOCADO` o sin QR), programación vigente y acceso al historial (US-044).
 - **UX/UI y estados:** tabla en escritorio y tarjetas en móvil; estados: cargando, sin resultados, error, permiso denegado.
 - **Dependencias:** US-038, US-039, US-044.
 - **Trazabilidad:** RF-AST-12 · OE-04 · Hito 03.
@@ -687,9 +697,8 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 ### SIGE-US-054 — Administrar catálogos institucionales
 **Épica:** EP-09 · **Módulo:** ADM · **Actor:** ADM · **Prioridad:** Must · **Hito:** 02
-> **Como** administrador, **quiero** gestionar los catálogos de grupos, grados, ciclos escolares, tipos y niveles de gravedad de reporte, y las asignaciones prefecto–grupo y docente–grupo, **para** que el resto del sistema opere con datos consistentes.
-
-- **Reglas de negocio:** RN-ADM-01 (solo ADM modifica catálogos y asignaciones prefecto–grupo y docente–grupo) · RN-TRX-03 (los elementos ya usados en historial se **desactivan**, no se eliminan).
+> **Como** administrador, **quiero** gestionar los catálogos de grupos, grados y ciclos escolares, y las asignaciones prefecto–grupo y docente–grupo, **para** que el resto del sistema opere con datos consistentes.
+- **Reglas de negocio:** RN-ADM-01 (solo ADM modifica catálogos editables y asignaciones prefecto–grupo y docente–grupo) · RN-TRX-03 (los elementos ya usados en historial se **desactivan**, no se eliminan) · RN-ADM-03 (tipos, niveles de gravedad y opciones de reporte son fijos; ninguna interfaz los edita).
 - **UX/UI y estados:** listas con alta, edición y desactivación; advertencia de uso antes de desactivar.
 - **Trazabilidad:** RF-ADM-01 · OE-09 · KPI-07.
 
@@ -697,8 +706,8 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 **Épica:** EP-09 · **Módulo:** ADM · **Actor:** ADM · **Prioridad:** Should · **Hito:** 02/07
 > **Como** administrador, **quiero** configurar la ventana de rebote, la hora de corte y las horas de verificación de ausencias de estudiantes y docentes, **para** adaptar las reglas a la jornada de la institución.
 
-- **Reglas de negocio:** RN-ADM-02 (solo ADM; todo cambio auditado; no retroactivo; la hora de verificación debe ser posterior a la de corte) · RN-AST-03 (rebote 1–30 min, 5 por defecto) · RN-AST-08 (verificación estudiantil inicial 10:00) · RN-AST-14 (tolerancia docente inicial de 0 min) · RF-ADM-02 (parámetros estudiantiles y docentes independientes; opciones del reglamento por tipo/gravedad).
-- **Datos:** ventana de rebote (min), hora de corte por grupo/jornada, hora de verificación estudiantil, hora de verificación docente, tolerancia institucional de puntualidad docente, número y duración del bloqueo de cuentas, opciones del reglamento.
+- **Reglas de negocio:** RN-ADM-02 (solo ADM; todo cambio auditado; no retroactivo; la hora de verificación debe ser posterior a la de corte) · RN-AST-03 (rebote 1–30 min, 5 por defecto) · RN-AST-08 (verificación estudiantil inicial 10:00 matutino / 16:00 vespertino) · RN-AST-14 (tolerancia docente inicial de 0 min) · RF-ADM-02 (parámetros estudiantiles y docentes independientes; opciones del reglamento por tipo/gravedad).
+- **Datos:** ventana de rebote (min), hora de corte por grupo/jornada, hora de verificación estudiantil, hora de verificación docente, tolerancia institucional de puntualidad docente, número y duración del bloqueo de cuentas.
 - **UX/UI y estados:** validación de rangos; muestra desde cuándo aplica el nuevo valor.
 - **Trazabilidad:** RF-ADM-02 · OE-09 · KPI-16.
 

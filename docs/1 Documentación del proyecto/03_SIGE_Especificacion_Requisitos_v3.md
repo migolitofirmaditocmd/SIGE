@@ -1,7 +1,7 @@
 # Especificación de Requisitos del Sistema — SIGE
 ### Sistema Integral de Gestión Escolar
-**Documento derivado del Acta Constitutiva del Proyecto v9**
-**Versión:** 2.0 — Ampliación de RF/RNF | **Estado:** Para revisión del equipo
+**Documento derivado del Acta Constitutiva del Proyecto v10**
+**Versión:** 3 — Ampliación de RF/RNF | **Estado:** Para revisión del equipo
 
 ---
 
@@ -80,12 +80,12 @@ Y para los No Funcionales, la idea detrás de cada categoría:
 
 **RF-EST-01 — Expediente digital del estudiante** *(reemplaza y expande RF-02)*
 El sistema DEBE mantener una ficha centralizada y única por estudiante con los siguientes datos:
-- **Mínimos (obligatorios para guardar):** nombre completo, matrícula, grado, grupo, ciclo escolar, turno, estatus (`ACTIVO`, `BAJA`, `EGRESADO`) y al menos un tutor con contacto válido (RN-EST-03, RN-EST-11).
+- **Mínimos (obligatorios para guardar):** nombre(s), apellido paterno, matrícula, grado, grupo, ciclo escolar, turno, estatus (`ACTIVO`, `BAJA`, `EGRESADO`) y al menos un tutor con contacto válido (RN-EST-03, RN-EST-11).
+- **Opcional (nombre):** apellido materno. El nombre se captura, valida y presenta conforme a RN-TRX-08, RN-TRX-09 y RN-TRX-10.
 - **Obligatorios diferidos:** fecha de nacimiento y fotografía (RN-EST-10).
 - **Opcionales (dirección):** calle, colonia, municipio, estado, código postal, sexo y CURP.
 - **Opcionales (salud, acceso restringido):** tipo de sangre, alergias.
-- **Opcionales (situación administrativa, acceso restringido):** indicador de adeudo de pago, materias pendientes ("debe materias").
-El sistema DEBE aplicar la restricción de acceso de RN-EST-12 a los campos de salud y situación administrativa.
+- **Opcionales (situación administrativa, acceso restringido):** indicador de adeudo de pago (sí/no, sin monto), materias pendientes ("debe materias").
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02 · KPI-07, KPI-09.
 
 **RF-EST-02 — Transiciones de estatus del estudiante**
@@ -93,11 +93,11 @@ El sistema DEBE restringir las transiciones de estatus a un conjunto válido (`A
 - *Prioridad:* Should. **Trazabilidad:** OE-02 · Hito 02 · RN-EST-04, RN-EST-06, RN-EST-09.
 
 **RF-EST-03 — Asociación de familiares/tutores**
-El sistema DEBE permitir asociar uno o más tutores por estudiante, cada uno con nombre, relación, teléfono y correo, y DEBE permitir marcar un tutor como "contacto principal" para efectos de notificación. Un tutor tiene contacto válido cuando cuenta con nombre, relación y al menos correo o teléfono con formato válido (RN-EST-11); el correo sigue siendo el único canal habilitado para comunicaciones automatizadas (RN-COM-01); el sistema DEBE marcarlo automáticamente y permitir al Personal administrativo o Administrador invalidarlo con motivo. Un estudiante no puede guardarse sin al menos un tutor con contacto válido.
+El sistema DEBE permitir asociar uno o más tutores por estudiante, cada uno con nombre(s), apellido paterno, apellido materno (opcional), relación, teléfono y correo, y DEBE permitir marcar un tutor como "contacto principal" para efectos de notificación. Un tutor tiene contacto válido cuando cuenta con nombre(s), apellido paterno, relación y al menos correo o teléfono con formato válido (RN-EST-11); el correo sigue siendo el único canal habilitado para comunicaciones automatizadas (RN-COM-01); el sistema DEBE marcarlo automáticamente y permitir al Personal administrativo o Administrador invalidarlo con motivo. Un estudiante no puede guardarse sin al menos un tutor con contacto válido. Al dar de alta un tutor, el sistema DEBE buscar coincidencias fuertes (RN-EST-13) con tutores ya existentes y, si encuentra alguna, DEBE ofrecer reutilizar el tutor existente en vez de crear uno nuevo. Al modificar el correo, el teléfono, el nombre(s) o los apellidos de un tutor asociado a más de un estudiante, el sistema DEBE advertir, antes de guardar, cuántos estudiantes comparten a ese tutor y actualizar los datos en todos ellos al confirmar (RN-EST-14).
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02.
 
 **RF-EST-04 — Consulta y filtrado de expedientes**
-El sistema DEBE permitir buscar y filtrar estudiantes por nombre, matrícula, grupo, grado y estatus, con resultados paginados.
+El sistema DEBE permitir buscar y filtrar estudiantes por nombre (nombre(s), apellido paterno o apellido materno, sin distinguir acentos ni mayúsculas; RN-TRX-10), matrícula, grupo, grado y estatus, con resultados paginados.
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02.
 
 **RF-EST-05 — Registro de consentimiento del tutor**
@@ -106,8 +106,12 @@ El sistema DEBE permitir registrar, para cada tutor/familiar asociado a un estud
 - *Prioridad:* Must (regulatorio). **Trazabilidad:** OE-02 · Hito 02 · Protección de datos de menores (acta) · KPI-07, KPI-09, KPI-75 (tutores con estatus de consentimiento registrado, 100 %; ver sección 6).
 
 **RF-EST-06 — Datos de salud y situación administrativa**
-El sistema DEBE permitir registrar, de forma opcional, tipo de sangre, alergias, adeudo de pago y materias pendientes por estudiante, y DEBE restringir su consulta conforme a RN-EST-12.
-- *Prioridad:* Should. **Trazabilidad:** OE-02 · Protección de datos de menores (acta, sujeto a P3-A-01) · LFPDPPP.
+El sistema DEBE permitir registrar, de forma opcional, tipo de sangre, alergias, indicador de adeudo de pago (sí/no, sin monto) y materias pendientes por estudiante, y DEBE restringir su consulta conforme a RN-EST-12.
+- *Prioridad:* Should. **Trazabilidad:** OE-02 · Protección de datos de menores (acta §7, CC-01) · LFPDPPP.
+
+**RF-EST-07 — Reconocimiento y sincronización de tutores compartidos entre hermanos**
+El sistema DEBE reconocer que dos estudiantes comparten al mismo tutor cuando coincide su nombre completo y, además, su correo o su teléfono (RN-EST-13). El personal administrativo DEBE poder separar manualmente a un tutor reconocido por error, sin afectar a los demás estudiantes vinculados. Toda edición de los datos de contacto o de nombre de un tutor asociado a más de un estudiante DEBE mostrar, antes de confirmarse, cuántos y cuáles estudiantes se verán afectados (RN-EST-14).
+- *Prioridad:* Should. **Trazabilidad:** OE-02 · RF-EST-03 · RN-EST-13, RN-EST-14.
 
 **RF-IMP-01 — Importación masiva de estudiantes (CSV/XLSX)** *(expande RF-01)*
 El sistema DEBE permitir cargar archivos CSV y XLSX basados estrictamente en un diccionario de datos publicado por el equipo de desarrollo, ejecutando el proceso en modo transaccional por fila (una fila inválida no bloquea a las demás) y emitiendo, al finalizar, un reporte descargable con: total de filas procesadas, filas insertadas, filas con error y el detalle del error por fila (columna y motivo).
@@ -118,10 +122,12 @@ El sistema DEBE permitir cargar archivos CSV y XLSX basados estrictamente en un 
 > - Si al confirmar una matrícula ya fue creada por otro proceso, solo esa fila se rechaza (RN-IMP-07).
 > - El grado, grupo, ciclo escolar y turno se seleccionan una sola vez por lote, no van en el archivo (RN-IMP-08).
 > - El diccionario de datos de importación DEBE incluir columnas opcionales para tipo de sangre, alergias, adeudo de pago y materias pendientes, sujetas a la misma restricción de acceso que en RF-EST-06.
+> - El diccionario DEBE traer el nombre del estudiante y el de cada tutor en columnas separadas (nombre(s), apellido paterno y apellido materno); no se acepta una columna única de nombre completo ni se separa automáticamente (RN-IMP-09).
+> - Al insertar un tutor cuyo nombre, correo o teléfono coincida fuertemente con uno ya existente (RN-EST-13), la importación DEBE reutilizarlo en vez de crear uno nuevo, sin modificar los datos ya guardados de ese tutor (RN-IMP-10).
 - *Prioridad:* Must. **Trazabilidad:** OE-02 · Hito 02 · Fuera de alcance §7.
 
 **RF-IMP-02 — Plantilla de importación descargable**
-El sistema DEBERÍA proveer una plantilla CSV/XLSX descargable con las columnas exactas del diccionario de datos y ejemplos de formato válido, para reducir errores de captura por parte de la institución.
+El sistema DEBERÍA proveer una plantilla CSV/XLSX descargable con las columnas exactas del diccionario de datos y ejemplos de formato válido —incluidos un nombre compuesto (p. ej., nombre(s) «María José», apellido paterno «De la Cruz») y un apellido materno vacío—, para reducir errores de captura por parte de la institución.
 - *Prioridad:* Should. **Trazabilidad:** OE-02 · Hito 02.
 
 ---
@@ -167,11 +173,11 @@ El sistema DEBE restringir cada función y cada dato mostrado según el rol del 
 - *Prioridad:* Must. **Trazabilidad:** OE-03 · Hito 02 · KPI-08.
 
 **RF-AUT-03 — Gestión del ciclo de vida de cuentas**
-El sistema DEBE permitir a Administrador dar de alta, desactivar y reasignar el rol de una cuenta de usuario, y DEBE bloquear temporalmente una cuenta tras un número configurable de intentos fallidos consecutivos (5 por defecto) durante un periodo configurable (15 minutos por defecto), con desbloqueo manual anticipado por Administrador. Una cuenta con rol Docente DEBE poder vincularse a la ficha de un docente (RF-AST-11, RN-AST-30).
+El sistema DEBE permitir a Administrador dar de alta, desactivar y reasignar el rol de una cuenta de usuario, y DEBE bloquear temporalmente una cuenta tras un número configurable de intentos fallidos consecutivos (5 por defecto) durante un periodo configurable (15 minutos por defecto), con desbloqueo manual anticipado por Administrador. Una cuenta con rol Docente DEBE poder vincularse a la ficha de un docente (RF-AST-11, RN-AST-30). Toda cuenta registra el nombre de su titular con la estructura de RN-TRX-08 (nombre(s) y apellido paterno obligatorios; apellido materno opcional).
 - *Prioridad:* Must. **Trazabilidad:** OE-03 · Hito 02.
 
 **RF-AUT-04 — Recuperación segura de contraseña**
-El sistema DEBE proveer un mecanismo de restablecimiento de contraseña mediante enlace de un solo uso enviado al correo institucional registrado, con expiración configurable.
+El sistema DEBE proveer un mecanismo de restablecimiento de contraseña mediante enlace de un solo uso enviado al correo institucional registrado, con expiración configurable. Al emitirse un nuevo enlace, todo enlace previo del mismo usuario que no haya sido usado ni haya expirado DEBE invalidarse de inmediato, de modo que nunca convivan dos enlaces vigentes para el mismo usuario.
 - *Prioridad:* Should. **Trazabilidad:** OE-03 · Hito 02.
 
 **RF-AUT-05 — Bitácora de auditoría de accesos y acciones críticas**
@@ -181,6 +187,8 @@ El sistema DEBE registrar usuario, fecha/hora, acción y resultado para inicios 
 ---
 
 ### 3.4 Control de Asistencia — *(OE-04 · Hito 03)*
+
+**Alcance de sujetos de asistencia (fase actual):** este módulo cubre a **estudiantes** (RF-AST-01 a RF-AST-07) y **docentes** (RF-AST-08 a RF-AST-12). La asistencia del **personal administrativo**, prevista en OE-04 del Acta, está **en espera** (Acta §7.1, CC-02): no tiene RF asignado y el sistema no registra ni evalúa su asistencia. Cuando se active, le corresponderán los RF-AST-13 y sucesivos.
 
 **RF-AST-01 — Registro de asistencia por escaneo QR**
 El sistema DEBE generar un registro de asistencia al validar el código QR de un estudiante, asociándolo a fecha, hora, grupo y jornada/periodo escolar correspondiente.
@@ -243,13 +251,13 @@ El sistema DEBE conservar de forma permanente en la base de datos todo registro 
 
 **RF-AST-11 — Expediente y mantenimiento del personal docente**
 El sistema DEBE mantener una ficha (expediente) por docente, independiente de las cuentas de usuario, con:
-- **Datos mínimos (obligatorios):** nombre completo, identificador interno (clave institucional, única e inmutable, RN-AST-26) y estatus (`ACTIVO` / `INACTIVO`).
-- **Datos opcionales:** fotografía, correo electrónico y teléfono (RN-AST-27). No se recolectan otros datos personales.
+**Datos mínimos (obligatorios):** nombre(s), apellido paterno, identificador interno (clave institucional, única e inmutable, RN-AST-26) y estatus (`ACTIVO` / `INACTIVO`).
+- **Datos opcionales:** apellido materno, fotografía, correo electrónico y teléfono (RN-AST-27). No se recolectan otros datos personales.
 El sistema DEBE permitir al Personal administrativo y al Administrador registrar y editar la ficha y desactivar al docente con motivo; DEBE permitir **solo al Administrador** reactivarlo con motivo (RN-AST-28). Un docente nunca se elimina y su historial se conserva. Al desactivarlo aplican los efectos de RN-AST-29 (el QR no se revoca, la programación queda suspendida y el historial sigue consultable). El sistema DEBE permitir al Administrador vincular al docente con una cuenta de usuario con rol Docente (RN-AST-30). Todo alta, edición y cambio de estatus DEBE conservar trazabilidad (RN-AUT-05).
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · KPI-72 · RN-AST-23, RN-AST-26 a RN-AST-30.
 
 **RF-AST-12 — Consulta y filtrado de docentes**
-El sistema DEBE permitir al Personal administrativo y al Administrador buscar y filtrar docentes por nombre, identificador interno y estatus, con resultados paginados, y consultar su ficha con: datos, estatus, estado de su QR (`VIGENTE`, `REVOCADO` o sin QR), programación vigente y acceso a su historial de asistencia (RF-AST-10).
+El sistema DEBE permitir al Personal administrativo y al Administrador buscar y filtrar docentes por nombre (RN-TRX-10), identificador interno y estatus, con resultados paginados, y consultar su ficha con: datos, estatus, estado de su QR (`VIGENTE`, `REVOCADO` o sin QR), programación vigente y acceso a su historial de asistencia (RF-AST-10).
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · RN-AUT-06.
 
 ### 3.5 Reportes Escolares — *(OE-05/OE-06 · Hito 04/07)*
@@ -295,11 +303,11 @@ El sistema DEBE limitar la información enviada a terceros (proveedor de mensaje
 ### 3.7 Panel Administrativo — *(OE-09 (Panel administrativo) · Hito 02)*
 
 **RF-ADM-01 — Administración centralizada**
-El sistema DEBE proveer una interfaz única para que el rol Administrador gestione usuarios, estudiantes, docentes, catálogos (grupos, grados, ciclos, tipos y niveles de gravedad de reporte), las asignaciones prefecto–grupo y docente–grupo, y módulos habilitados.
+El sistema DEBE proveer una interfaz única para que el rol Administrador gestione usuarios, estudiantes, docentes, catálogos (grupos, grados y ciclos), las asignaciones prefecto–grupo y docente–grupo, y módulos habilitados. Los tipos de reporte, niveles de gravedad y opciones predeterminadas del reglamento (REPORT_TYPE, REPORT_SEVERITY, REPORT_PRESET_OPTION) son datos fijos, sembrados en la instalación inicial: el sistema NO DEBE proveer una interfaz para crearlos, editarlos ni desactivarlos (Acta §7 y §7.1, CC-03).
 - *Prioridad:* Must. **Trazabilidad:** 	OE-09 (Panel administrativo) · Hito 02.
 
 **RF-ADM-02 — Configuración de parámetros operativos**
-El sistema DEBE permitir configurar, de forma independiente para estudiantes y docentes, la ventana de prevención de rebote (1–30 min, 5 por defecto), la hora de corte por grupo y jornada, las horas de verificación de ausencias (10:00 inicial para estudiantes) —siempre posteriores a la hora de corte—, la tolerancia institucional de puntualidad docente (0 min inicial), el número y duración de bloqueo de cuentas (5 intentos / 15 min) y las opciones predeterminadas del reglamento por tipo/gravedad de reporte. Todo cambio DEBE auditarse y no ser retroactivo (RN-ADM-02).
+El sistema DEBE permitir configurar, de forma independiente para estudiantes y docentes, la ventana de prevención de rebote (1–30 min, 5 por defecto), la hora de corte por grupo y jornada, las horas de verificación de ausencias (10:00 inicial para estudiantes del turno matutino, 16:00 inicial para estudiantes del turno vespertino — valor provisional sujeto a confirmación de la institución) —siempre posteriores a la hora de corte del mismo grupo y turno—, la tolerancia institucional de puntualidad docente (0 min inicial), y el número y duración de bloqueo de cuentas (5 intentos / 15 min). Todo cambio DEBE auditarse y no ser retroactivo (RN-ADM-02). Las opciones predeterminadas del reglamento no forman parte de este panel (RF-ADM-01).
 - *Prioridad:* Should. **Trazabilidad:** 	OE-09 (Panel administrativo) · Hito 02/07.
 
 **RF-ADM-03 — Panel de indicadores (KPIs)**
@@ -344,7 +352,7 @@ La aplicación móvil DEBE poder comunicarse con el servidor local a través de 
 	
 ---
 
-### 3.10 Infraestructura y Servidor Local — *(	OE-11 (Servidor local) OE-13 · Hito 05)*
+### 3.10 Infraestructura y Servidor Local — *(	OE-11 (Servidor local) · Hito 05)*
 
 **RF-INF-01 — Despliegue en servidor local institucional**
 El sistema DEBE poder desplegarse en una computadora proporcionada por la institución, conectada a la red local, alojando backend, API y base de datos.

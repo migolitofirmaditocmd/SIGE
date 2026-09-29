@@ -1,4 +1,4 @@
-# ACTA CONSTITUTIVA DEL PROYECTO v9
+# ACTA CONSTITUTIVA DEL PROYECTO v10
 # Sistema Integral de Gestión Escolar
 
 
@@ -49,7 +49,8 @@ Implementar un módulo que permita registrar, consultar, modificar y administrar
 Implementar un sistema de autenticación y autorización que permita gestionar el acceso a la plataforma mediante los roles definidos por la institución, asegurando que cada usuario pueda acceder únicamente a las funciones y datos correspondientes a sus permisos antes de la puesta en operación del sistema.
 
 ### OE-04 — Registro y gestión de asistencia
-Desarrollar e implementar un módulo de control de asistencia que permita registrar, consultar, modificar conforme a permisos y administrar la asistencia de estudiantes, docentes y personal administrativo, mediante mecanismos de identificación definidos por la institución, incluyendo el escaneo de códigos QR desde la aplicación móvil cuando corresponda.
+Desarrollar e implementar un módulo de control de asistencia que permita registrar, consultar, modificar conforme a permisos y administrar la asistencia de estudiantes, docentes y personal administrativo, mediante mecanismos de identificación definidos por la institución, incluyendo el escaneo de códigos QR desde la aplicación móvil cuando corresponda. 
+**Alcance por fase:** en la fase actual el módulo cubre la asistencia de **estudiantes y docentes**. La asistencia del **personal administrativo** forma parte del objetivo, pero queda **en espera (*stand by*)** y se incorporará por control de cambios (CC-02, §7.1), sin necesidad de rediseñar el módulo.
 
 Para los estudiantes, el sistema deberá permitir generar un registro de asistencia asociado a una fecha, grupo y jornada o periodo escolar, determinando el estado correspondiente de cada alumno, como:
 
@@ -128,12 +129,13 @@ El proyecto deberá producir una plataforma integral de gestión escolar, compue
 ### 6.1. Gestión de estudiantes
 Módulo destinado a centralizar la información básica y administrativa de los estudiantes, permitiendo:
 
-- registrar y modificar datos de identificación, como nombre completo, fecha de nacimiento y fotografía;
+- registrar y modificar datos de identificación, como nombre(s), apellido paterno, apellido materno, fecha de nacimiento y fotografía;
 - registrar información escolar, como grado, grupo, ciclo escolar y matrícula;
 - asociar familiares o tutores, incluyendo sus datos de contacto y relación con el estudiante;
 - consultar el expediente del estudiante;
 - consultar la información relacionada con asistencia e incidencias;
 - administrar el estado del estudiante dentro de la institución, como activo, egresado o dado de baja;
+- registrar, de forma opcional y con acceso restringido por rol, tipo de sangre, alergias, indicador de adeudo de pago y materias pendientes;
 - importación de estudiantes a partir de archivos estructurados (Excel/CSV) que cumplan con un formato definido por el equipo de desarrollo, como mecanismo de alta inicial masiva.
 
 ### 6.2. Gestión de usuarios y permisos
@@ -153,7 +155,7 @@ Módulo encargado de generar y administrar la identificación digital de los est
 - generación de los códigos en un formato adecuado para su incorporación a las credenciales físicas.
 
 ### 6.4. Control de asistencia
-Módulo destinado al registro, consulta y administración de asistencia de estudiantes, docentes y personal administrativo, integrado con la aplicación móvil y la plataforma web.
+Módulo destinado al registro, consulta y administración de asistencia de estudiantes y docentes (la del personal administrativo queda en espera, CC-02), integrado con la aplicación móvil y la plataforma web.
 
 Se deberá poder:
 
@@ -305,12 +307,12 @@ La siguiente matriz delimita los componentes y funcionalidades contemplados dent
 
 | Área | Dentro del alcance | Fuera del alcance |
 |---|---|---|
-| **Gestión de estudiantes** | Registro, consulta, modificación y administración de la información de los estudiantes. Importación desde archivos estructurados (Excel/CSV) con formato definido. | Carga o incorporación masiva de información histórica de estudiantes cuando los datos no se encuentren en archivos estructurados, como Excel o CSV, o cuando requieran limpieza, corrección o transformación adicional antes de poder utilizarse en el sistema. |
-| **Gestión de usuarios** | Registro de usuarios, autenticación, gestión de cuentas y asignación de permisos de acuerdo con los roles definidos por la institución. | Administración de cuentas personales externas a la plataforma o sistemas de identidad institucional no contemplados durante la definición del proyecto. Registro opcional de tipo de sangre, alergias, adeudo de pago y materias pendientes del estudiante, con acceso restringido por rol.|
+| **Gestión de estudiantes** | Registro, consulta, modificación y administración de la información de los estudiantes. Importación desde archivos estructurados (Excel/CSV) con formato definido. Registro opcional de tipo de sangre, alergias, adeudo de pago (como indicador) y materias pendientes del estudiante, con acceso restringido por rol (incorporado por control de cambios, CC-01; §7.1). | Carga o incorporación masiva de información histórica de estudiantes cuando los datos no se encuentren en archivos estructurados, como Excel o CSV, o cuando requieran limpieza, corrección o transformación adicional antes de poder utilizarse en el sistema. |
+| **Gestión de usuarios** | Registro de usuarios, autenticación, gestión de cuentas y asignación de permisos de acuerdo con los roles definidos por la institución. | Administración de cuentas personales externas a la plataforma o sistemas de identidad institucional no contemplados durante la definición del proyecto.|
 | **Gestión de familiares** | Registro y asociación de familiares o responsables con los estudiantes correspondientes y consulta de la información necesaria para los procesos de comunicación. | Gestión de información familiar que no sea necesaria para la operación del sistema. |
 | **Identificación mediante QR** | Generación de identificadores QR únicos, asociación con estudiantes, consulta y validación de los códigos y preparación de los mismos para su incorporación en credenciales. | Diseño, fabricación, impresión, distribución o reposición física de las credenciales. |
-| **Control de asistencia** | Registro y consulta de asistencia de estudiantes, docentes y personal administrativo; escaneo y validación de QR mediante la aplicación móvil; registro de fecha y hora; asociación con grupo y jornada; historial diario por grupo; historial individual por estudiante; estados de asistió, faltó, llegó tarde y falta justificada; justificación y modificación de faltas por personal autorizado; prevención de registros inválidos o duplicados; generación de información de asistencia para apoyar procesos de evaluación. Alta y mantenimiento individual de la ficha de docentes. | Desarrollo de dispositivos físicos especializados para lectura de QR, sistemas biométricos o mecanismos de identificación no contemplados en los requerimientos del proyecto. Importación masiva de docentes. |
-| **Reportes escolares** | Registro de reportes por parte de docentes; clasificación por tipo emocional, académico o conductual; selección del nivel de gravedad; selección de opciones predeterminadas basadas en el reglamento escolar; observación adicional de 50–100 caracteres; envío al prefecto; filtrado y canalización por parte del prefecto; revisión por personal administrativo y determinación de los reportes que serán comunicados a la familia; almacenamiento y trazabilidad del flujo. | Automatización de decisiones disciplinarias, interpretación automática de situaciones, evaluación automática del comportamiento mediante inteligencia artificial o modificación del reglamento escolar desde el sistema. |
+| **Control de asistencia** | Registro y consulta de asistencia de estudiantes y docentes; escaneo y validación de QR mediante la aplicación móvil; registro de fecha y hora; asociación con grupo y jornada; historial diario por grupo; historial individual por estudiante; estados de asistió, faltó, llegó tarde y falta justificada; justificación y modificación de faltas por personal autorizado; prevención de registros inválidos o duplicados; generación de información de asistencia para apoyar procesos de evaluación. Alta y mantenimiento individual de la ficha de docentes. | Desarrollo de dispositivos físicos especializados para lectura de QR, sistemas biométricos o mecanismos de identificación no contemplados en los requerimientos del proyecto. Importación masiva de docentes. Asistencia del personal administrativo (diferida; ver §7.1, CC-02). |
+| **Reportes escolares** | Registro de reportes por parte de docentes; clasificación por tipo emocional, académico o conductual; selección del nivel de gravedad; selección de opciones predeterminadas basadas en el reglamento escolar; observación adicional de 50–100 caracteres; envío al prefecto; filtrado y canalización por parte del prefecto; revisión por personal administrativo y determinación de los reportes que serán comunicados a la familia; almacenamiento y trazabilidad del flujo. | Automatización de decisiones disciplinarias, interpretación automática de situaciones, evaluación automática del comportamiento mediante inteligencia artificial o modificación del reglamento escolar desde el sistema (los tipos, niveles de gravedad y opciones predeterminadas de reporte son datos fijos, sembrados en la instalación inicial; ver §7.1, CC-03). |
 | **Consultas e información** | Consulta, filtrado y generación de información consolidada sobre estudiantes, asistencia y reportes, de acuerdo con los permisos establecidos para cada rol. | Sistemas avanzados de analítica, inteligencia artificial o predicción que no hayan sido definidos dentro de los requerimientos originales. |
 | **Panel administrativo** | Administración de usuarios y estudiantes; consulta de información; gestión de módulos disponibles según el rol; gestión de asistencia; consulta y seguimiento de reportes; administración de catálogos y configuraciones necesarias para la operación del sistema. | Personalizaciones independientes para cada usuario que no sean necesarias para la operación general del sistema; funcionalidades administrativas no contempladas en los requisitos aprobados. |
 | **Comunicación con familiares** | Integración con el servicio de mensajería seleccionado para permitir el envío automatizado de información y reportes definidos por la institución. | Costos de servicios externos, campañas masivas, funcionalidades propias de la plataforma de mensajería no relacionadas con el sistema y canales de comunicación adicionales no contemplados. |
@@ -322,6 +324,16 @@ La siguiente matriz delimita los componentes y funcionalidades contemplados dent
 | **Infraestructura y despliegue** | Configuración y preparación de la infraestructura necesaria para poner en operación el sistema dentro del entorno tecnológico definido por la institución, incluyendo la configuración del servidor local en una computadora de la escuela y su conexión con la red institucional. | Adquisición de servidores físicos, computadoras, redes institucionales u otra infraestructura física que no haya sido especificada como parte del proyecto. |
 | **Servidor local y red institucional** | Configuración de una computadora proporcionada por la institución como servidor local; instalación y configuración de los servicios necesarios para SIGE; despliegue de backend, API y base de datos; conexión con la red local; configuración para acceso desde plataforma web y aplicación móvil; mecanismos básicos de respaldo y recuperación; pruebas de operación sin Internet. | Adquisición de hardware especializado; administración integral de la infraestructura de red institucional; reparación de equipos físicos; ampliación de la red Wi-Fi; servicios de acceso remoto no contemplados; infraestructura de alta disponibilidad o redundancia especializada. |
 | **Mantenimiento y evolución** | Corrección de errores derivados de la implementación y ajustes necesarios durante la validación y puesta en operación inicial. | Desarrollo indefinido de nuevas funcionalidades posteriores a la entrega sin un proceso de ampliación o modificación del alcance. |
+
+### 7.1 Registro de cambios de alcance y elementos diferidos
+ 
+Los cambios siguientes se tramitaron conforme al principio 10 de la sección 9 (control de cambios).
+ 
+| ID | Descripción | Estado | Aprobación / fecha |
+|---|---|---|---|
+| CC-01 | Registro opcional de tipo de sangre, alergias, indicador de adeudo de pago y materias pendientes del estudiante, con acceso restringido por rol. | Aprobado e incorporado al alcance | [FECHA Y MEDIO DE APROBACIÓN INSTITUCIONAL — completar] |
+| CC-02 | Asistencia del personal administrativo (OE-04). | Diferido (*stand by*): fuera del alcance de la fase actual; la fase actual cubre estudiantes y docentes. Se incorporará por control de cambios. | Decisión del equipo, [fecha — completar] |
+| CC-03 | Catálogos de reporte (tipos, niveles de gravedad y opciones predeterminadas del reglamento). | Aclaración de alcance: son datos semilla cargados en la instalación y no se editan desde el sistema; cualquier ajuste posterior se atiende por control de cambios mediante migración de datos versionada. | Decisión del equipo, [fecha — completar] |
 
 ---
 
