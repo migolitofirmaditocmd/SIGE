@@ -14,8 +14,8 @@ Este documento define la estrategia institucional para la gestión, versionado y
 
 ## 3. Orden de Creación y Dependencias
 Para inicializar la base de datos vacía sin conflictos de dependencias (Foreign Keys), la primera ronda de migraciones debe respetar el siguiente orden de resolución:
-1. **Catálogos Base (`catalogs`, `settings`, `reports`):** Entidades semilla e independientes, tales como `ACADEMIC_CYCLE`, `GROUP`, `REPORT_TYPE`, `REPORT_SEVERITY` y `OPERATIONAL_PARAMETER`.
-2. **Usuarios y Docentes (`accounts`, `teachers`):** Por la dependencia circular indirecta, se recomienda crear primero la tabla `TEACHER` y posteriormente la tabla `USER`, integrando su Foreign Key `teacher_id` (RN-AST-30) en el momento de creación, o resolviéndolo en un paso posterior dentro de la misma migración.
+1. **Catálogos Base (`catalogs`, `settings`, `reports`):** Entidades semilla e independientes, tales como `ACADEMIC_CYCLE`, `GROUP`, `REPORT_TYPE`, `REPORT_SEVERITY` y `OPERATIONAL_PARAMETER`. La primera migración de esta app (p. ej. `0001_extensions`) DEBE ejecutar, vía `RunSQL`, `CREATE EXTENSION IF NOT EXISTS unaccent;` — requerida por la convención de nombre de persona (Modelo de Datos §3.0) para búsquedas sin distinguir acentos.
+2. **Usuarios y Docentes (`accounts`, `teachers`):** Por la dependencia circular indirecta, se crea primero la tabla `TEACHER` y luego `USER` (sin la FK `teacher_id` todavía). La FK `USER.teacher_id` (RN-AST-30) se agrega en una migración separada, posterior a la creación de ambas tablas. Inmediatamente después (o en la misma migración de `USER`) se crean `USER_SESSION` y `PASSWORD_RESET_TOKEN`, que solo dependen de `USER`.
 3. **Estudiantes y Tutores (`students`):** Tablas `STUDENT`, `GUARDIAN` y la relación intermedia `STUDENT_GUARDIAN`.
 4. **Módulos Operativos:** Tablas de dependencias amplias, en este orden: `attendance`, `reports` (Incidentes), `credentials` (Tokens QR), `imports`, y finalmente las tablas de log `audit` y `ops`.
 
@@ -23,13 +23,15 @@ Para inicializar la base de datos vacía sin conflictos de dependencias (Foreign
 El sistema requiere una línea base de información para que los flujos puedan operar. Toda inserción de datos semilla debe existir como una **migración de datos (Data Migration) de Django (`RunPython`)**, de manera que cualquier desarrollador o servidor consiga el mismo estado base al correr `migrate`.
 1. **Parámetros Operativos (RN-ADM-02):** La migración de la app `settings` inyectará:
    - `REBOUND_WINDOW_MINUTES`: "5"
-   - `STUDENT_ABSENCE_CHECK_TIME`: "10:00"
-   - `TEACHER_ABSENCE_CHECK_TIME`: "08:00" (o similar institucional)
+   - `STUDENT_ABSENCE_CHECK_TIME_MATUTINO`: "10:00"
+   - `STUDENT_ABSENCE_CHECK_TIME_VESPERTINO`: "16:00"
+   - `TEACHER_ABSENCE_CHECK_OFFSET_MINUTES`: "30"
    - `TEACHER_DEFAULT_TOLERANCE_MINUTES`: "0"
    - `ACCOUNT_LOCKOUT_MAX_ATTEMPTS`: "5"
    - `ACCOUNT_LOCKOUT_DURATION_MINUTES`: "15"
 2. **Ciclo Escolar Activo:** Debe inyectarse un registro de prueba de `ACADEMIC_CYCLE` con la bandera `is_active=True`, dado que ninguna alta estudiantil o docente puede procesarse sin un ciclo vigente.
 3. **Roles:** El rol de cada usuario vive en la columna `USER.role` (`ENUM`), verificada mediante clases de permisos de Django REST Framework (RN-AUT-06). Este proyecto **no** usa `django.contrib.auth.models.Group` ni `Permission` para RBAC; no hace falta sembrar grupos de Django en esta migración.
+4. **Catálogos de Reporte (RN-ADM-03):** `REPORT_TYPE` (exactamente 3 valores, RN-REP-02), `REPORT_SEVERITY` y `REPORT_PRESET_OPTION` se siembran una sola vez en la instalación inicial vía migración de datos. No existe interfaz de edición; cualquier cambio posterior a su contenido se hace con una nueva migración de datos versionada, bajo control de cambios del proyecto (Acta §7.1, CC-03), nunca editando la migración original (ver §2.3, inmutabilidad del historial).
 
 ## 5. Cambios Restrictivos en Tablas Pobladas
 Al evolucionar el sistema, si un campo opcional se convierte en obligatorio (restricción `NOT NULL`), la migración automática de Django fallará en tablas que ya contengan filas nulas. La estrategia es:
