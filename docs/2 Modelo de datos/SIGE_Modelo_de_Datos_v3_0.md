@@ -1,9 +1,9 @@
-# SIGE — Modelo de Datos v3.0
+# SIGE — Modelo de Datos v3.2
 ### Sistema Integral de Gestión Escolar
 **Sustituye a:** `SIGE_modelo_de_datos_v2_5.md` (etiquetado internamente como versión **2.1** — ver §0, hallazgo A-1)
 **Motor:** PostgreSQL 15+ / Django ORM
 **Derivado de:** Acta Constitutiva v10 · Especificación de Requisitos (archivo `03_..._v3.md`, etiquetado internamente como **v3.0**) · Catálogo de Reglas de Negocio (archivo `04_..._v3.md`, etiquetado internamente como **v3.0**) · Historias de Usuario v2 · Criterios de Aceptación v2
-**Versión:** 3.0 | **Estado:** Para revisión del equipo (auditoría de consistencia documental + adiciones)
+**Versión:** 3.2 | **Estado:** Para revisión del equipo (auditoría de consistencia documental + adiciones)
 
 ---
 
@@ -103,9 +103,9 @@ erDiagram
     REPORT_PRESET_OPTION ||--o{ REPORT_SELECTED_OPTION : ""
     INCIDENT_REPORT ||--o{ REPORT_TRANSITION_LOG : ""
     INCIDENT_REPORT ||--o{ COMMUNICATION_LOG : ""
+    COMMUNICATION_LOG ||--o{ COMMUNICATION_LOG : "reintento de"
     INCIDENT_REPORT ||--o{ INCIDENT_REPORT : "reporte nuevo referencia al original RN-REP-08"
     STUDENT_GUARDIAN ||--o{ COMMUNICATION_LOG : "destinatario"
-
     IMPORT_BATCH ||--o{ IMPORT_ROW_ERROR : ""
 
     USER {
@@ -130,6 +130,7 @@ erDiagram
         string refresh_token_hash UK
         datetime issued_at
         datetime expires_at
+        datetime absolute_expires_at
         datetime revoked_at
         enum revoked_reason
     }
@@ -313,6 +314,7 @@ erDiagram
         enum status
         enum origin
         enum anomaly_flag
+        boolean is_scheduled
         uuid recorded_by FK
         text justification_reason
         uuid justified_by FK
@@ -380,6 +382,9 @@ erDiagram
         string provider_reference
         datetime attempted_at
         uuid retried_by FK
+        int attempt_number
+        uuid retry_of_id FK
+        text error_detail
     }
 
     IMPORT_BATCH {
@@ -387,6 +392,9 @@ erDiagram
         uuid uploaded_by FK
         uuid group_id FK
         string filename
+        string file_path
+        string file_sha256
+        datetime expires_at
         enum status
         int total_rows
         int inserted_rows
@@ -413,6 +421,7 @@ erDiagram
         uuid entity_id
         jsonb previous_value
         jsonb new_value
+        text reason
         enum origin
         datetime created_at
     }
@@ -433,6 +442,25 @@ erDiagram
         enum offsite_status
         bigint size_bytes
         text notes
+    }
+        JOB_RUN {
+        uuid id PK
+        string job_name
+        date run_date
+        string scope
+        enum status
+        datetime started_at
+        datetime finished_at
+        int evaluated_count
+        int created_count
+        text error
+    }
+        OFFLINE_EVENT_RECEIPT {
+        uuid client_event_id PK
+        enum result
+        string error_code
+        uuid processed_by FK
+        datetime processed_at
     }
 ```
 
@@ -468,7 +496,8 @@ Las cuatro entidades guardan el nombre con el mismo grupo de columnas, definido 
 | `USER.failed_login_attempts`, `USER.locked_until` | INT, TIMESTAMP | RN-AUT-03: valores no son constantes; el umbral y la duración viven en `OPERATIONAL_PARAMETER` |
 | `USER.is_active` | BOOLEAN | RN-EST-04/RN-TRX-03 equivalente para cuentas: se desactiva, nunca se borra |
 | `USER_SESSION.refresh_token_hash` | UNIQUE | Se guarda el **hash** del token de renovación, nunca el valor en claro (mismo criterio que `password_hash`); RF-AUT-01 |
-| `USER_SESSION.revoked_at`, `revoked_reason` | TIMESTAMP, `ENUM('LOGOUT', 'ADMIN_INVALIDATION', 'PASSWORD_RESET', 'EXPIRED')` | RF-AUT-01: invalidación al cerrar sesión o por compromiso de cuenta; SIGE-US-004: al desactivar una cuenta, **todas** sus sesiones (`WHERE user_id = ... AND revoked_at IS NULL`) se marcan `ADMIN_INVALIDATION` en el mismo momento |
+| `USER_SESSION.revoked_at`, `revoked_reason` | `ENUM('LOGOUT', 'ADMIN_INVALIDATION', 'PASSWORD_RESET', 'EXPIRED', 'ROTATED', 'REUSE_DETECTED')` | RF-AUT-01: invalidación al cerrar sesión o por compromiso de cuenta; SIGE-US-004: al desactivar una cuenta, **todas** sus sesiones (`WHERE user_id = ... AND revoked_at IS NULL`) se marcan `ADMIN_INVALIDATION` en el mismo momento |
+| `USER_SESSION.absolute_expires_at` | TIMESTAMP | Tope absoluto de la sesión (7 días desde el inicio de sesión, D-08); se conserva igual en las sesiones emitidas por rotación. `expires_at` es la expiración deslizante de 24 h. `ROTATED`: el refresh fue renovado y esta sesión se reemplazó; `REUSE_DETECTED`: se presentó un refresh ya rotado y se revocaron todas las sesiones vigentes del usuario |
 | `PASSWORD_RESET_TOKEN.token_hash` | UNIQUE | RF-AUT-04: enlace de un solo uso; se guarda el hash, no el token en claro, por el mismo criterio de seguridad que `USER_SESSION` |
 | `PASSWORD_RESET_TOKEN.expires_at`, `used_at`, `invalidated_at` | TIMESTAMP, TIMESTAMP NULLABLE, TIMESTAMP NULLABLE | RF-AUT-04: expiración configurable; `used_at` distingue un enlace ya consumido de uno solo vencido; `invalidated_at` distingue un enlace reemplazado por uno nuevo (RN-AUT-07) de uno vencido por su cuenta, sin necesitar borrarlo (RN-TRX-03) |
 | `USER.first_name`, `USER.last_name_father`, `USER.last_name_mother` | Ver §3.0 | US-003 exige el nombre del titular de la cuenta (v3.0 no tenía ningún campo de nombre en `USER`); RN-TRX-08 |
@@ -494,7 +523,7 @@ Catálogo administrado exclusivamente por `Administrador` (RN-ADM-01).
 | `address_*`, `sex` | STRING | Opcionales (RF-EST-01); mapean 1:1 a `DOMICILIO/COLONIA/MUNICIPIO/ESTADO/C.P.` del Excel |
 | `blood_type`, `allergies` | STRING / TEXT | RN-EST-12: salud, opcional y de acceso restringido |
 | `has_payment_debt` | BOOLEAN | RN-EST-12: indicador de adeudo de pago (sí/no), mapea a `DEBE PGO`; alcance aprobado (Acta v10, §7.1, CC-01). No se almacena monto (RN-TRX-01) |
-| `completeness` | `ENUM('COMPLETO', 'INCOMPLETO')`, calculado al guardar | RN-EST-10: `INCOMPLETO` si falta `birth_date` o `photo_url` |
+| `completeness` | `ENUM('COMPLETO', 'INCOMPLETO')`, calculado al guardar | RN-EST-10: `INCOMPLETO` si falta `birth_date` o `photo_url`. Un estudiante `INCOMPLETO` conserva el estatus `ACTIVO` y puede tener QR y exportar sticker; la credencial completa exige `photo_url`, no `birth_date` (RN-CRE-01) |
 | `group_id` | FK | Mínimo obligatorio (RN-EST-10); incluye grado, grupo, ciclo y turno por relación |
 
 **Serializador de API:** los campos `blood_type`, `allergies`, `has_payment_debt` y la relación `STUDENT_PENDING_SUBJECT` se excluyen…
@@ -521,7 +550,7 @@ Mapea a la columna `DEBE MAT.` del Excel, normalizada: una fila por materia pend
 
 **Regla de aplicación (no de columna):** toda escritura en `STUDENT_GUARDIAN.consent_status` DEBE generar, en la misma transacción, un renglón en `GUARDIAN_CONSENT_LOG` con el valor anterior y el nuevo (RN-EST-07).
 
-**Regla de aplicación (no de columna):** al recibir una edición de `GUARDIAN.first_name`, `last_name_father`, `last_name_mother`, `email` o `phone_number`, el backend cuenta las filas de `STUDENT_GUARDIAN` asociadas a ese `guardian_id`; si son 2 o más, la API responde primero con la lista de estudiantes afectados para que la interfaz muestre el aviso (RN-EST-14), y solo aplica el `UPDATE` (una sola fila de `GUARDIAN`, visible de inmediato para todos los vínculos) cuando la petición trae la confirmación explícita.
+**Regla de aplicación (no de columna):** al recibir una edición de `GUARDIAN.first_name`, `last_name_father`, `last_name_mother`, `email` o `phone_number`, el backend cuenta las filas de `STUDENT_GUARDIAN` asociadas a ese `guardian_id`; si son 2 o más y la petición no trae `confirm=true`, la API responde `422 CONFIRMATION_REQUIRED` sin guardar nada y con `details.affected_students` (cantidad y lista de estudiantes afectados) para que la interfaz muestre el aviso (RN-EST-14), y solo aplica el `UPDATE` (una sola fila de `GUARDIAN`, visible de inmediato para todos los vínculos) cuando la petición trae la confirmación explícita.
 
 **Regla de aplicación (no de columna):** "separar un tutor" (RF-EST-07) crea un nuevo `GUARDIAN` con una copia de los datos vigentes, mueve a él el o los renglones de `STUDENT_GUARDIAN` señalados, y dispara un nuevo `GUARDIAN_CONSENT_LOG` inicial en `PENDIENTE` para esos vínculos (mismo criterio que un alta nueva, RN-EST-07); el `GUARDIAN` original y sus demás vínculos no se modifican.
 
@@ -533,6 +562,7 @@ Mapea a la columna `DEBE MAT.` del Excel, normalizada: una fila por materia pend
 | `TEACHER.internal_id` | UNIQUE, inmutable, único también frente a `INACTIVO` | RN-AST-26 |
 | `TEACHER.status` | `ENUM('ACTIVO', 'INACTIVO')` | RN-AST-28: solo `ACTIVO`/`INACTIVO`, nunca se elimina |
 | `TEACHER_SCHEDULE.punctuality_tolerance_minutes` | SMALLINT | Si está vacío se usa `OPERATIONAL_PARAMETER['TEACHER_DEFAULT_TOLERANCE_MINUTES']` (RN-AST-14) |
+| `TEACHER_SCHEDULE.is_active` | BOOLEAN | Marca si el horario de ese día de la semana está vigente (RN-AST-18). **Desactivar al docente (`TEACHER.status = 'INACTIVO'`) no modifica ningún renglón de `TEACHER_SCHEDULE`** (RN-AST-29b): el job de ausencias filtra por `TEACHER.status = 'ACTIVO'`, así que la programación conservada simplemente no se evalúa. Al reactivarlo, la misma programación vuelve a aplicar desde la fecha de reactivación, sin efecto retroactivo sobre los días en que estuvo `INACTIVO`, y la interfaz advierte que debe revisarse *(nuevo en v3.2, hallazgo E-4)* |
 | `TEACHER_GROUP_ASSIGNMENT` | FK | Determina de qué grupos puede un docente **registrar reportes**; el reporte en sí se envía a los prefectos asignados al grupo del estudiante vía `PREFECT_GROUP_ASSIGNMENT` (RN-REP-09) *(redacción corregida en v3, hallazgo C-4: la versión anterior decía, de forma incorrecta, que esta tabla determina a qué docente "le llegan" los reportes)* |
 | `TEACHER.first_name`, `TEACHER.last_name_father`, `TEACHER.last_name_mother` | Ver §3.0 (reemplazan a `full_name`) | RN-AST-27, RN-TRX-08 |
 
@@ -553,21 +583,34 @@ Mapea a la columna `DEBE MAT.` del Excel, normalizada: una fila por materia pend
 ### 3.8 `ATTENDANCE_STUDENT` y `ATTENDANCE_STUDENT_EVENT` (app `attendance`)
 | Columna | Tipo / Constraint | Regla |
 |---|---|---|
-| `effective_datetime` | TIMESTAMP | RN-TRX-04: hora del servidor si es en línea, hora de captura corregida si vino de sincronización offline |
+| `effective_datetime` | TIMESTAMP NULLABLE | RN-TRX-04: hora del servidor si es en línea, hora de captura corregida si vino de sincronización offline. `NULL` en un `FALTO` de origen `AUTOMATICO` (no hubo escaneo); se llena si el registro se reclasifica por RN-AST-09 |
 | `status` | `ENUM('ASISTIO', 'LLEGO_TARDE', 'FALTO', 'FALTA_JUSTIFICADA')` | RN-AST-22 |
 | `origin` | `ENUM('ESCANEO', 'AUTOMATICO', 'MANUAL')` | RN-TRX-07 |
 | `sync_status` | `ENUM('ONLINE', 'OFFLINE_SYNCED')` | RN-MOV-02 |
 | `group_id` | FK | Denormalizado al momento del registro, para que un cambio de grupo posterior no reescriba historial (US-013) |
 | `justification_reason`, `justified_by` | TEXT, FK | Reflejan la justificación **vigente**; el histórico completo de valor anterior/nuevo, usuario y fecha vive en `AUDIT_LOG` (RN-AST-05) |
 
+### 3.8.1 `OFFLINE_EVENT_RECEIPT` (app `attendance`)
+Acuse de cada evento offline procesado. Permite reintentar la sincronización sin duplicar y devolver el mismo resultado al reenviar un evento (CA-033-07, RN-MOV-02).
+| Columna | Tipo / Constraint | Regla |
+|---|---|---|
+| `client_event_id` | UUID, PK | Generado por la PWA al capturar el evento |
+| `result` | `ENUM('REGISTRADO', 'EVENTO_ADICIONAL', 'RECLASIFICADO', 'DUPLICADO_IGNORADO', 'DESCARTADO')` | Resultado del procesamiento |
+| `error_code` | STRING NULLABLE | Motivo si fue `DESCARTADO` (p. ej. `QR_REVOKED`, `EVENT_TOO_OLD`) |
+| `processed_by` | FK a `USER` | Usuario autenticado que sincronizó |
+| `processed_at` | TIMESTAMP | |
+
 ### 3.9 `ATTENDANCE_TEACHER` (app `attendance`)
 | Columna | Tipo / Constraint | Regla |
 |---|---|---|
 | `record_type` | `ENUM('ENTRADA', 'SALIDA')` | RN-AST-12 |
-| `status` | `ENUM('ASISTIO', 'LLEGO_TARDE', 'FALTO', 'FALTA_JUSTIFICADA')` (NULL permitido en `SALIDA`) | RN-AST-14 |
+| `status` | `ENUM('ASISTIO', 'LLEGO_TARDE', 'FALTO', 'FALTA_JUSTIFICADA')` (NULL permitido en `SALIDA` y en `ENTRADA` con `is_scheduled = false`) | RN-AST-14, RN-AST-32 |
 | `origin` | `ENUM('ESCANEO', 'AUTOMATICO', 'MANUAL')` | RN-TRX-07 |
 | `anomaly_flag` | `ENUM('NINGUNA', 'SALIDA_SIN_ENTRADA')` | RN-AST-25 |
+| `is_scheduled` | BOOLEAN NOT NULL DEFAULT `true` | RN-AST-32, CA-040-04: `false` si, al registrar, el docente no tenía un `TEACHER_SCHEDULE` activo para ese día de la semana. Un renglón con `is_scheduled = false` no determina puntualidad (`status` nulo) y nunca genera ni modifica ausencias. Los `FALTO` automáticos siempre son `true`, porque el job solo evalúa a docentes con programación hoy (RN-AST-18) |
 | `recorded_by` | FK | Debe ser un `USER` con rol adecuado (RN-AST-10) |
+
+> **Constraint de base de datos:** `CHECK (status IS NOT NULL OR record_type = 'SALIDA' OR is_scheduled = false)`. Un `status` nulo solo es válido en una `SALIDA` o en una `ENTRADA` registrada en una fecha sin programación (RN-AST-14, RN-AST-32). *(Nuevo en v3.2, hallazgo E-1.)*
 
 ### 3.10 Catálogos de reportes e `INCIDENT_REPORT` (app `reports`)
 | Columna | Tipo / Constraint | Regla |
@@ -578,6 +621,7 @@ Mapea a la columna `DEBE MAT.` del Excel, normalizada: una fila por materia pend
 | `INCIDENT_REPORT.rejection_reason`, `no_communication_reason` | TEXT | Copia de acceso rápido del motivo de la transición vigente; el registro autoritativo de motivo por cada cambio de estado vive en `REPORT_TRANSITION_LOG.reason` *(aclaración agregada en v3, hallazgo C-8, para evitar que ambos se desincronicen sin control)* |
 | `replaces_report_id` | Autorreferencia FK | Traza reemplazos por correcciones |
 | `REPORT_TRANSITION_LOG.from_status`, `to_status` | `ENUM` — mismo dominio de valores que `INCIDENT_REPORT.status` | Una fila por cada cambio de estado (RN-REP-06); *(tipo corregido en v3, hallazgo C-7: antes eran `STRING` libre, sin garantía de que solo contuvieran valores válidos del flujo)* |
+| `REPORT_TRANSITION_LOG.changed_by` | FK a `USER`, NULLABLE | Usuario que ejecutó la transición (RN-REP-06). `NULL` en transiciones del sistema: `COMUNICADO` y `RESUELTO` tras un envío exitoso (RN-REP-07a). Esas filas se identifican porque `changed_by IS NULL` |
 
 > **Resuelto en v3.1 (opción A):** REPORT_TYPE, REPORT_SEVERITYyREPORT_PRESET_OPTIONson fijos, sembrados en la instalación inicial y sin interfaz de edición para ningún rol (RN-ADM-03, Acta §7.1 CC-03). Las tablas se mantienen sin cambio de esquema, únicamente para preservar la integridad referencial deINCIDENT_REPORT/REPORT_SELECTED_OPTION; un ajuste futuro de contenido se hace por migración de datos versionada, no por interfaz.
 
@@ -587,6 +631,9 @@ Mapea a la columna `DEBE MAT.` del Excel, normalizada: una fila por materia pend
 | `content_snapshot` | TEXT | Guarda exactamente lo que se envió, nunca el expediente completo (RN-COM-02) |
 | `status` | `ENUM('PENDIENTE', 'ENVIADO', 'FALLIDO')` | RN-COM-03 |
 | `guardian_id` | FK a `STUDENT_GUARDIAN` | Apunta a la relación `STUDENT_GUARDIAN` con `email` válido (RN-COM-01, RN-COM-04) para contextualizar la notificación por estudiante y tutor |
+| `attempt_number` | INT, ≥ 1 | Número de intento sobre la misma comunicación. Cada intento (automático o manual) es un renglón propio: el intento fallido se conserva (RN-COM-03, CA-053-03) |
+| `retry_of_id` | FK a `COMMUNICATION_LOG`, NULLABLE | Renglón del intento anterior que este renglón reintenta; `NULL` en el primer intento |
+| `error_detail` | TEXT, NULLABLE | Motivo del fallo (sin datos personales ni contenido del correo) |
 
 ### 3.12 `IMPORT_BATCH` e `IMPORT_ROW_ERROR` (app `imports`)
 | Columna | Tipo / Constraint | Regla |
@@ -594,16 +641,21 @@ Mapea a la columna `DEBE MAT.` del Excel, normalizada: una fila por materia pend
 | `group_id` | FK | Grupo destino de la importación |
 | `status` | `ENUM('VALIDANDO', 'VISTA_PREVIA', 'CONFIRMADO', 'CANCELADO')` | RN-IMP-04 |
 | `IMPORT_ROW_ERROR` | FK | Una fila por error, con columna y motivo (RN-IMP-01/03) |
+| `file_path`, `file_sha256` | STRING NULLABLE, STRING NULLABLE | Ruta en el almacén privado y huella del archivo cargado. En `confirm` el servidor vuelve a leer y validar el archivo (RN-IMP-04, RN-IMP-07). `file_path` pasa a `NULL` cuando el archivo se purga |
+| `expires_at` | TIMESTAMP | Vigencia de la vista previa (24 h por defecto). Vencida, el job de mantenimiento marca el lote `CANCELADO` y elimina el archivo (minimización de datos de menores, RN-TRX-01); el lote y sus `IMPORT_ROW_ERROR` se conservan (RN-TRX-03) |
 
 ### 3.13 `AUDIT_LOG` (app `audit`)
 Tabla de solo inserción (`INSERT`-only a nivel de permisos de base de datos). Registra **inicios de sesión (exitosos y fallidos)**, cambios de rol, modificaciones de asistencia, de reportes y de estatus de estudiante/docente (RF-AUT-05, RN-AUT-05). *(El registro de inicios de sesión se agrega explícitamente en v3, hallazgo C-6; antes la descripción de esta tabla no lo mencionaba pese a estar exigido por RF-AUT-05.)* `user_id` es **NULLABLE**; cuando `origin='AUTOMATICO'`, `user_id` es `NULL` y el proceso que lo generó se identifica por el campo `action` (p. ej. `'job:absence_check_students'`). El campo `origin` utiliza `ENUM('ESCANEO', 'AUTOMATICO', 'MANUAL')` (RN-TRX-07).
+`reason` es TEXT NULLABLE. La aplicación lo exige (no nulo ni vacío) en las acciones que por regla requieren motivo: desactivación y reactivación de docente (RN-AST-28), justificación y modificación manual de asistencia (RN-AST-05, RN-AST-17), revocación y reemplazo de QR (RN-QR-03) y corrección excepcional de campos inmutables (RN-EST-02, RN-AST-26). Es la fuente del **historial** de motivos; `ATTENDANCE_*.justification_reason` y `QR_TOKEN.revoked_reason` conservan solo el vigente. *(Nuevo en v3.2, hallazgo E-2.)*
+
+**Restauración de la base de datos (CA-057-07):** tras restaurar un respaldo se inserta un renglón con `action = 'ops:restore'` y `origin = 'MANUAL'`. `user_id` es `NULL` cuando la restauración se hizo por consola sin sesión web; el responsable, el respaldo usado y el resultado van en `new_value`. Es la única acción manual que puede tener `user_id` nulo.
 
 ### 3.14 `OPERATIONAL_PARAMETER` (app `settings`)
-Filas iniciales (semilla): `REBOUND_WINDOW_MINUTES` (5), `STUDENT_ABSENCE_CHECK_TIME_MATUTINO` (10:00), STUDENT_ABSENCE_CHECK_TIME_VESPERTINO (16:00), `TEACHER_ABSENCE_CHECK_OFFSET_MINUTES` (30), `TEACHER_DEFAULT_TOLERANCE_MINUTES` (0), `ACCOUNT_LOCKOUT_MAX_ATTEMPTS` (5), `ACCOUNT_LOCKOUT_DURATION_MINUTES` (15). Editable únicamente por `Administrador` (RN-ADM-02); todo cambio pasa por `AUDIT_LOG`.
+Filas iniciales (semilla): `REBOUND_WINDOW_MINUTES` (5), `STUDENT_ABSENCE_CHECK_TIME_MATUTINO` (10:00), `STUDENT_ABSENCE_CHECK_TIME_VESPERTINO` (16:00), `TEACHER_ABSENCE_CHECK_OFFSET_MINUTES` (30), `TEACHER_DEFAULT_TOLERANCE_MINUTES` (0), `ACCOUNT_LOCKOUT_MAX_ATTEMPTS` (5), `ACCOUNT_LOCKOUT_DURATION_MINUTES` (15), `PASSWORD_MIN_LENGTH` (10), `PASSWORD_REQUIRE_COMPLEXITY` (`true`: al menos una mayúscula, una minúscula y un dígito), `PASSWORD_RESET_EXPIRY_MINUTES` (30), `COMMUNICATION_MAX_AUTO_ATTEMPTS` (3), `BACKUP_FREQUENCY_HOURS` (24) y `OFFLINE_MAX_AGE_HOURS` (72). Editable únicamente por `Administrador` (RN-ADM-02); todo cambio pasa por `AUDIT_LOG`.
 
 *Cambio en v3 (hallazgo C-1):* la llave `STUDENT_ABSENCE_CHECK_DEFAULT_TIME` de v2.1 (un único valor global) se reemplaza por dos llaves, una por turno (`_MATUTINO` / `_VESPERTINO`), porque RN-ADM-02 exige que la hora de verificación sea posterior a la hora de corte "del mismo grupo y jornada", y `GROUP.cutoff_time` puede diferir sustancialmente entre turnos. La aplicación DEBE validar esta restricción en ambos sentidos: (a) al guardar cada llave de OPERATIONAL_PARAMETER, que su valor sea posterior al cutoff_timede todoGROUP activo (is_active = true) de ese turno, tomando como referencia la hora de corte más tardía si hubiera varias; y (b) al crear o modificar GROUP.cutoff_time, que el nuevo valor siga dejando la hora de verificación de ese turno posterior a él, para que ningún cambio por el lado del grupo pueda romper la restricción sin ser detectado (RN-ADM-02)
 
-*Nota:* El job de verificación de ausencias docentes evalúa a cada docente individualmente contra su propio `TEACHER_SCHEDULE.expected_entry_time` más `TEACHER_ABSENCE_CHECK_OFFSET_MINUTES`, nunca contra una sola hora global, para no marcar `FALTO` a un docente antes de que comience su turno.
+*Nota:* El job de verificación de ausencias docentes evalúa a cada docente individualmente contra su propio `TEACHER_SCHEDULE.expected_entry_time` más `max(tolerancia efectiva, 0)` más `TEACHER_ABSENCE_CHECK_OFFSET_MINUTES`, de modo que el umbral nunca quede antes del límite de puntualidad (RN-AST-14), nunca contra una sola hora global, para no marcar `FALTO` a un docente antes de que comience su turno.
 
 ### 3.15 `BACKUP_LOG` (app `ops`)
 Un registro por corrida del respaldo automático (RN-API-03), consultable por el Administrador.
@@ -611,6 +663,18 @@ Un registro por corrida del respaldo automático (RN-API-03), consultable por el
 |---|---|---|
 | `status` | `ENUM('EXITOSO', 'FALLIDO')` | Refleja únicamente el resultado del respaldo local |
 | `offsite_status` | `ENUM('N_A', 'EXITOSO', 'FALLIDO')` | Refleja la copia externa opcional, sin afectar `status` |
+
+### 3.16 `JOB_RUN` (app `ops`)
+Un registro por corrida de cada proceso programado (ver `SIGE_Estrategia_Procesos_Programados.md`, §1). Es el marcador de idempotencia de los jobs y la fuente de su estado de salud para el Administrador (R-09).
+| Columna | Tipo / Constraint | Regla |
+|---|---|---|
+| `job_name` | STRING | Ej. `check_student_absences`, `check_teacher_absences`, `run_backup`, `email_sweeper` |
+| `run_date` | DATE | Día lectivo evaluado |
+| `scope` | STRING | Alcance de la corrida: turno (`MATUTINO`/`VESPERTINO`) o `GLOBAL`. Los jobs de reevaluación intradía (`check_teacher_absences`) usan `GLOBAL` y tienen **un único renglón por día**: la primera corrida lo crea y las siguientes lo actualizan, para no violar `UNIQUE(job_name, run_date, scope)` (PP §1, principio 2) |
+| `status` | `ENUM('EN_CURSO', 'COMPLETADO', 'FALLIDO', 'OMITIDO')` | `OMITIDO` cuando una guardia impide la corrida (ciclo inactivo o guardia de sanidad). En el renglón diario del job docente el estado se reescribe en cada corrida: `EN_CURSO` y luego `COMPLETADO`, o `OMITIDO` si la guardia de sanidad docente no encuentra actividad, y vuelve a `COMPLETADO` en cuanto la hay |
+| `started_at`, `finished_at` | TIMESTAMP, TIMESTAMP NULLABLE | |
+| `evaluated_count`, `created_count` | INT NULLABLE | Elegibles evaluados y registros creados. En el renglón diario del job docente son acumulados del día, y `finished_at` es el de la última corrida |
+| `error` | TEXT NULLABLE | Detalle del fallo |
 
 ---
 
@@ -624,6 +688,7 @@ Un registro por corrida del respaldo automático (RN-API-03), consultable por el
 | `QR_TOKEN` |  `CHECK (num_nonnulls(student_id, teacher_id) = 1)`; único parcial `(student_id) WHERE status='VIGENTE'`; único parcial `(teacher_id) WHERE status='VIGENTE'` | RN-QR-01/05: exactamente uno de los dos, y como mucho un token vigente por persona |
 | `ATTENDANCE_STUDENT` | `UNIQUE(student_id, record_date)` | Un solo registro oficial por día; los adicionales van a `ATTENDANCE_STUDENT_EVENT` (RN-AST-07) |
 | `ATTENDANCE_TEACHER` | `UNIQUE(teacher_id, record_date, record_type)` | Máximo una `ENTRADA` y una `SALIDA` por día (RN-AST-13/16) |
+| `ATTENDANCE_TEACHER` | `CHECK (status IS NOT NULL OR record_type = 'SALIDA' OR is_scheduled = false)` | `status` nulo solo en `SALIDA` o en `ENTRADA` sin programación (RN-AST-14, RN-AST-32) *(nuevo en v3.2)* |
 | `INCIDENT_REPORT.observation` | `CHECK (char_length(observation) BETWEEN 50 AND 100)` | RN-REP-01 |
 | `GROUP` | `UNIQUE(cycle_id, grade, group_letter, shift)` | Evita grupos duplicados dentro de un mismo ciclo |
 | `TEACHER_SCHEDULE` | `UNIQUE(teacher_id, weekday) WHERE is_active = true` | Un docente no puede tener dos horarios activos distintos para el mismo día de la semana (evita ambigüedad para RN-AST-14) |
@@ -633,6 +698,7 @@ Un registro por corrida del respaldo automático (RN-API-03), consultable por el
 | `PASSWORD_RESET_TOKEN.token_hash` | `UNIQUE` | RF-AUT-04: enlace de un solo uso *(nuevo en v3)*; la aplicación invalida (`invalidated_at`) cualquier enlace previo no usado del mismo usuario al emitir uno nuevo, para que nunca convivan dos enlaces vigentes (RN-AUT-07) |
 | `REPORT_PRESET_OPTION.is_active` | Sin `UNIQUE`, es bandera de archivado lógico | Ver hallazgo C-2 *(nuevo en v3)* |
 | `USER`, `STUDENT`, `TEACHER`, `GUARDIAN` (campos de nombre) | `CHECK` de longitud 2–60 en `first_name` y `last_name_father`; `last_name_mother` `NULL` o 2–60; sin `UNIQUE` | RN-TRX-08/09/10 |
+| `JOB_RUN` | `UNIQUE(job_name, run_date, scope)` | Una sola corrida por proceso, día y alcance: marcador de idempotencia. `check_teacher_absences` reutiliza su renglón diario (`scope = 'GLOBAL'`) y actualiza sus conteos; su idempotencia real está en la selección de elegibles y en `UNIQUE(teacher_id, record_date, record_type)` |
 
 ---
 
@@ -661,6 +727,7 @@ Un registro por corrida del respaldo automático (RN-API-03), consultable por el
 3. **Migraciones reversibles:** toda migración que agregue una restricción `NOT NULL` sobre una tabla con datos (por ejemplo, si más adelante se vuelve obligatorio algún campo hoy opcional) debe ir en dos pasos: rellenar valores por defecto y luego aplicar la restricción, para no romper el entorno de pruebas con datos ya cargados.
 4. **Índices únicos parciales:** requieren migración manual de Django (`RunSQL`) porque el ORM no los genera automáticamente desde `unique=True`; documentar cada uno en el archivo de migración con un comentario que cite la RN correspondiente.
 5. **Plan de rollback:** cada migración de datos (no solo de esquema) debe acompañarse de su `reverse_code`; no se aceptan migraciones de datos irreversibles sin respaldo previo (enlaza con `RN-API-03`/`BACKUP_LOG`).
+6. **Cambios de la v3.2:** (a) `ATTENDANCE_TEACHER.is_scheduled`: `AddField` BOOLEAN NOT NULL DEFAULT `true`, sin relleno (las filas existentes cumplen el `CHECK` porque ninguna `ENTRADA` tiene `status` nulo hasta ahora) y, en migración manual (`RunSQL`), el `CHECK (status IS NOT NULL OR record_type = 'SALIDA' OR is_scheduled = false)` con un comentario que cite RN-AST-32; (b) `AUDIT_LOG.reason`: `AddField` TEXT NULL, sin relleno y sin alterar los permisos de solo inserción; (c) los demás cambios de la v3.2 (§0.5, E-3 a E-6) son documentales y no alteran el esquema. Ambas migraciones deben llevar `reverse_code` (punto 5).
 
 ---
 

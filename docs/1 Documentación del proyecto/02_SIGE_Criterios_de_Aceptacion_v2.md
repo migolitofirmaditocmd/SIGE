@@ -72,7 +72,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-001-07 · UX** — **Dado que** el servidor no está disponible, **cuando** el usuario intenta iniciar sesión, **entonces** se muestra un error recuperable con opción de reintentar.
 
 ### SIGE-US-002 — Bloqueo temporal por intentos fallidos y desbloqueo manual
-- **CA-002-01 · Límite** — **Dado que** el umbral es 5 intentos, **cuando** un usuario falla 4 veces consecutivas, **entonces** la cuenta sigue disponible; **y cuando** falla el 5.º, **entonces** la cuenta se bloquea temporalmente.
+- **CA-002-01 · Límite** — **Dado que** el umbral es 5 intentos, **cuando** un usuario falla 4 veces consecutivas, **entonces** la cuenta sigue disponible y cada intento responde `401`; **y cuando** falla el 5.º, **entonces** la cuenta se bloquea temporalmente y esa misma respuesta es `429 ACCOUNT_LOCKED` con el tiempo de espera.
 - **CA-002-02 · UX** — **Dado que** la cuenta está bloqueada, **cuando** el usuario intenta ingresar, **entonces** SIGE informa el tiempo de espera restante.
 - **CA-002-03 · Neg** — **Dado que** la cuenta está bloqueada, **cuando** el usuario envía la contraseña correcta, **entonces** el acceso se rechaza hasta que venza el bloqueo.
 - **CA-002-04 · Feliz** — **Dado que** un usuario acumuló 3 fallos, **cuando** inicia sesión correctamente, **entonces** el contador de fallos vuelve a cero.
@@ -96,6 +96,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-004-04 · Neg** — **Dado que** solo queda un ADM activo, **cuando** se intenta desactivarlo o quitarle el rol, **entonces** se rechaza para no dejar el sistema sin administrador.
 - **CA-004-05 · Perm** — **Dado que** el actor no es ADM, **cuando** intenta desactivar o reasignar, **entonces** se deniega (también por API).
 - **CA-004-06 · Feliz** — **Dado que** una cuenta fue desactivada, **cuando** se consultan los registros que creó, **entonces** siguen mostrando su autoría.
+- **CA-004-07 · Neg** — **Dado que** un ADM desactivó una cuenta (o cambió su rol) y el usuario aún tiene un token de acceso no vencido, **cuando** envía una petición con ese token, **entonces** se responde `401 SESSION_REVOKED`, no se ejecuta ninguna operación y el cliente vuelve al inicio de sesión sin intentar renovar.
 
 ### SIGE-US-005 — Recuperar contraseña mediante enlace de un solo uso
 - **CA-005-01 · Feliz** — **Dado que** un usuario solicita recuperación con su correo institucional registrado, **cuando** hay Internet, **entonces** recibe un enlace de un solo uso con expiración configurable.
@@ -460,6 +461,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-040-08 · Feliz** — **Dado que** se guardó la `ENTRADA`, **cuando** se intenta borrarla, **entonces** se rechaza (RN-AST-21).
 - **CA-040-09 · Límite** — **Dado que** la tolerancia del docente es 0 y su hora esperada es 08:00, **cuando** registra a las 08:00, **entonces** es `ASISTIÓ`; a las 08:01, `LLEGÓ TARDE`.
 - **CA-040-10 · Feliz** — **Dado que** se ejecutan los escenarios de prueba de entrada, **cuando** se revisan los registros, **entonces** el 100 % tiene fecha, hora y estado correctos y 0 docentes tienen más de una `ENTRADA` en la misma fecha (KPI-73, KPI-74).
+- **CA-040-11 · Neg** — **Dado que** el QR del docente fue revocado, **cuando** el PAD lo escanea, **entonces** se rechaza con `QR_REVOKED` y alerta de verificación manual; si el token no existe o pertenece a otro tipo de entidad, se rechaza con `QR_NOT_RECOGNIZED`.
 
 ### SIGE-US-041 — Registrar la SALIDA de un docente
 - **CA-041-01 · Feliz** — **Dado que** un PAD escanea el QR vigente y elige `SALIDA`, **cuando** guarda, **entonces** se registra la hora efectiva del escaneo.
@@ -474,9 +476,11 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-042-01 · Feliz** — **Dado que** llegó la hora de verificación docente y un docente con asistencia programada hoy no tiene `ENTRADA`, **cuando** corre el proceso, **entonces** se le asigna `FALTÓ` con origen `AUTOMÁTICO`.
 - **CA-042-02 · Neg** — **Dado que** un docente no tiene asistencia programada hoy, **cuando** corre el proceso, **entonces** no se le genera ausencia.
 - **CA-042-03 · Feliz** — **Dado que** el docente ya tiene `ENTRADA`, **cuando** corre el proceso, **entonces** no se realiza ninguna acción.
-- **CA-042-04 · Feliz** — **Dado que** el ADM configuró una hora de verificación docente distinta de la estudiantil, **cuando** corre el proceso, **entonces** usa la del personal docente.
+- **CA-042-04 · Feliz** — **Dado que** el ADM cambió `TEACHER_ABSENCE_CHECK_OFFSET_MINUTES` (30 por defecto), **cuando** corre el proceso, **entonces** el umbral de cada docente es su hora esperada de entrada del día + su tolerancia efectiva + el nuevo offset, y el cambio no es retroactivo.
 - **CA-042-05 · Alt** — **Dado que** un docente marcado `FALTÓ` registra una `ENTRADA` válida ese día, **cuando** se registra, **entonces** el estado se reclasifica según su límite de entrada, sin contarse como segunda entrada, con origen `AUTOMÁTICO`.
 - **CA-042-06 · Aud** — **Dado que** se asignó `FALTÓ`, **cuando** se consulta el historial, **entonces** su origen es `AUTOMÁTICO`.
+- **CA-042-07 · Neg** — **Dado que** un docente tiene `FALTA JUSTIFICADA` (o un estado modificado manualmente) en su `ENTRADA` del día, **cuando** el PAD registra una `ENTRADA`, **entonces** se rechaza como duplicada con `details.reason = "MANUAL_STATE_PREVAILS"` y el estado manual no cambia.
+- **CA-042-08 · Neg** — **Dado que** llegó el umbral de uno o más docentes y hoy no existe ningún escaneo estudiantil ni docente (ni eventos offline pendientes conocidos), **cuando** corre el proceso, **entonces** no se asigna `FALTÓ` a ningún docente, el `JOB_RUN` del día queda `OMITIDO` y el Administrador recibe una sola alerta ese día; en cuanto existe actividad, el proceso evalúa con normalidad.
 
 ### SIGE-US-043 — Justificar o modificar la asistencia de un docente
 - **CA-043-01 · Feliz** — **Dado que** un PAD/ADM selecciona un registro docente, **cuando** captura motivo y confirma, **entonces** se aplica el nuevo estado.
@@ -511,6 +515,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-060-07 · Feliz** — **Dado que** un ADM reactiva a un docente con motivo, **cuando** confirma, **entonces** pasa a `ACTIVO`, conserva su QR vigente y queda un evento de reactivación distinto del alta original.
 - **CA-060-08 · Alt** — **Dado que** el docente tiene una cuenta vinculada activa, **cuando** se desactiva, **entonces** SIGE advierte al ADM y la cuenta no se desactiva automáticamente.
 - **CA-060-09 · Neg** — **Dado que** existe un docente, **cuando** alguien intenta eliminarlo físicamente, **entonces** se rechaza.
+- **CA-060-10 · Feliz** — **Dado que** un ADM reactiva a un docente cuya programación se conservó, **cuando** confirma, **entonces** la programación vuelve a aplicar desde esa fecha, no se evalúan retroactivamente los días en que estuvo `INACTIVO` y SIGE advierte que debe revisarla.
  
 ### SIGE-US-061 — Consultar y filtrar docentes
 - **CA-061-01 · Feliz** — **Dado que** un PAD/ADM abre el listado, **cuando** filtra por nombre, identificador o estatus, **entonces** obtiene resultados paginados que cumplen.
@@ -656,6 +661,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-057-04 · Feliz** — **Dado que** falla el servidor local, **cuando** se sigue el procedimiento de recuperación, **entonces** se restaura desde el último respaldo válido y el sistema vuelve a operar.
 - **CA-057-05 · Feliz** — **Dado que** se prepara el cierre de un hito, **cuando** se prueba la restauración completa, **entonces** se verifica la integridad de los datos recuperados.
 - **CA-057-06 · Feliz** — **Dado que** se documenta la instalación, **cuando** se reproduce en un equipo de reemplazo, **entonces** el entorno queda operativo siguiendo solo esa documentación.
+- **CA-057-07 · Aud** — **Dado que** se restauró la base de datos a partir de un respaldo, **cuando** termina el procedimiento, **entonces** queda un registro de la restauración (fecha, respaldo usado, responsable y resultado) en la bitácora de operación y un renglón `ops:restore` en `AUDIT_LOG`.
 
 ### SIGE-US-058 — Operar las funciones internas sin Internet
 - **CA-058-01 · Feliz** — **Dado que** no hay Internet pero sí red local y servidor, **cuando** el personal registra asistencia, reportes o consultas, **entonces** todo funciona con normalidad.

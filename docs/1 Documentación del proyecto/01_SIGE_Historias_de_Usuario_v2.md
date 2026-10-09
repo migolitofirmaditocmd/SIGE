@@ -193,7 +193,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 > **Como** personal administrativo, **quiero** guardar un estudiante cuyos datos aún están incompletos y ver claramente qué campos faltan, **para** completarlos después sin perder lo ya capturado.
 
 - **Contexto:** anotación del F-EST: los datos incompletos sí pueden existir como *registro incompleto* si están presentes los campos mínimos para crearlo.
-- **Reglas de negocio:** F-EST (los campos faltantes deben quedar identificados) · RN-EST-03 (el tutor sigue siendo obligatorio) · RN-EST-05 (solo `ACTIVO` recibe asistencia y reportes) · RN-EST-10 (el incompleto conserva el estatus `ACTIVO`, puede recibir asistencia y reportes, y no genera credencial hasta completarse).
+- **Reglas de negocio:** F-EST (los campos faltantes deben quedar identificados) · RN-EST-03 (el tutor sigue siendo obligatorio) · RN-EST-05 (solo `ACTIVO` recibe asistencia y reportes) · RN-EST-10 (el incompleto conserva el estatus `ACTIVO`, puede recibir asistencia y reportes, y puede obtener su QR y sticker; la credencial completa exige la fotografía, RN-CRE-01).
 - **Datos:** lista de campos faltantes visible en la ficha. Mínimos: nombre(s), apellido paterno, matrícula, grado, grupo, ciclo y tutor válido.
 - **UX/UI y estados:** indicador "Incompleto" en listas y ficha, con checklist de faltantes; al completar el último campo el indicador desaparece; guardado parcial con confirmación.
 - **Flujos alternativos:** si no se cumplen los requisitos mínimos, el registro no se guarda.

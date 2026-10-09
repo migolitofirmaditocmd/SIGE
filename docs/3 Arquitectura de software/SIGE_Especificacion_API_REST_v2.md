@@ -28,7 +28,7 @@ La API se publica con OpenAPI 3 generado desde el código (por ejemplo `drf-spec
 
 ### 1.3 Mapeo de códigos HTTP
 *   `400 Bad Request`: error de formato o validación básica.
-*   `401 Unauthorized`: credenciales inválidas en el login, o token ausente, inválido o vencido (`TOKEN_EXPIRED`, RN-AUT-04).
+*   `401 Unauthorized`: credenciales inválidas en el login (`INVALID_CREDENTIALS`); token ausente, inválido o vencido (`TOKEN_EXPIRED`, RN-AUT-04); o token de acceso aún vigente cuya sesión fue revocada o cuya cuenta fue desactivada (`SESSION_REVOKED`, efecto inmediato). Ante `SESSION_REVOKED` el cliente no intenta renovar y redirige al inicio de sesión.
 *   `403 Forbidden`: el rol no tiene permiso, o la cuenta está desactivada (evaluado solo con credenciales correctas, para no revelar cuentas).
 *   `404 Not Found`: el recurso no existe **o el rol no tiene permiso de verlo** (p. ej. un reporte ajeno, RN-REP-05): no se revela su existencia.
 *   `422 Unprocessable Entity`: violación de una regla de negocio.
@@ -36,7 +36,7 @@ La API se publica con OpenAPI 3 generado desde el código (por ejemplo `drf-spec
 *   **Resultados no erróneos que se comunican en el cuerpo (200):** un escaneo ignorado por rebote, un evento adicional o una reclasificación **no son errores**; ver 2.2.
 
 ### 1.4 Catálogo de `error_code` (inicial)
-`INVALID_CREDENTIALS`, `ACCOUNT_LOCKED`, `ACCOUNT_DISABLED`, `TOKEN_EXPIRED`, `PERMISSION_DENIED`, `NOT_FOUND`, `VALIDATION_ERROR`, `BUSINESS_RULE_VIOLATION`, `QR_NOT_RECOGNIZED`, `QR_REVOKED`, `STUDENT_NOT_ACTIVE`, `TEACHER_NOT_ACTIVE`, `EVENT_IN_FUTURE`, `EVENT_TOO_OLD`, `DUPLICATE_ENROLLMENT`, `DUPLICATE_RECORD`, `GUARDIAN_MATCH_FOUND`, `INVALID_TRANSITION`, `IMPORT_INVALID_STRUCTURE`, `RATE_LIMITED`. Cada uno lleva su `rn_reference`.
+`INVALID_CREDENTIALS`, `ACCOUNT_LOCKED`, `ACCOUNT_DISABLED`, `TOKEN_EXPIRED`, `SESSION_REVOKED`, `PERMISSION_DENIED`, `NOT_FOUND`, `VALIDATION_ERROR`, `BUSINESS_RULE_VIOLATION`, `QR_NOT_RECOGNIZED`, `QR_REVOKED`, `STUDENT_NOT_ACTIVE`, `TEACHER_NOT_ACTIVE`, `EVENT_IN_FUTURE`, `EVENT_TOO_OLD`, `DUPLICATE_ENROLLMENT`, `DUPLICATE_TEACHER_ID`, `DUPLICATE_RECORD`, `GUARDIAN_MATCH_FOUND`, `CONFIRMATION_REQUIRED`, `INVALID_TRANSITION`, `IMPORT_INVALID_STRUCTURE`, `RATE_LIMITED`. Cada uno lleva su `rn_reference`.
 
 ### 1.5 Listados
 Todo listado es paginado: parámetros `page` y `page_size` (máx. 100), respuesta `{ "count": n, "next": url|null, "previous": url|null, "results": [...] }`. El orden por defecto de personas es apellido paterno, apellido materno, nombre(s) (RN-TRX-10). Todo objeto de persona incluye `display_name` y `sort_name` calculados (RN-TRX-10); nunca un `full_name` almacenado.
@@ -58,7 +58,7 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 *   **Response (200 OK):** `{ "access": "jwt...", "expires_in": 900, "user": { "id": "uuid", "display_name": "...", "role": "DOCENTE", "teacher_id": "uuid|null" } }`. El refresh token **no** viaja en el cuerpo: se entrega en cookie `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/` (SG-01).
 *   **Errores:**
     *   `401 INVALID_CREDENTIALS`: usuario o contraseña incorrectos, **o usuario inexistente**, con idéntica respuesta (anti-enumeración).
-    *   `429 ACCOUNT_LOCKED` (con `Retry-After`): cuenta bloqueada o con intentos agotados (RN-AUT-03). Se aplica por nombre de usuario recibido exista o no (SG-02).
+    *   `429 ACCOUNT_LOCKED` (con `Retry-After`): la cuenta está bloqueada, **o este intento fallido fue el que alcanzó el umbral** `ACCOUNT_LOCKOUT_MAX_ATTEMPTS` y activó el bloqueo (RN-AUT-03, CA-002-01). Los intentos fallidos previos al umbral responden `401 INVALID_CREDENTIALS`. Se aplica por nombre de usuario recibido exista o no (SG-02).
     *   `403 ACCOUNT_DISABLED`: cuenta desactivada; solo se devuelve cuando la contraseña es correcta.
 *   **Reglas:** RN-AUT-01 (la cuenta tiene exactamente un rol y está activa, `USER.is_active`), RN-AUT-03 (contador, bloqueo y reinicio), RN-AUT-05 (el inicio de sesión, exitoso o fallido, queda en `AUDIT_LOG`).
 
@@ -126,8 +126,21 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 *   **Reglas Validadas (403 / 422):**
     *   **RN-QR-01/05:** Si la persona **no** tiene token vigente, cualquier `ADM` o `PAD` puede emitir uno nuevo (alta inicial).
     *   **RN-QR-03:** Si la persona **ya** tiene un token vigente, la operación es una revocación + reemplazo y se rechaza (403) si el solicitante no es `ADM`; el campo `reason` es obligatorio en este caso y queda registrado en `AUDIT_LOG`.
-    *   **RN-EST-05 / RN-AST-23:** Rechaza si el estudiante no está `ACTIVO` o el docente no está `ACTIVO`.
+    *   **RN-EST-05 / RN-AST-23:** Rechaza con `422 STUDENT_NOT_ACTIVE` (`entity_type = STUDENT`) o `422 TEACHER_NOT_ACTIVE` (`entity_type = TEACHER`) si la persona no está `ACTIVO`.
     *   **RN-QR-02:** El token generado no debe poder derivar datos personales.
+
+#### `POST /api/v1/credentials/exports/preview/` — Vista previa de una exportación
+*   **Roles:** ADM, PAD (RN-AUT-06). **Trazabilidad:** RF-CRE-01, RF-CRE-02, RN-CRE-01.
+*   **Request:** `{ "mode": "CREDENCIAL" | "STICKER", "entity_type": "STUDENT" | "TEACHER", "entity_ids": ["uuid", "..."], "group_id": "uuid" }`. Se envía **exactamente uno** de `entity_ids` (individual o subconjunto, RF-CRE-02) o `group_id` (lote por grupo, solo con `STUDENT`). Hay un máximo configurable de personas por exportación.
+*   **Respuesta `200 OK`:** `{ "included": 38, "excluded": [ { "entity_id": "uuid", "display_name": "...", "reason": "SIN_FOTOGRAFIA" | "NO_ACTIVO" | "SIN_QR_VIGENTE" } ] }`. Nunca se omite en silencio a alguien: los excluidos se listan con su motivo (RN-CRE-01).
+*   **Reglas:** solo se incluyen personas `ACTIVO` con QR `VIGENTE`. `mode = CREDENCIAL` exige además fotografía cargada; `mode = STICKER` no la exige (RN-CRE-01).
+
+#### `POST /api/v1/credentials/exports/` — Exportar credenciales o stickers
+*   **Roles:** ADM, PAD. **Trazabilidad:** RF-CRE-01, RF-CRE-02, RN-CRE-01, RN-TRX-02.
+*   **Request:** el de la vista previa más `"format": "PDF" | "PNG"`. `PNG` (imagen de alta resolución del QR) solo se admite para una única persona; `PDF` aplica a lote o a una persona.
+*   **Respuesta `200 OK`:** el archivo (`application/pdf` o `image/png`) con las personas incluidas. No se guarda copia en el servidor (las fotografías son datos de menores, RN-TRX-01 y RN-TRX-02).
+*   **Errores:** `422 BUSINESS_RULE_VIOLATION` si ninguna persona cumple las condiciones; `422 VALIDATION_ERROR` si se envían ambos o ninguno de `entity_ids` y `group_id`, o si se pide `PNG` para más de una persona; `403 PERMISSION_DENIED` si el rol no es ADM ni PAD.
+*   **Uso típico de RF-CRE-02:** reexportar el sticker de reposición tras una revocación (RF-QR-03): `mode = STICKER` con el `entity_id` de la persona.
 
 ---
 
@@ -199,7 +212,7 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 | `action` | Desde → Hasta | Rol | Notas |
 |---|---|---|---|
 | `REVIEW` | `REGISTRADO → REVISADO_PREFECTO` | `PRE` (grupo asignado) | |
-| `REJECT` | `REGISTRADO → RECHAZADO` | `PRE` (grupo asignado) | `reason` obligatorio. **Fin del flujo del original**; la corrección exige `POST /reports/` con `replaces_report_id`. Se notifica al docente autor (RN-REP-08). |
+| `REJECT` | `REGISTRADO → RECHAZADO` | `PRE` (grupo asignado) | `reason` obligatorio. **Fin del flujo del original**; la corrección exige `POST /reports/` con `replaces_report_id`. Se notifica al docente autor dentro de la aplicación (RN-REP-08): el reporte aparece en su `GET /reports/` con `status = RECHAZADO` y el motivo se consulta en `GET /reports/{id}/history/`. No se envía correo. El aviso se genera a partir de los reportes `RECHAZADO` propios sin reporte nuevo referenciado; cerrarlo solo lo oculta en el cliente (CA-048-03). |
 | `CHANNEL` | `REVISADO_PREFECTO → CANALIZADO` | `PRE` (grupo asignado) | |
 | `ADMIN_REVIEW` | `CANALIZADO → REVISADO_ADMINISTRATIVO` | `PAD` | |
 | `ADMIN_RETURN` | `CANALIZADO → REVISADO_PREFECTO` | `PAD` | `reason` obligatorio (rechazo administrativo: regresa al prefecto, no cierra, RN-REP-03). |
@@ -246,22 +259,22 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 *   **Roles:** solo `PAD` (RN-AST-10). Cualquier otro rol, incluido `ADM`, recibe 403.
 *   **Request:** `{ "qr_token": "uuid", "record_type": "ENTRADA|SALIDA", "client_event_id": "uuid" }`. El PAD elige el tipo manualmente (RN-AST-12). La hora efectiva es la del servidor (RN-TRX-04).
 *   **Respuestas:**
-    *   `201 Created` — `{ "result": "REGISTRADO", "attendance_id": "...", "record_type": "ENTRADA", "status": "ASISTIO|LLEGO_TARDE", "effective_datetime": "...", "anomaly_flag": "NINGUNA" }`. Para `ENTRADA`, el estado se calcula con el límite del día: `expected_entry_time + tolerancia` (RN-AST-14/19). Para `SALIDA`, `status` es nulo y se conserva la hora efectiva (RN-AST-20).
+    *   `201 Created` — `{ "result": "REGISTRADO", "attendance_id": "...", "record_type": "ENTRADA", "status": "ASISTIO|LLEGO_TARDE", "effective_datetime": "...", "anomaly_flag": "NINGUNA", "scheduled": true }`. Para `ENTRADA`, el estado se calcula con el límite del día: `expected_entry_time + tolerancia` (RN-AST-14/19). Para `SALIDA`, `status` es nulo y se conserva la hora efectiva (RN-AST-20).
     *   `201 Created` con `anomaly_flag: "SALIDA_SIN_ENTRADA"` si se registra una `SALIDA` sin `ENTRADA` válida ese día (RN-AST-25); se asigna en este mismo momento (PP-03). Un `FALTÓ` automático no cuenta como `ENTRADA`.
     *   `200 OK` — `{ "result": "RECLASIFICADO", "previous_status": "FALTO", "status": "ASISTIO|LLEGO_TARDE" }`: si el docente tenía `FALTÓ` automático ese día, la `ENTRADA` **actualiza ese mismo renglón** y no cuenta como segunda entrada (RN-AST-13/24). Un `FALTÓ` justificado manualmente no se reclasifica.
-*   **Errores (422):** `QR_NOT_RECOGNIZED` (inexistente, revocado o de otro tipo de entidad, RN-AST-11, RN-QR-06); `QR_REVOKED`; `TEACHER_NOT_ACTIVE` (docente `INACTIVO`; el QR **no** se marca revocado, RN-AST-23/29, CA-060-04); `DUPLICATE_RECORD` (segunda `ENTRADA` o segunda `SALIDA` del mismo día, RN-AST-13/16).
-*   **Pendiente (D-13):** `ENTRADA` en un día sin asistencia programada.
+*   **Errores (422):** `QR_NOT_RECOGNIZED` (inexistente o de otro tipo de entidad, p. ej. un QR de estudiante, RN-AST-11, RN-QR-06); `QR_REVOKED` (el token está `REVOCADO`; incluye alerta para verificar la identidad manualmente, RN-QR-04, RN-QR-06); `TEACHER_NOT_ACTIVE` (docente `INACTIVO`; el QR **no** se marca revocado, RN-AST-23/29, CA-060-04); `DUPLICATE_RECORD` (segunda `ENTRADA` o segunda `SALIDA` del mismo día, RN-AST-13/16). Cuando la `ENTRADA` existente tiene un estado manual (`FALTA_JUSTIFICADA` o modificado por un usuario), el error incluye `details.reason = "MANUAL_STATE_PREVAILS"` y no se reclasifica (RN-AST-24).
+*   **Registro en un día sin asistencia programada (D-13, resuelto):** una `ENTRADA` o `SALIDA` en una fecha sin programación del docente responde `201 Created` con `{ "result": "REGISTRADO", "record_type": "...", "status": null, "scheduled": false, "anomaly_flag": "NINGUNA" }`: se guarda el registro con su hora efectiva, sin determinar puntualidad, y no genera ausencia (RN-AST-32, RN-AST-18, CA-040-04).
 
 ### 3.2 Docentes (Módulo AST / `teachers`)
 
 | Método y ruta | Roles | Reglas |
 |---|---|---|
 | `GET /teachers/` (búsqueda por nombre, identificador y estatus, paginado) | ADM, PAD | RF-AST-12, RN-TRX-10 |
-| `POST /teachers/` | ADM, PAD | RF-AST-11, RN-AST-26/27, RN-TRX-08/09 (identificador único incluso frente a inactivos, inmutable) |
+| `POST /teachers/` | ADM, PAD | RF-AST-11, RN-AST-26/27, RN-TRX-08/09 (identificador único incluso frente a inactivos, inmutable) Identificador duplicado, incluso frente a docentes `INACTIVO`: `422 DUPLICATE_TEACHER_ID` (RN-AST-26). Intentar cambiar el identificador en `PATCH`: `422 BUSINESS_RULE_VIOLATION` con `rn_reference = RN-AST-26` (inmutable, salvo corrección excepcional con motivo y bitácora).|
 | `GET /teachers/{id}/` (ficha, estado del QR, programación, acceso a historial) | ADM, PAD | RF-AST-12 |
-| `PATCH /teachers/{id}/` | ADM, PAD | RN-AST-26 (identificador inmutable), RN-AUT-05 |
+| `PATCH /teachers/{id}/` | ADM, PAD | RN-AST-26 (identificador inmutable), RN-AUT-05 Identificador duplicado, incluso frente a docentes `INACTIVO`: `422 DUPLICATE_TEACHER_ID` (RN-AST-26). Intentar cambiar el identificador en `PATCH`: `422 BUSINESS_RULE_VIOLATION` con `rn_reference = RN-AST-26` (inmutable, salvo corrección excepcional con motivo y bitácora).|
 | `POST /teachers/{id}/deactivate/` (motivo obligatorio) | ADM, PAD | RN-AST-28/29 |
-| `POST /teachers/{id}/reactivate/` (motivo obligatorio) | ADM | RN-AST-28 |
+| `POST /teachers/{id}/reactivate/` (motivo obligatorio; la respuesta advierte que debe revisarse la programación conservada) | ADM | RN-AST-28/29 |
 | `PUT /teachers/{id}/schedule/` | ADM, PAD | RF-AST-09, RN-AST-14/18/19 |
 | `POST /users/{user_id}/link-teacher/` | ADM | RN-AST-30 (1 a 1) |
 | `GET /teachers/{id}/attendance/?from=&to=` | ADM, PAD | RF-AST-10, RN-AST-21 |
@@ -283,7 +296,7 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 | `POST /students/{id}/status/` (`BAJA`, `EGRESADO`) | ADM, PAD | RF-EST-02, RN-EST-04/09 |
 | `POST /students/{id}/reinstate/` (`BAJA → ACTIVO`) | ADM | RN-EST-06, RN-EST-09 (`EGRESADO` es final) |
 | `POST /students/{id}/guardians/` | ADM, PAD | RN-EST-03/11/13 |
-| `PATCH /guardians/{id}/` (si el tutor es compartido, la primera llamada devuelve la lista de estudiantes afectados y requiere reenviar con `confirm=true`) | ADM, PAD | RN-EST-14, Modelo §3.5 |
+| `PATCH /guardians/{id}/` (si el tutor es compartido y la solicitud no trae `confirm=true`, responde `422 CONFIRMATION_REQUIRED` sin guardar nada y con `details.affected_students = { "count": n, "students": [ { "id": "uuid", "display_name": "...", "group": "..." } ] }`; el cliente muestra la advertencia y reenvía con `confirm=true` (RN-EST-14)) | ADM, PAD | RN-EST-14, Modelo §3.5 |
 | `POST /guardians/{id}/split/` | ADM, PAD | RF-EST-07, RN-EST-13 |
 | `POST /student-guardians/{id}/invalidate-contact/` (motivo) | ADM, PAD | RN-EST-11 |
 | `PATCH /student-guardians/{id}/consent/` | ADM, PAD | RN-EST-07, `GUARDIAN_CONSENT_LOG` |
@@ -294,7 +307,7 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 |---|---|---|
 | `POST /reports/{id}/communications/` | PAD | API-06, PP-05 |
 | `GET /communications/?status=&report_id=` | ADM, PAD | RN-COM-03 |
-| `POST /communications/{id}/retry/` | PAD (ADM según D-06) | RN-COM-03, CA-053-02/03 |
+| `POST /communications/{id}/retry/` | PAD | RN-COM-03, RN-AUT-06, CA-053-02/03 |
 
 ### 3.6 Administración y operación (Módulo ADM / `ops`)
 

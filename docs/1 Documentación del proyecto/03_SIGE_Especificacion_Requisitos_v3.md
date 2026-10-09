@@ -253,7 +253,7 @@ El sistema DEBE conservar de forma permanente en la base de datos todo registro 
 El sistema DEBE mantener una ficha (expediente) por docente, independiente de las cuentas de usuario, con:
 **Datos mínimos (obligatorios):** nombre(s), apellido paterno, identificador interno (clave institucional, única e inmutable, RN-AST-26) y estatus (`ACTIVO` / `INACTIVO`).
 - **Datos opcionales:** apellido materno, fotografía, correo electrónico y teléfono (RN-AST-27). No se recolectan otros datos personales.
-El sistema DEBE permitir al Personal administrativo y al Administrador registrar y editar la ficha y desactivar al docente con motivo; DEBE permitir **solo al Administrador** reactivarlo con motivo (RN-AST-28). Un docente nunca se elimina y su historial se conserva. Al desactivarlo aplican los efectos de RN-AST-29 (el QR no se revoca, la programación queda suspendida y el historial sigue consultable). El sistema DEBE permitir al Administrador vincular al docente con una cuenta de usuario con rol Docente (RN-AST-30). Todo alta, edición y cambio de estatus DEBE conservar trazabilidad (RN-AUT-05).
+El sistema DEBE permitir al Personal administrativo y al Administrador registrar y editar la ficha y desactivar al docente con motivo; DEBE permitir **solo al Administrador** reactivarlo con motivo (RN-AST-28). Un docente nunca se elimina y su historial se conserva. Al desactivarlo aplican los efectos de RN-AST-29 (el QR no se revoca, la programación se conserva sin modificarse y no se evalúa mientras esté `INACTIVO`, y el historial sigue consultable). Al reactivarlo, la programación conservada vuelve a aplicar desde la fecha de reactivación y se advierte que debe revisarse. El sistema DEBE permitir al Administrador vincular al docente con una cuenta de usuario con rol Docente (RN-AST-30). Todo alta, edición y cambio de estatus DEBE conservar trazabilidad (RN-AUT-05).
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03 · KPI-72 · RN-AST-23, RN-AST-26 a RN-AST-30.
 
 **RF-AST-12 — Consulta y filtrado de docentes**
@@ -307,7 +307,7 @@ El sistema DEBE proveer una interfaz única para que el rol Administrador gestio
 - *Prioridad:* Must. **Trazabilidad:** 	OE-09 (Panel administrativo) · Hito 02.
 
 **RF-ADM-02 — Configuración de parámetros operativos**
-El sistema DEBE permitir configurar, de forma independiente para estudiantes y docentes, la ventana de prevención de rebote (1–30 min, 5 por defecto), la hora de corte por grupo y jornada, las horas de verificación de ausencias (10:00 inicial para estudiantes del turno matutino, 16:00 inicial para estudiantes del turno vespertino — valor provisional sujeto a confirmación de la institución) —siempre posteriores a la hora de corte del mismo grupo y turno—, la tolerancia institucional de puntualidad docente (0 min inicial), y el número y duración de bloqueo de cuentas (5 intentos / 15 min). Todo cambio DEBE auditarse y no ser retroactivo (RN-ADM-02). Las opciones predeterminadas del reglamento no forman parte de este panel (RF-ADM-01).
+El sistema DEBE permitir configurar, de forma independiente para estudiantes y docentes, la ventana de prevención de rebote (1–30 min, 5 por defecto), la hora de corte por grupo y jornada, las horas de verificación de ausencias (10:00 inicial para estudiantes del turno matutino, 16:00 inicial para estudiantes del turno vespertino — valor provisional sujeto a confirmación de la institución) —siempre posteriores a la hora de corte del mismo grupo y turno—, la tolerancia institucional de puntualidad docente (0 min inicial), y el número y duración de bloqueo de cuentas (5 intentos / 15 min), la longitud y complejidad mínimas de contraseña (RNF-SEG-03), la vigencia del enlace de restablecimiento (RF-AUT-04), el número de intentos automáticos de envío de correo, la periodicidad del respaldo automático y la antigüedad máxima de los eventos offline aceptados. Todo cambio DEBE auditarse y no ser retroactivo (RN-ADM-02). Las opciones predeterminadas del reglamento no forman parte de este panel (RF-ADM-01).
 - *Prioridad:* Should. **Trazabilidad:** 	OE-09 (Panel administrativo) · Hito 02/07.
 
 **RF-ADM-03 — Panel de indicadores (KPIs)**
@@ -434,7 +434,7 @@ El módulo de captura de QR DEBE aceptar lectores USB emuladores de teclado (HID
 - *Prioridad:* Could. **Trazabilidad:** Hito 03/06 · Riesgo R-13.
 
 **RNF-COM-02 — Dispositivos y navegadores soportados**
-El equipo DEBE definir y documentar, antes del Hito 04, el conjunto mínimo de dispositivos móviles (SO y versión) y navegadores web soportados, y validar la aplicación contra una muestra representativa de dicho conjunto.
+El equipo DEBE definir y documentar, antes del Hito 04, el conjunto mínimo de dispositivos móviles (SO y versión) y navegadores web soportados, y validar la aplicación contra una muestra representativa de dicho conjunto. La validación DEBE incluir la instalación y confianza del certificado de la autoridad certificadora interna en los dispositivos iOS y Android soportados (requisito de la conexión HTTPS en red local, RNF-SEG-01) y las limitaciones conocidas de la PWA en cada navegador (cámara en contexto seguro, sincronización offline solo con la aplicación abierta en iOS, y posible purga del almacenamiento local por inactividad).
 - *Prioridad:* Must. **Trazabilidad:** 	OE-10 (App móvil) · Hito 04 · KPI-26 · Riesgo R-13.
 
 ### 4.6 Mantenibilidad

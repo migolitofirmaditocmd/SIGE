@@ -29,6 +29,12 @@ El sistema requiere una línea base de información para que los flujos puedan o
    - `TEACHER_DEFAULT_TOLERANCE_MINUTES`: "0"
    - `ACCOUNT_LOCKOUT_MAX_ATTEMPTS`: "5"
    - `ACCOUNT_LOCKOUT_DURATION_MINUTES`: "15"
+   - `BACKUP_FREQUENCY_HOURS`: "24"
+   - `COMMUNICATION_MAX_AUTO_ATTEMPTS`: "3"
+   - `OFFLINE_MAX_AGE_HOURS`: "72"
+   - `PASSWORD_MIN_LENGTH`: "10"
+   - `PASSWORD_REQUIRE_COMPLEXITY`: "true"
+   - `PASSWORD_RESET_EXPIRY_MINUTES`: "30"
 2. **Ciclo Escolar Activo:** Debe inyectarse un registro de prueba de `ACADEMIC_CYCLE` con la bandera `is_active=True`, dado que ninguna alta estudiantil o docente puede procesarse sin un ciclo vigente.
 3. **Roles:** El rol de cada usuario vive en la columna `USER.role` (`ENUM`), verificada mediante clases de permisos de Django REST Framework (RN-AUT-06). Este proyecto **no** usa `django.contrib.auth.models.Group` ni `Permission` para RBAC; no hace falta sembrar grupos de Django en esta migración.
 4. **Catálogos de Reporte (RN-ADM-03):** `REPORT_TYPE` (exactamente 3 valores, RN-REP-02), `REPORT_SEVERITY` y `REPORT_PRESET_OPTION` se siembran una sola vez en la instalación inicial vía migración de datos. No existe interfaz de edición; cualquier cambio posterior a su contenido se hace con una nueva migración de datos versionada, bajo control de cambios del proyecto (Acta §7.1, CC-03), nunca editando la migración original (ver §2.3, inmutabilidad del historial).

@@ -11,7 +11,7 @@ Este documento detalla los mecanismos de seguridad, políticas de control de acc
 ## 1. Estrategia de Autenticación: JWT de acceso + sesión revocable
 SIGE usa un token de acceso JWT de vida corta y un token de renovación **con estado** persistido en `USER_SESSION` (RF-AUT-01). Solo el token de acceso es sin estado.
 
-*   **Access Token (15 minutos).** JWT firmado enviado en `Authorization: Bearer <token>`. Claims: `sub` (id de usuario), `sid` (id de `USER_SESSION`), `iat`, `exp`. **El backend no autoriza con ningún rol contenido en el token:** en cada petición carga de la BD `USER.role`, `USER.is_active` y verifica que `USER_SESSION.revoked_at IS NULL` (RN-API-01). Así la desactivación de una cuenta o un cambio de rol tienen efecto inmediato, no a los 15 minutos (US-004). El token vencido se rechaza con 401 aunque el refresh siga vigente (RN-AUT-04).
+*   **Access Token (15 minutos).** JWT firmado enviado en `Authorization: Bearer <token>`. Claims: `sub` (id de usuario), `sid` (id de `USER_SESSION`), `iat`, `exp`. **El backend no autoriza con ningún rol contenido en el token:** en cada petición carga de la BD `USER.role`, `USER.is_active` y verifica que `USER_SESSION.revoked_at IS NULL` (RN-API-01).Así la desactivación de una cuenta o un cambio de rol tienen efecto inmediato, no a los 15 minutos (US-004). La petición con una sesión revocada o una cuenta desactivada se rechaza con `401 SESSION_REVOKED`. El token vencido se rechaza con 401 aunque el refresh siga vigente (RN-AUT-04).
 *   **Refresh Token (opaco, con estado).** Cadena aleatoria criptográfica (`secrets.token_urlsafe(48)`), **no JWT**. En BD solo se guarda su hash (`USER_SESSION.refresh_token_hash`, UNIQUE).
 *   **Vigencia (D-08):** expiración deslizante de 24 horas con tope absoluto de 7 días desde el inicio de sesión (`USER_SESSION.absolute_expires_at`, ver §7 I-05). Superado el tope, se exige iniciar sesión de nuevo.
 *   **Rotación y detección de reutilización:** cada llamada a `POST /api/v1/auth/refresh/` revoca la sesión usada (`revoked_reason='ROTATED'`) y emite una nueva con el mismo tope absoluto. Si llega un refresh ya rotado, se asume robo: se revocan todas las sesiones vigentes del usuario (`revoked_reason='REUSE_DETECTED'`) y se audita.
@@ -23,7 +23,7 @@ SIGE usa un token de acceso JWT de vida corta y un token de renovación **con es
 Para prevenir ataques de fuerza bruta sobre las cuentas del personal:
 
 1.  **Umbral:** `OPERATIONAL_PARAMETER['ACCOUNT_LOCKOUT_MAX_ATTEMPTS']` (5 por defecto, configurable) intentos fallidos consecutivos.
-2.  **Mecanismo:** cada fallo incrementa `USER.failed_login_attempts`. Al alcanzar el umbral se estampa `USER.locked_until = ahora + ACCOUNT_LOCKOUT_DURATION_MINUTES` (15 por defecto, configurable) y se registra en `AUDIT_LOG`.
+2.  **Mecanismo:** cada fallo incrementa `USER.failed_login_attempts`.Al alcanzar el umbral se estampa `USER.locked_until = ahora + ACCOUNT_LOCKOUT_DURATION_MINUTES` (15 por defecto, configurable) y se registra en `AUDIT_LOG`. El propio intento que alcanza el umbral se responde con `429 ACCOUNT_LOCKED` y `Retry-After` igual a la duración del bloqueo (no con `401`).
 3.  **Durante el bloqueo** se rechaza el acceso aunque la contraseña sea correcta y se informa el tiempo restante.
 4.  **Reinicio del contador:** un inicio de sesión exitoso, el vencimiento de `locked_until` y el desbloqueo manual ponen `failed_login_attempts = 0`.
 5.  **Desbloqueo manual:** solo el Administrador (endpoint `POST /api/v1/users/{id}/unlock/`), con registro en `AUDIT_LOG`.
