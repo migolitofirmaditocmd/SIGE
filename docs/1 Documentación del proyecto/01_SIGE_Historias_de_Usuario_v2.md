@@ -436,7 +436,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 
 - **Contexto:** F-AST §4 (A). La pérdida de Internet y la pérdida de la red local son escenarios distintos (acta): esta historia trata la pérdida de conexión con el servidor local.
 - **Reglas de negocio:** RN-MOV-02 (buffer local de hasta 1,000 registros; el evento queda **pendiente de validación** y no es definitivo) · RN-MOV-03 (con el buffer lleno se rechaza el evento y se alerta al operador) · RNF-FIA-01 · RN-API-02 (el buffer no sustituye la fuente central).
-- **Datos:** fecha, hora de captura, tipo de evento, identificador QR leído; marca `PENDIENTE DE VALIDACIÓN`. Sin conexión no se verifican la existencia del token ni el estatus del estudiante (RN-MOV-02).
+- **Datos:** fecha, hora de captura, tipo de evento, identificador QR leído; más el identificador del evento, el desfase del reloj y el operador que capturó (sin ningún dato del estudiante); marca `PENDIENTE DE VALIDACIÓN`.
 - **UX/UI y estados:** indicador persistente "Sin conexión — N eventos pendientes"; con el buffer lleno (1,000) se rechaza el nuevo evento con alerta y se indica reintentar (RN-MOV-03).
 - **Trazabilidad:** RF-MOV-01, RF-MOV-03 · RNF-FIA-01 · OE-04, OE-11 · KPI-43.
 

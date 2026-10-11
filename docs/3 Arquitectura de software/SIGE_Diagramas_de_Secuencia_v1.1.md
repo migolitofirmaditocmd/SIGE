@@ -119,7 +119,7 @@ sequenceDiagram
             W->>W: Redirige al inicio de sesión (los eventos offline pendientes se conservan)
         else Refresh vigente
             A->>DB: Revoca la sesión usada (ROTATED) e inserta nueva USER_SESSION con el mismo tope absoluto
-            A-->>W: 200 {access, expires_in 900} + nueva cookie refresh
+            A-->>W: 200 {access, expires_in 900, user} + nueva cookie refresh
             W->>A: Reintenta la petición original con el nuevo access
         end
     else Access token vigente
@@ -686,7 +686,7 @@ sequenceDiagram
     participant B as Buffer (IndexedDB)
     participant A as API
 
-    Note over W,A: Con conexión, la PWA consultó GET /system/status/ y calculó clock_offset_ms (reloj del dispositivo contra hora del servidor)
+    Note over W,A: Con conexión, la PWA consultó GET /system/status/ y calculó clock_offset_ms (hora del servidor menos hora del dispositivo)
     O->>W: Escanea el QR de un estudiante
     W->>W: Detecta que no alcanza el servidor (pérdida de la LAN)
     W->>B: ¿El buffer tiene menos de 1,000 eventos?
@@ -724,7 +724,7 @@ sequenceDiagram
             A->>A: Devuelve el resultado previo sin reprocesar (idempotencia)
         else Evento nuevo
             A->>DB: ¿captured_by conserva rol PRE o PAD y cuenta activa?
-            A->>A: Hora efectiva = captured_at corregida con clock_offset_ms (RN-TRX-04)
+            A->>A: Hora efectiva = captured_at + clock_offset_ms (RN-TRX-04)
             alt Antigüedad mayor a OFFLINE_MAX_AGE_HOURS (72 h)
                 A->>A: Descarta con EVENT_TOO_OLD
             else Hora efectiva posterior al reloj del servidor más una tolerancia pequeña

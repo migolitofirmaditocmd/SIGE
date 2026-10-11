@@ -53,7 +53,7 @@ C4Container
 
     System_Boundary(sige_sys, "Servidor local institucional") {
         Container(proxy, "Proxy inverso / TLS", "Nginx o Caddy", "Termina HTTPS con certificado de CA interna (RNF-SEG-01). Enruta / al frontend y /api/ al backend bajo el mismo origen. Único puerto expuesto en la LAN.")
-        Container(frontend, "Aplicación Web / PWA", "Next.js, React, Service Worker", "Interfaz web y aplicación móvil (PWA). Incluye el buffer offline en IndexedDB: hasta 1,000 eventos de captura (RN-MOV-02/03), sin datos personales, no sustituye la fuente central (RN-API-02).")
+        Container(frontend, "Aplicación Web / PWA", "Next.js, React, Service Worker", "Interfaz web y aplicación móvil (PWA). Incluye el buffer offline en IndexedDB: hasta 1,000 eventos de captura (RN-MOV-02/03), sin datos personales, no sustituye la fuente central (RN-API-02). El Service Worker solo guarda recursos estáticos: nunca respuestas de la API ni tokens.")
         Container(backend, "API Backend", "Python, Django, DRF", "Lógica de negocio central, RBAC, auditoría y servicios REST. Incluye generación de QR y PDF mediante librerías (no es un contenedor aparte).")
         ContainerDb(db, "Base de Datos Relacional", "PostgreSQL 15+", "Todos los datos del sistema. Sin eliminación física de registros históricos (RN-TRX-03). AUDIT_LOG de solo inserción.")
         Container(worker, "Worker y planificador", "Celery Worker + Beat (o Django-Q2, D-02)", "Ausencias estudiantiles y docentes, respaldos, cola de correos, mantenimiento. Planificación por condición con registro JOB_RUN.")
@@ -224,7 +224,7 @@ C4Deployment
 
 | ADR | Decisión | Estado |
 |---|---|---|
-| ADR-01 | **La "aplicación móvil" es la PWA de Next.js.** Coherente con el stack base del Acta (TypeScript, Next.js). Limitaciones a validar en RNF-COM-02: iOS/Safari no soporta *Background Sync* (la sincronización offline debe iniciarse con la app abierta), el almacenamiento local puede ser purgado por el navegador tras un periodo sin uso, y la cámara exige contexto seguro (HTTPS). | Propuesta |
+| ADR-01 | **La "aplicación móvil" es la PWA de Next.js.** Coherente con el stack base del Acta (TypeScript, Next.js). Limitaciones a validar en RNF-COM-02: iOS/Safari no soporta *Background Sync* (la sincronización offline debe iniciarse con la app abierta), el almacenamiento local puede ser purgado por el navegador tras un periodo sin uso, y la cámara exige contexto seguro (HTTPS). Detalle en `SIGE_Arquitectura_Frontend_y_PWA_v1.md`. | Aceptada |
 | ADR-02 | Motor de tareas: Celery+Redis o Django-Q2 (ORM), recomendado Django-Q2 (D-02). | Pendiente |
 | ADR-03 | HTTPS en LAN con CA interna (D-09). | Propuesta |
 | ADR-04 | Sesión con access token de 15 min + refresh opaco con rotación en cookie HttpOnly (SG-01, D-08). | Propuesta |

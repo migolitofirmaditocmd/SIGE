@@ -339,7 +339,7 @@ El sistema DEBE devolver errores en un formato consistente (código, mensaje, re
 ### 3.9 Aplicación Móvil — *(OE-11 · Hito 04)*
 
 **RF-MOV-01 — Escaneo y validación de QR desde el dispositivo móvil**
-La aplicación móvil DEBE permitir escanear el QR de un estudiante y, con conexión al servidor local, validarlo contra el backend en tiempo real. Sin conexión, DEBE almacenar únicamente el evento de captura (fecha, hora de captura, tipo de evento e identificador QR leído) conforme a RNF-FIA-01 y RN-MOV-02, marcarlo como pendiente de validación y no considerarlo registro definitivo; la existencia del token, su vigencia, el estatus del estudiante, la unicidad y el rebote se validan en el backend al sincronizar.
+La aplicación móvil DEBE permitir escanear el QR de un estudiante y, con conexión al servidor local, validarlo contra el backend en tiempo real. Sin conexión, DEBE almacenar únicamente el evento de captura (fecha, hora de captura, tipo de evento e identificador QR leído, más el identificador del evento, el desfase del reloj y el operador que capturó, sin ningún dato del estudiante) conforme a RNF-FIA-01 y RN-MOV-02, marcarlo como pendiente de validación y no considerarlo registro definitivo; la existencia del token, su vigencia, el estatus del estudiante, la unicidad y el rebote se validan en el backend al sincronizar.
 - *Prioridad:* Must. **Trazabilidad:** OE-10 · Hito 04 · KPI-19, KPI-26.
 
 **RF-MOV-02 — Registro y consulta de asistencia y reportes desde móvil**
@@ -434,7 +434,7 @@ El módulo de captura de QR DEBE aceptar lectores USB emuladores de teclado (HID
 - *Prioridad:* Could. **Trazabilidad:** Hito 03/06 · Riesgo R-13.
 
 **RNF-COM-02 — Dispositivos y navegadores soportados**
-El equipo DEBE definir y documentar, antes del Hito 04, el conjunto mínimo de dispositivos móviles (SO y versión) y navegadores web soportados, y validar la aplicación contra una muestra representativa de dicho conjunto. La validación DEBE incluir la instalación y confianza del certificado de la autoridad certificadora interna en los dispositivos iOS y Android soportados (requisito de la conexión HTTPS en red local, RNF-SEG-01) y las limitaciones conocidas de la PWA en cada navegador (cámara en contexto seguro, sincronización offline solo con la aplicación abierta en iOS, y posible purga del almacenamiento local por inactividad).
+El equipo DEBE definir y documentar, antes del Hito 04, el conjunto mínimo de dispositivos móviles (SO y versión) y navegadores web soportados, y validar la aplicación contra una muestra representativa de dicho conjunto. La validación DEBE incluir la instalación y confianza del certificado de la autoridad certificadora interna en los dispositivos iOS y Android soportados (requisito de la conexión HTTPS en red local, RNF-SEG-01) y las limitaciones conocidas de la PWA en cada navegador (cámara en contexto seguro, sincronización offline solo con la aplicación abierta en iOS, y posible purga del almacenamiento local por inactividad). La matriz incluye además, por cada dispositivo y navegador, el soporte de Web Locks (renovación de sesión entre pestañas), la decodificación de QR con la cámara, el almacenamiento persistente y el comportamiento de purga de los sitios instalados en iOS.
 - *Prioridad:* Must. **Trazabilidad:** 	OE-10 (App móvil) · Hito 04 · KPI-26 · Riesgo R-13.
 
 ### 4.6 Mantenibilidad

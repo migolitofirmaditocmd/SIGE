@@ -46,6 +46,9 @@ ISO 8601 con zona horaria. El servidor almacena en UTC y la interfaz muestra la 
 
 ### 1.7 Permisos por endpoint
 Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, RN-AUT-06). Un rol sin permiso recibe 403; un recurso fuera del alcance del rol (p. ej. reporte de otro grupo) recibe 404.
+
+### 1.8 Caché de las respuestas
+Toda respuesta de la API que contenga datos personales (estudiantes, tutores, docentes, asistencia, reportes, comunicaciones y bitácora) lleva `Cache-Control: no-store`. El Service Worker de la PWA nunca guarda respuestas de `/api/*` (Arquitectura Frontend §5.3.3; RN-TRX-01, RN-TRX-02).
 ---
 
 ## 2. Endpoints por Módulo
@@ -64,7 +67,7 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 
 #### POST `/api/v1/auth/refresh/`
 *   **Capacidad:** renovar el access token con la cookie de refresh.
-*   **Response (200 OK):** `{ "access": "jwt...", "expires_in": 900 }` y nueva cookie de refresh (rotación).
+*   **Response (200 OK):** `{ "access": "jwt...", "expires_in": 900, "user": { "id": "uuid", "display_name": "...", "role": "DOCENTE", "teacher_id": "uuid|null" } }` y nueva cookie de refresh (rotación). El objeto `user` es el mismo del login y se lee de la base en cada renovación, de modo que un cambio de rol o de nombre se refleja en el cliente sin volver a iniciar sesión.
 *   **Errores:** `401 TOKEN_EXPIRED` si el refresh está vencido, revocado o fue reutilizado (esto último revoca todas las sesiones del usuario). **Reglas:** RN-AUT-04, RF-AUT-01.
 
 #### POST `/api/v1/auth/logout/`
@@ -96,8 +99,8 @@ Cada endpoint declara su matriz de roles y se aplica en el backend (RN-API-01, R
 #### POST `/api/v1/attendance/students/sync/`
 *   **Capacidad:** sincronizar los eventos capturados offline (RN-MOV-02, US-033).
 *   **Roles:** `PRE`, `PAD`.
-*   **Request:** `{ "events": [ { "client_event_id": "uuid", "qr_token": "uuid", "captured_at": "ISO8601", "clock_offset_ms": 1200, "captured_by": "uuid" } ] }` (máximo 1,000, el tamaño del buffer).
-*   **Procesamiento:** en orden de `captured_at`. Cada evento es independiente: uno inválido no aborta el lote. La hora efectiva es `captured_at` corregida con `clock_offset_ms` (RN-TRX-04, RNF-FIA-04). Cada evento pasa por las mismas validaciones y resultados que el escaneo en línea (RN-MOV-01, RN-API-01). Los eventos se reintentan con seguridad: un `client_event_id` ya procesado devuelve su resultado previo sin reprocesarse (idempotencia; ver §7 I-08).
+*   **Request:** `{ "events": [ { "client_event_id": "uuid", "qr_token": "uuid", "event_type": "ESCANEO_ESTUDIANTE", "captured_at": "ISO8601", "clock_offset_ms": 1200, "captured_by": "uuid" } ] }` (máximo 1,000, el tamaño del buffer). `event_type` es opcional y vale `ESCANEO_ESTUDIANTE` por defecto, que es el único valor admitido en esta versión; cualquier otro responde `400 VALIDATION_ERROR`.
+*   **Procesamiento:** en orden de `captured_at`. Cada evento es independiente: uno inválido no aborta el lote. La hora efectiva es `captured_at` corregida con `clock_offset_ms` (RN-TRX-04, RNF-FIA-04): `clock_offset_ms = hora del servidor − hora del dispositivo` medido en la última conexión (positivo si el dispositivo está atrasado), y la hora efectiva es `captured_at + clock_offset_ms`. Cada evento pasa por las mismas validaciones y resultados que el escaneo en línea (RN-MOV-01, RN-API-01). Los eventos se reintentan con seguridad: un `client_event_id` ya procesado devuelve su resultado previo sin reprocesarse (idempotencia; ver §7 I-08).
 *   **Response (200 OK):** `{ "accepted": [ { "client_event_id": "...", "result": "REGISTRADO|EVENTO_ADICIONAL|RECLASIFICADO|DUPLICADO_IGNORADO" } ], "discarded": [ { "client_event_id": "...", "error_code": "QR_REVOKED|STUDENT_NOT_ACTIVE|QR_NOT_RECOGNIZED|EVENT_IN_FUTURE|EVENT_TOO_OLD", "rn_reference": "RN-QR-04" } ], "summary": { "accepted": 12, "discarded": 1 } }`. Los descartados se notifican al operador con su motivo (US-033).
 *   **Validaciones adicionales offline:** antigüedad máxima `OFFLINE_MAX_AGE_HOURS` (D-11), desfase razonable del reloj y vigencia del rol/cuenta del operador (SG-09).
 

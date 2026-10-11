@@ -70,6 +70,9 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-001-05 · Neg** — **Dado que** el token de acceso está vencido, **cuando** se envía una solicitud a la API sin renovarlo, **entonces** se responde 401 y no se ejecuta ninguna operación.
 - **CA-001-06 · Alt** — **Dado que** el usuario cierra sesión, **cuando** intenta reutilizar su token de renovación, **entonces** se rechaza por estar invalidado.
 - **CA-001-07 · UX** — **Dado que** el servidor no está disponible, **cuando** el usuario intenta iniciar sesión, **entonces** se muestra un error recuperable con opción de reintentar.
+- **CA-001-08 · Alt** — **Dado que** el usuario tiene una sesión vigente, **cuando** recarga la página o reabre la aplicación, **entonces** la sesión se recupera con el token de renovación y se muestra la pantalla de su rol, con el rol y el nombre vigentes en ese momento, sin pedir credenciales.
+- **CA-001-09 · UX** — **Dado que** el operador tiene eventos pendientes sin sincronizar, **cuando** cierra sesión, **entonces** SIGE le advierte que quedan eventos pendientes y, al confirmar, los conserva en el dispositivo sin borrarlos (SEG §7).
+- **CA-001-10 · Alt** — **Dado que** la aplicación está abierta en dos pestañas y ambas deben renovar el acceso, **cuando** lo hacen casi al mismo tiempo, **entonces** las renovaciones se atienden una tras otra y la sesión no se cierra por detección de reutilización.
 
 ### SIGE-US-002 — Bloqueo temporal por intentos fallidos y desbloqueo manual
 - **CA-002-01 · Límite** — **Dado que** el umbral es 5 intentos, **cuando** un usuario falla 4 veces consecutivas, **entonces** la cuenta sigue disponible y cada intento responde `401`; **y cuando** falla el 5.º, **entonces** la cuenta se bloquea temporalmente y esa misma respuesta es `429 ACCOUNT_LOCKED` con el tiempo de espera.
@@ -372,13 +375,16 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-031-07 · Neg** — **Dado que** el estado fue justificado manualmente (`FALTA JUSTIFICADA`), **cuando** el estudiante escanea, **entonces** no se reclasifica.
 
 ### SIGE-US-032 — Capturar asistencia sin conexión al servidor (app móvil)
-- **CA-032-01 · Feliz** — **Dado que** el dispositivo perdió conexión con el servidor, **cuando** el operador escanea, **entonces** el evento se almacena localmente con fecha, hora, tipo y QR leído, marcado `PENDIENTE DE VALIDACIÓN`.
+- **CA-032-01 · Feliz** — **Dado que** el dispositivo perdió conexión con el servidor, **cuando** el operador escanea, **entonces** el evento se almacena localmente con fecha, hora, tipo y QR leído, más el identificador del evento, el desfase del reloj y el operador que capturó, marcado `PENDIENTE DE VALIDACIÓN`.
 - **CA-032-02 · UX** — **Dado que** hay eventos pendientes, **cuando** el operador ve la pantalla, **entonces** un indicador persistente muestra "sin conexión" y el número de pendientes.
 - **CA-032-03 · Límite** — **Dado que** el buffer tiene 999 eventos, **cuando** se captura el 1,000.º, **entonces** se almacena.
 - **CA-032-04 · Límite** — **Dado que** el buffer tiene 1,000 eventos, **cuando** se intenta capturar otro, **entonces** se rechaza y se alerta al operador (RN-MOV-03).
 - **CA-032-05 · Neg** — **Dado que** un evento está pendiente, **cuando** se consulta el historial definitivo, **entonces** no aparece como registro definitivo.
 - **CA-032-06 · Feliz** — **Dado que** no hay conexión, **cuando** el operador consulta el resultado del escaneo, **entonces** se le informa que quedó pendiente, no confirmado.
-- **CA-032-07 · UX** — **Dado que** no hay conexión, **cuando** se escanea, **entonces** solo se almacena fecha, hora de captura, tipo y token; no se muestra nombre ni estatus del estudiante.
+- **CA-032-07 · UX** — **Dado que** no hay conexión, **cuando** se escanea, **entonces** no se almacena ningún dato del estudiante: solo fecha, hora de captura, tipo y token, más los metadatos técnicos (identificador del evento, desfase del reloj y operador); no se muestra nombre ni estatus del estudiante.
+- **CA-032-08 · Alt** — **Dado que** la PWA está instalada y el dispositivo no alcanza el servidor, **cuando** el operador abre la aplicación, **entonces** llega a la pantalla de escaneo y puede capturar eventos.
+- **CA-032-09 · Alt** — **Dado que** hay eventos pendientes, **cuando** el operador recarga la aplicación sin conexión, **entonces** los eventos pendientes siguen en el buffer.
+- **CA-032-10 · Neg** — **Dado que** el dispositivo nunca midió su desfase de reloj contra el servidor, **cuando** el operador intenta capturar sin conexión, **entonces** no se almacena el evento y se le indica conectarse una vez al servidor para calibrar el reloj (RN-TRX-04).
 
 ### SIGE-US-033 — Sincronizar y validar los eventos capturados sin conexión
 - **CA-033-01 · Feliz** — **Dado que** hay eventos pendientes, **cuando** se restablece la conexión, **entonces** se sincronizan automáticamente sin intervención del operador.
@@ -390,6 +396,9 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-033-07 · Alt** — **Dado que** el servidor vuelve a fallar durante la sincronización, **cuando** ocurre, **entonces** los eventos no enviados permanecen en el buffer y se reintentan.
 - **CA-033-08 · UX** — **Dado que** terminó la sincronización, **cuando** el operador ve el resumen, **entonces** muestra cuántos se aceptaron y cuántos se descartaron.
 - **CA-033-09 · Neg** — **Dado que** un evento offline tiene hora efectiva futura, **cuando** se sincroniza, **entonces** se rechaza y se notifica al operador.
+- **CA-033-10 · Alt** — **Dado que** un lote ya fue procesado, **cuando** se reenvía con los mismos identificadores de evento, **entonces** se devuelven los mismos resultados y no se duplica ningún registro.
+- **CA-033-11 · Alt** — **Dado que** hay eventos capturados en distintos momentos, **cuando** se sincronizan, **entonces** se envían ordenados por hora de captura, para que el rebote y el primer escaneo se evalúen en su orden real (RN-AST-02, RN-AST-03).
+- **CA-033-12 · UX** — **Dado que** el desfase del reloj del dispositivo supera 5 minutos, **cuando** el operador captura un evento sin conexión, **entonces** se le advierte que la hora del dispositivo difiere del servidor, y el evento se marca para revisión al sincronizar (SEG §7).
 
 ### SIGE-US-034 — Justificar o modificar la asistencia de un estudiante
 - **CA-034-01 · Feliz** — **Dado que** un PAD/ADM justifica un registro `FALTÓ` con motivo, **cuando** confirma, **entonces** el estado pasa a `FALTA JUSTIFICADA` con origen `MANUAL`.
