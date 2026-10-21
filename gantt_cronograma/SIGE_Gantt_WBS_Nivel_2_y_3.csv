@@ -24,7 +24,7 @@ ID,WBS Nivel 2 / Tarea Nivel 3,Tipo,Duración (Valor),Unidad (Días/Semanas/Mese
 3,BASE FUNCIONAL Y GENERACIÓN DE QR,Entregable Nivel 2,25,Días,Ambos,2026-09-21,2026-10-15,En Proceso,FC actividades H1,Sistema QR funcional + códigos validados
 3.1,Diseñar arquitectura inicial,Tarea Nivel 3,2,Días,Saul,22/09/2026,2026-09-23,Completado,FC 2.12,Arquitectura inicial
 3.2,Diseñar modelo de datos inicial,Tarea Nivel 3,2,Días,Saul,22/09/2026,2026-09-23,Completado,CC 3.1,Modelo de datos
-3.3,Configurar proyecto Next.js/TypeScript,Tarea Nivel 3,2,Días,Miguel,24/09/2026,2026-09-25,No Iniciado,FC 3.1,Proyecto base
+3.3,Configurar proyecto Next.js/TypeScript,Tarea Nivel 3,2,Días,Miguel,24/09/2026,2026-09-25,Completado,FC 3.1,Proyecto base
 3.4,Configurar PostgreSQL,Tarea Nivel 3,2,Días,Saul,24/09/2026,2026-09-25,Completado,FC 3.2,BD inicial
 3.5,Implementar backend/API base,Tarea Nivel 3,3,Días,Saul,27/09/2026,2026-09-29,Completado,"FC 3.3, 3.4",API base
 3.6,Implementar modelo de estudiantes,Tarea Nivel 3,2,Días,Saul,29/09/2026,2026-09-30,Completado,FC 3.4,Modelo de estudiantes

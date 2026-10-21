@@ -1,0 +1,64 @@
+/**
+ * SIGE — Sistema Integral de Gestión Escolar
+ * Tokens de Diseño Institucional y Squircle UI
+ * Basado en: SIGE_Arquitectura_Frontend_y_PWA_v1.md §5.4.2
+ *
+ * Contraste optimizado para visibilidad en luz solar directa (WCAG AAA/AA).
+ */
+
+:root {
+  /* Textos y Superficies Principales */
+  --color-text: #0B1320;
+  --color-text-muted: #334155;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F1F5F9;
+  --color-border: #CBD5E1;
+  --color-border-strong: #64748B;
+
+  /* Acción Primaria / Identidad Institucional */
+  --color-primary: #0A3D91;
+  --color-primary-hover: #072B68;
+  --color-primary-soft: #DCEBFF;
+  --color-on-primary: #FFFFFF;
+
+  /* Éxito (Asistencia Puntual, Envío Correcto) */
+  --color-success-text: #0B4A22;
+  --color-success-bg: #DCF5E3;
+  --color-success-solid: #0A5A2A;
+
+  /* Advertencia (Retardo, Reporte Autorizado) */
+  --color-warning-text: #5C3200;
+  --color-warning-bg: #FFEBC2;
+  --color-warning-solid: #7C4400;
+
+  /* Peligro / Error (Falta, Rechazo, Error Crítico) */
+  --color-danger-text: #7A0F0F;
+  --color-danger-bg: #FDE4E4;
+  --color-danger-solid: #A31515;
+
+  /* Información / Trámite */
+  --color-info-text: #0A3D91;
+  --color-info-bg: #DCEBFF;
+  --color-info-solid: #0A3D91;
+
+  /* Pendientes de Validación (Buffer Offline, Comunicaciones) */
+  --color-pending-text: #3B2A7A;
+  --color-pending-bg: #E9E4FA;
+  --color-pending-solid: #4B35A0;
+
+  /* Neutro (Duplicados ignorados, sin cambios) */
+  --color-neutral-text: #1F2937;
+  --color-neutral-bg: #E5E9EE;
+  --color-neutral-border: #94A3B8;
+
+  /* Radios de Esquinas Squircle (RNF-USA-01, CT-11: 12px a 16px) */
+  --radius-squircle-sm: 8px;
+  --radius-squircle: 12px;
+  --radius-squircle-lg: 16px;
+  --radius-squircle-pill: 9999px;
+
+  /* Sombras Suaves */
+  --shadow-squircle-sm: 0 1px 3px rgba(11, 19, 32, 0.08);
+  --shadow-squircle: 0 4px 12px rgba(11, 19, 32, 0.08);
+  --shadow-squircle-lg: 0 8px 24px rgba(11, 19, 32, 0.12);
+}

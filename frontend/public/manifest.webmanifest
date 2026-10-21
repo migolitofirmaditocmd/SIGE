@@ -1,0 +1,25 @@
+{
+  "name": "SIGE — Escuela Secundaria Mixta 5",
+  "short_name": "SIGE Mixta 5",
+  "description": "Sistema Integral de Gestión Escolar y Control de Asistencia QR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0A3D91",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
