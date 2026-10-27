@@ -3,7 +3,7 @@ import pytest
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.students.models import Guardian, Student
+from apps.students.models import Guardian, Student, StudentGuardian
 from apps.qr_codes.models import QRCodeToken
 from apps.qr_codes.crypto import (
     calculate_token_hmac,
@@ -15,9 +15,10 @@ from apps.qr_codes.crypto import (
 class TestQRCryptoEngine(TestCase):
     def setUp(self):
         self.guardian = Guardian.objects.create(
-            full_name="Rosa Silva Ramos",
+            first_name="Rosa",
+            last_name_father="Silva",
+            last_name_mother="Ramos",
             phone_number="3322114455",
-            relationship=Guardian.Relationship.MADRE
         )
         self.student = Student.objects.create(
             enrollment_id="2026-1C-015",
@@ -26,8 +27,14 @@ class TestQRCryptoEngine(TestCase):
             last_name_father="Silva",
             last_name_mother="Ramos",
             grade=1,
-            group="C",
-            guardian=self.guardian
+            group_letter="C",
+            shift="MATUTINO",
+        )
+        StudentGuardian.objects.create(
+            student=self.student,
+            guardian=self.guardian,
+            relationship=StudentGuardian.Relationship.MADRE,
+            is_primary_contact=True,
         )
 
     def test_hmac_calculation_and_verification(self):
@@ -71,9 +78,10 @@ class TestQRAPI(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.guardian = Guardian.objects.create(
-            full_name="Fernando López Soto",
+            first_name="Fernando",
+            last_name_father="López",
+            last_name_mother="Soto",
             phone_number="3399887766",
-            relationship=Guardian.Relationship.PADRE
         )
         self.student = Student.objects.create(
             enrollment_id="2026-3C-099",
@@ -82,8 +90,14 @@ class TestQRAPI(TestCase):
             last_name_father="López",
             last_name_mother="Soto",
             grade=3,
-            group="C",
-            guardian=self.guardian
+            group_letter="C",
+            shift="MATUTINO",
+        )
+        StudentGuardian.objects.create(
+            student=self.student,
+            guardian=self.guardian,
+            relationship=StudentGuardian.Relationship.PADRE,
+            is_primary_contact=True,
         )
         self.active_token = issue_qr_token_for_student(self.student)
 
