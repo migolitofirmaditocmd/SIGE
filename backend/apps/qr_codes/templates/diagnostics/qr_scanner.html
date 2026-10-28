@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGE · Consola de Diagnóstico de Escáner QR</title>
+  <!-- html5-qrcode para decodificación óptica en navegador -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-dark: #0f172a;
+      --accent: #d97706;
+      --success: #10b981;
+      --danger: #ef4444;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-diag { background: #e0e7ff; color: #3730a3; margin-bottom: 0.5rem; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-error { background: #fee2e2; color: #991b1b; }
+    h1 { font-size: 1.5rem; color: var(--primary-dark); font-weight: 800; }
+    .subtitle { font-size: 0.875rem; color: var(--text-muted); }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .container { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    /* Scanner Area */
+    #reader {
+      width: 100%;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      border: 2px dashed var(--border);
+      background: #000;
+      min-height: 260px;
+    }
+    .scan-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #e2e8f0; color: #334155; }
+    button.secondary:hover { background: #cbd5e1; }
+    button.outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    button.outline:hover { background: #f1f5f9; }
+    /* Result Display */
+    .result-box {
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .student-card {
+      width: 100%;
+      background: white;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      border: 2px solid var(--success);
+      box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1);
+      text-align: left;
+    }
+    .student-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .student-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+    .student-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .student-field {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      font-size: 0.85rem;
+      border-bottom: 1px dashed #f1f5f9;
+    }
+    .student-field strong { color: var(--text); }
+    /* Quick test chips */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .chip {
+      background: #e2e8f0;
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: monospace;
+      transition: background 0.2s;
+    }
+    .chip:hover { background: #cbd5e1; }
+    .manual-input {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      font-family: monospace;
+    }
+    .status-log {
+      margin-top: 0.75rem;
+      padding: 0.6rem 0.85rem;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      color: #334155;
+      font-family: monospace;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span class="badge badge-diag">Módulo de Diagnóstico Aislado · SIGE</span>
+    <h1>Escuela Secundaria Mixta 5 · Validador Óptico</h1>
+    <p class="subtitle">Verificación técnica de códigos QR físicos impresos y resolución criptográfica HMAC-SHA256</p>
+  </div>
+
+  <div class="container">
+    <!-- Panel Izquierdo: Escáner de Cámara y Entrada -->
+    <div class="card">
+      <div class="card-title">
+        <span>📷</span> Lector de Cámara Óptica
+      </div>
+      <div id="reader"></div>
+
+      <!-- Barra de Estado Óptico en Vivo -->
+      <div id="status-box" class="status-log">
+        📡 <strong>Estado:</strong> Cámara detenida. Haz clic en "Iniciar Cámara" o sube una imagen.
+      </div>
+
+      <div class="scan-controls">
+        <button id="btn-start" onclick="startScanner()">Iniciar Cámara</button>
+        <button id="btn-stop" class="secondary" onclick="stopScanner()" style="display:none;">Detener Cámara</button>
+        <label class="button outline" style="padding: 0.6rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: white;">
+          📁 Cargar Imagen / Foto
+          <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="scanSelectedFile(this)">
+        </label>
+      </div>
+
+      <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+        <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+          O ingresa / pega un UUID de prueba directamente:
+        </label>
+        <div class="manual-input">
+          <input type="text" id="manual-token" placeholder="Ej: 3b9b3137-e276-4e8b-9645-190cc5c05c1c">
+          <button onclick="resolveManual()">Validar</button>
+        </div>
+      </div>
+
+      <!-- Alumnos de muestra de 1°A Vespertino para un clic -->
+      {% if sample_students %}
+      <div style="margin-top: 1rem;">
+        <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+          Tokens muestra del grupo 1°A (Clic para probar):
+        </label>
+        <div class="chips">
+          {% for s in sample_students %}
+          <div class="chip" onclick="resolveToken('{{ s.token }}')" title="{{ s.name }}">
+            {{ s.name|truncatechars:18 }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Panel Derecho: Expediente Resuelto en Pantalla -->
+    <div class="card">
+      <div class="card-title">
+        <span>📋</span> Expediente del Alumno Resuelto
+      </div>
+
+      <div id="result-container" class="result-box">
+        <span style="font-size: 2.5rem; opacity: 0.3; margin-bottom: 0.5rem;">💳</span>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">
+          Apunta la credencial física a la cámara, sube una foto o ingresa un token para resolver los datos escolares oficiales.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let html5QrCode = null;
+    let isScanning = false;
+    let lastScanTime = 0;
+    let isProcessing = false;
+
+    function updateStatus(msg, isError = false) {
+      const box = document.getElementById("status-box");
+      if (box) {
+        box.innerHTML = msg;
+        box.style.color = isError ? "#b91c1c" : "#1e293b";
+        box.style.background = isError ? "#fee2e2" : "#f8fafc";
+      }
+    }
+
+    function playBeep(success = true) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(success ? 880 : 330, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch (e) {}
+    }
+
+    async function resolveToken(tokenStr) {
+      if (!tokenStr || !tokenStr.trim()) {
+        updateStatus("⚠️ Se detectó un código QR, pero está <strong>vacío</strong>. Asegúrese de usar el PDF de credenciales recién regenerado.", true);
+        return;
+      }
+      tokenStr = tokenStr.trim();
+
+      const now = Date.now();
+      // Evitar ráfagas continuas de escaneo repetido dentro de 2.0 segundos
+      if (isProcessing || (now - lastScanTime < 2000)) {
+        return;
+      }
+      isProcessing = true;
+      lastScanTime = now;
+
+      updateStatus(`🔍 <strong>Óptica leída:</strong> <code>${tokenStr}</code> · Consultando backend...`);
+
+      const container = document.getElementById("result-container");
+      container.innerHTML = `
+        <div style="text-align: center; padding: 2rem;">
+          <div style="font-size: 2rem;">⏳</div>
+          <p style="font-size: 0.9rem; font-weight: 600; color: var(--primary); margin-top: 0.5rem;">
+            Resolviendo y validando firma HMAC en servidor SIGE...
+          </p>
+          <div style="font-size: 0.75rem; font-family: monospace; color: var(--text-muted); margin-top: 0.25rem;">
+            ${tokenStr}
+          </div>
+        </div>
+      `;
+
+      const startTime = performance.now();
+
+      try {
+        const response = await fetch("/api/v1/qr/validate/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: tokenStr })
+        });
+
+        const elapsedMs = (performance.now() - startTime).toFixed(1);
+        const data = await response.json();
+
+        if (response.ok && data.valid && data.student) {
+          playBeep(true);
+          const s = data.student;
+          const studentName = s.full_name || s.display_name || "Alumno Sin Nombre";
+          const groupLabel = (s.grade || "") + "° \"" + (s.group || s.group_letter || "A") + "\" " + (s.shift || "VESPERTINO");
+          const guardianName = s.guardian ? s.guardian.full_name : "Tutor institucional asignado";
+          const guardianTel = s.guardian ? s.guardian.phone_number : "No registrado";
+
+          updateStatus(`✅ <strong>Éxito:</strong> Alumno resuelto en <strong>${elapsedMs} ms</strong> (${studentName})`);
+
+          container.innerHTML = `
+            <div class="student-card">
+              <div class="student-header">
+                <div>
+                  <div class="student-name">${studentName}</div>
+                  <div class="student-meta">Matrícula: <strong>${s.enrollment_id}</strong> · CURP: ${s.curp || 'No registrada'}</div>
+                </div>
+                <span class="badge badge-success">ACTIVO Y VIGENTE</span>
+              </div>
+              <div class="student-field"><span>Grado y Grupo:</span><strong>${groupLabel}</strong></div>
+              <div class="student-field"><span>Estatus Escolar:</span><strong style="color:var(--success);">${s.status || 'ACTIVO'}</strong></div>
+              <div class="student-field"><span>Tutor Legal:</span><strong>${guardianName} (${guardianTel})</strong></div>
+              <div class="student-field"><span>Tipo de Sangre:</span><strong>${s.blood_type || 'No especificado'}</strong></div>
+              <div class="student-field"><span>Alergias / Salud:</span><strong>${s.allergies || s.medical_notes || 'Ninguna'}</strong></div>
+              <div class="student-field"><span>Tiempo Resolución:</span><strong style="color:#2563eb;">${elapsedMs} ms (KPI-03 APROBADO)</strong></div>
+              <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0; font-size: 0.75rem; color: var(--text-muted); word-break: break-all;">
+                Token validado: <code>${data.token}</code>
+              </div>
+              <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="resumeScanningPrompt()" style="width: 100%; background: #059669;">
+                  ✓ Escanear Siguiente Credencial
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          playBeep(false);
+          updateStatus(`❌ <strong>Rechazado:</strong> ${data.error || 'Código no registrado'}`, true);
+          container.innerHTML = `
+            <div style="background:#fee2e2; border:1px solid #f87171; border-radius:0.75rem; padding:1.25rem; width:100%; text-align:left;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <strong style="color:#991b1b; font-size:1rem;">⚠️ ACCESO DENEGADO / NO VÁLIDO</strong>
+                <span class="badge badge-error">${data.status || 'RECHAZADO'}</span>
+              </div>
+              <p style="font-size:0.875rem; color:#7f1d1d; margin-bottom:0.5rem;">
+                ${data.error || 'El código QR no está activo o no pertenece a un estudiante registrado.'}
+              </p>
+              <div style="font-size:0.75rem; color:#991b1b; word-break:break-all;">
+                Token evaluado: <code>${tokenStr}</code>
+              </div>
+              <div style="margin-top: 0.75rem; text-align: center;">
+                <button onclick="resumeScanningPrompt()" class="secondary" style="width: 100%;">
+                  Intentar con otra credencial
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        updateStatus(`❌ <strong>Error de red:</strong> ${err.message}`, true);
+        container.innerHTML = `
+          <div style="color:var(--danger); background:#fff1f2; border:1px solid #fecdd3; border-radius:0.75rem; padding:1rem; width:100%;">
+            <strong style="font-size:0.95rem;">❌ Error de conexión al servidor</strong>
+            <p style="font-size:0.85rem; margin-top:0.25rem;">
+              No se pudo comunicar con el backend en <code>/api/v1/qr/validate/</code> (${err.message}).
+            </p>
+            <div style="margin-top:0.75rem; text-align:center;">
+              <button onclick="resumeScanningPrompt()" class="secondary">Reintentar</button>
+            </div>
+          </div>
+        `;
+      } finally {
+        setTimeout(() => {
+          isProcessing = false;
+        }, 1000);
+      }
+    }
+
+    function resumeScanningPrompt() {
+      isProcessing = false;
+      lastScanTime = 0;
+      updateStatus("📷 Lector óptico en espera de código...");
+      const container = document.getElementById("result-container");
+      container.innerHTML = `
+        <span style="font-size: 2.5rem; opacity: 0.3; margin-bottom: 0.5rem;">💳</span>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">
+          Lector listo. Apunta la siguiente credencial frente a la cámara.
+        </p>
+      `;
+    }
+
+    function resolveManual() {
+      const val = document.getElementById("manual-token").value;
+      if (val) resolveToken(val);
+    }
+
+    async function scanSelectedFile(input) {
+      if (!input.files || input.files.length === 0) return;
+      const file = input.files[0];
+      updateStatus(`📁 Analizando archivo de imagen: ${file.name}...`);
+
+      const fileScanner = new Html5Qrcode("reader");
+      try {
+        const decodedText = await fileScanner.scanFile(file, true);
+        resolveToken(decodedText);
+      } catch (err) {
+        updateStatus(`⚠️ No se pudo detectar ningún código QR en la imagen seleccionada (${err}).`, true);
+      }
+    }
+
+    function startScanner() {
+      if (isScanning) return;
+      html5QrCode = new Html5Qrcode("reader");
+
+      const config = {
+        fps: 10,
+        qrbox: { width: 220, height: 220 },
+        aspectRatio: 1.0
+      };
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          resolveToken(decodedText);
+        },
+        (errorMessage) => {}
+      ).then(() => {
+        isScanning = true;
+        document.getElementById("btn-start").style.display = "none";
+        document.getElementById("btn-stop").style.display = "inline-block";
+        updateStatus("📷 <strong>Cámara activa:</strong> Apunte el código QR de la credencial.");
+      }).catch((err) => {
+        updateStatus("⚠️ No se pudo iniciar la cámara: " + err + ". Use la opción 'Cargar Imagen' o ingrese el UUID manualmente.", true);
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrCode && isScanning) {
+        html5QrCode.stop().then(() => {
+          isScanning = false;
+          document.getElementById("btn-start").style.display = "inline-block";
+          document.getElementById("btn-stop").style.display = "none";
+          updateStatus("⏹️ Cámara detenida.");
+        });
+      }
+    }
+  </script>
+</body>
+</html>

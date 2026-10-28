@@ -187,7 +187,17 @@ def generate_credential_png(
 
         # Código QR a la izquierda
         qr_size = h_px - 60
-        qr_img = generate_qr_pil_image(student_data.get("token", ""), box_size=6, border=1)
+        token_val = (
+            student_data.get("token")
+            or student_data.get("qr_token")
+            or student_data.get("active_qr_token")
+            or ""
+        )
+        if not str(token_val).strip():
+            raise ValueError(
+                f"Token QR ausente o vacío para el estudiante {student_data.get('display_name', 'Desconocido')}"
+            )
+        qr_img = generate_qr_pil_image(str(token_val).strip(), box_size=6, border=1)
         qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.NEAREST)
         img.paste(qr_img, (15, 52))
 
@@ -283,8 +293,18 @@ def generate_credential_png(
     qr_x = w_px - qr_side - int(w_px * 0.04)
     qr_y = header_height + int((h_px - header_height - qr_side) * 0.32)
 
+    token_val = (
+        student_data.get("token")
+        or student_data.get("qr_token")
+        or student_data.get("active_qr_token")
+        or ""
+    )
+    if not str(token_val).strip():
+        raise ValueError(
+            f"Token QR ausente o vacío para el estudiante {student_data.get('display_name', 'Desconocido')}"
+        )
     qr_pil = generate_qr_pil_image(
-        student_data.get("token", ""), box_size=8, border=1
+        str(token_val).strip(), box_size=8, border=1
     )
     qr_pil = qr_pil.resize((qr_side, qr_side), Image.Resampling.NEAREST)
 
