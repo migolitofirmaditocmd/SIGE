@@ -5,6 +5,102 @@ info:
   description: 'Sistema Integral de Gestión Escolar — Escuela Secundaria Mixta 5.
     API REST v1. Especificación: SIGE_Especificacion_API_REST_v2.md'
 paths:
+  /api/v1/credentials/exports/:
+    post:
+      operationId: credentials_export_download
+      description: Genera y entrega el documento de credenciales para impresión (RF-CRE-01,
+        RF-CRE-02).
+      summary: Descargar credenciales o stickers (PDF/PNG)
+      tags:
+      - Identificación y Credenciales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialExportDownloadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CredentialExportDownloadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CredentialExportDownloadRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/credentials/exports/preview/:
+    post:
+      operationId: credentials_export_preview
+      description: Evalúa los candidatos y lista a los incluidos y excluidos con su
+        motivo (RN-CRE-01).
+      summary: Vista previa de exportación de credenciales
+      tags:
+      - Identificación y Credenciales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialExportPreviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CredentialExportPreviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CredentialExportPreviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialExportPreviewResponse'
+          description: ''
+  /api/v1/credentials/tokens/:
+    post:
+      operationId: credentials_issue_token
+      description: Genera un nuevo token criptográfico opaco y revoca el anterior
+        si existía (RN-QR-01, RN-QR-03).
+      summary: Emitir o renovar código QR de credencial
+      tags:
+      - Identificación y Credenciales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialTokenIssueRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CredentialTokenIssueRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CredentialTokenIssueRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialTokenIssueResponse'
+          description: ''
   /api/v1/qr/{token}/image/:
     get:
       operationId: qr_render_image
@@ -567,6 +663,159 @@ components:
       - consent_status
       - id
       - previous_status
+    CredentialExportDownloadRequest:
+      type: object
+      description: Serializador para descarga de archivos de credenciales (§2.3).
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          default: CREDENCIAL
+          description: |-
+            Modalidad: CREDENCIAL (requiere foto) o STICKER (solo QR).
+
+            * `CREDENCIAL` - CREDENCIAL
+            * `STICKER` - STICKER
+        entity_type:
+          allOf:
+          - $ref: '#/components/schemas/EntityTypeEnum'
+          default: STUDENT
+          description: |-
+            Tipo de entidad a exportar.
+
+            * `STUDENT` - STUDENT
+            * `TEACHER` - TEACHER
+        entity_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Lista de identificadores para exportación selectiva.
+        group_id:
+          type: string
+          nullable: true
+          minLength: 1
+          description: Identificador de grupo escolar para exportación masiva.
+        format:
+          allOf:
+          - $ref: '#/components/schemas/FormatEnum'
+          default: PDF
+          description: |-
+            Formato de exportación: PDF (lote o individual) o PNG (individual).
+
+            * `PDF` - PDF
+            * `PNG` - PNG
+    CredentialExportPreviewRequest:
+      type: object
+      description: Serializador para solicitud de vista previa de exportación (§2.3).
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          default: CREDENCIAL
+          description: |-
+            Modalidad: CREDENCIAL (requiere foto) o STICKER (solo QR).
+
+            * `CREDENCIAL` - CREDENCIAL
+            * `STICKER` - STICKER
+        entity_type:
+          allOf:
+          - $ref: '#/components/schemas/EntityTypeEnum'
+          default: STUDENT
+          description: |-
+            Tipo de entidad a exportar.
+
+            * `STUDENT` - STUDENT
+            * `TEACHER` - TEACHER
+        entity_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Lista de identificadores para exportación selectiva.
+        group_id:
+          type: string
+          nullable: true
+          minLength: 1
+          description: Identificador de grupo escolar para exportación masiva.
+    CredentialExportPreviewResponse:
+      type: object
+      properties:
+        included:
+          type: integer
+        excluded:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - excluded
+      - included
+    CredentialTokenIssueRequest:
+      type: object
+      description: Serializador para emisión y reemplazo de tokens QR (§2.3).
+      properties:
+        entity_type:
+          allOf:
+          - $ref: '#/components/schemas/EntityTypeEnum'
+          default: STUDENT
+          description: |-
+            Tipo de persona (STUDENT o TEACHER).
+
+            * `STUDENT` - STUDENT
+            * `TEACHER` - TEACHER
+        entity_id:
+          type: string
+          format: uuid
+          description: UUID del estudiante o docente titular.
+        reason:
+          type: string
+          default: ''
+          description: Motivo de la emisión o reemplazo (obligatorio si ya tiene QR
+            vigente).
+      required:
+      - entity_id
+    CredentialTokenIssueResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+          format: uuid
+        status:
+          type: string
+        issued_at:
+          type: string
+          format: date-time
+        entity_id:
+          type: string
+          format: uuid
+        enrollment_id:
+          type: string
+      required:
+      - enrollment_id
+      - entity_id
+      - issued_at
+      - message
+      - status
+      - token
+    EntityTypeEnum:
+      enum:
+      - STUDENT
+      - TEACHER
+      type: string
+      description: |-
+        * `STUDENT` - STUDENT
+        * `TEACHER` - TEACHER
+    FormatEnum:
+      enum:
+      - PDF
+      - PNG
+      type: string
+      description: |-
+        * `PDF` - PDF
+        * `PNG` - PNG
     GradeEnum:
       enum:
       - 1
@@ -723,6 +972,14 @@ components:
       - id
       - invalid_reason
       - is_valid_contact
+    ModeEnum:
+      enum:
+      - CREDENCIAL
+      - STICKER
+      type: string
+      description: |-
+        * `CREDENCIAL` - CREDENCIAL
+        * `STICKER` - STICKER
     NullEnum:
       enum:
       - null
