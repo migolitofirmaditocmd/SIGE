@@ -40,12 +40,14 @@ C4Context
     Rel(sige, internet, "Depende de, solo para correo y acceso remoto")
 ```
 
+
 ---
 
 ## 2. Nivel 2: Diagrama de Contenedores
 Descompone el sistema SIGE en aplicaciones, almacenes de datos y servicios de ejecución en segundo plano (workers). Muestra las responsabilidades tecnológicas primarias (el *Stack Tecnológico*).
 
 ```mermaid
+
 C4Container
     title Diagrama de Contenedores de SIGE
 
@@ -56,8 +58,8 @@ C4Container
         Container(frontend, "Aplicación Web / PWA", "Next.js, React, Service Worker", "Interfaz web y aplicación móvil (PWA). Incluye el buffer offline en IndexedDB: hasta 1,000 eventos de captura (RN-MOV-02/03), sin datos personales, no sustituye la fuente central (RN-API-02). El Service Worker solo guarda recursos estáticos: nunca respuestas de la API ni tokens.")
         Container(backend, "API Backend", "Python, Django, DRF", "Lógica de negocio central, RBAC, auditoría y servicios REST. Incluye generación de QR y PDF mediante librerías (no es un contenedor aparte).")
         ContainerDb(db, "Base de Datos Relacional", "PostgreSQL 15+", "Todos los datos del sistema. Sin eliminación física de registros históricos (RN-TRX-03). AUDIT_LOG de solo inserción.")
-        Container(worker, "Worker y planificador", "Celery Worker + Beat (o Django-Q2, D-02)", "Ausencias estudiantiles y docentes, respaldos, cola de correos, mantenimiento. Planificación por condición con registro JOB_RUN.")
-        Container(broker, "Cola de mensajes", "Redis (omitir si D-02 = Django-Q2 con broker ORM)", "Broker de tareas y locks.")
+        Container(worker, "Worker y planificador", "Django-Q2 (qcluster, broker ORM; D-02)", "Ausencias estudiantiles y docentes, respaldos, cola de correos, mantenimiento. Planificación por condición con registro JOB_RUN.")
+        %% Sin Redis (D-02 = Django-Q2): la cola de tareas es una tabla de PostgreSQL
         ContainerDb(files, "Almacenamiento privado de archivos", "Sistema de archivos local", "Fotografías de estudiantes y docentes y archivos de importación temporales. Solo accesibles a través de la API autorizada.")
         ContainerDb(backups, "Volumen de respaldos", "Disco o partición distinta del de datos", "Respaldos locales verificados de PostgreSQL con rotación (PP-04).")
     }
@@ -71,25 +73,25 @@ C4Container
     Rel(frontend, backend, "Consume y envía acciones", "JSON/REST")
     Rel(backend, db, "Lee y escribe", "SQL/TCP")
     Rel(backend, files, "Guarda y lee archivos", "Sistema de archivos")
-    Rel(backend, broker, "Encola tareas", "Protocolo Redis")
-    Rel(worker, broker, "Consume tareas", "Protocolo Redis")
+    %% El backend y el worker intercambian tareas por una tabla de PostgreSQL (broker ORM)
     Rel(worker, db, "Lee y actualiza", "SQL/TCP")
     Rel(worker, backups, "Escribe respaldos", "Sistema de archivos")
     Rel(worker, email_sys, "Envía correos", "SMTP")
     Rel(worker, offsite, "Copia cifrada, si está habilitada", "HTTPS")
 ```
 
+
 ---
 
 ## 3. Nivel 3: Diagrama de Componentes (API Backend)
 Abre el contenedor de la **API Backend (Django/DRF)** para mostrar sus módulos lógicos internos. Cada componente se ha diseñado para alinearse estrechamente con los prefijos y dominios de las Reglas de Negocio (RN) del sistema.
 
-```mermaid
+```mermaid 
 C4Component
     title Diagrama de Componentes: API Backend Django
 
     Container(frontend, "Aplicación Web / PWA", "Next.js", "Interfaz cliente")
-    Container(worker, "Worker y planificador", "Celery/Django-Q2", "Jobs programados")
+    Container(worker, "Worker y planificador", "Django-Q2 (qcluster, broker ORM; D-02)", "Jobs programados")
 
     Container_Boundary(backend_api, "API Backend (Django)") {
         Component(core, "Núcleo transversal", "Django", "RBAC por rol (RN-AUT-06), auditoría (RN-AUT-05), errores uniformes (RF-API-04), validadores de nombre (RN-TRX-09), hora efectiva (RN-TRX-04) y estado del sistema.", GET /api/v1/system/status/)
@@ -175,17 +177,19 @@ C4Component
 | **IMP** | `RN-IMP-*` | Carga de archivos CSV y XLSX, validación fila por fila con nombres en columnas separadas (RN-IMP-09, sin separar nunca un nombre completo), vista previa sin persistir estudiantes, confirmación por fila (RN-IMP-04/07). Los archivos temporales viven en el almacén privado. |
 | **ADM** | `RN-ADM-*` | Parámetros operativos (RN-ADM-02), catálogos editables (grupos, grados, ciclos) y asignaciones prefecto–grupo y docente–grupo, indicadores, consulta de `AUDIT_LOG` y de respaldos. No administra los catálogos `REPORT_*` (fijos, RN-ADM-03). |
 
+
 ## 5. Diagrama de Despliegue
 ```mermaid
-C4Deployment
+C4Deployment 
+
     title Diagrama de Despliegue de SIGE
 
     Deployment_Node(lan, "Red local institucional", "LAN / Wi-Fi") {
-        Deployment_Node(server, "Servidor local (PC de la institución)", "Linux, reloj sincronizado (chrony), zona horaria institucional") {
+        Deployment_Node(server, "Servidor local (PC de la institución)", "Ubuntu Server LTS, Docker Compose, reloj sincronizado (chrony), zona horaria institucional") {
             Container(proxy, "Proxy inverso / TLS", "Nginx o Caddy", "HTTPS con certificado de CA interna")
             Container(app, "Frontend y API", "Next.js + Django", "Aplicación y servicios REST")
             ContainerDb(db, "PostgreSQL", "PostgreSQL 15+", "Datos del sistema")
-            Container(worker, "Worker y planificador", "Celery/Django-Q2", "Jobs programados")
+            Container(worker, "Worker y planificador", "Django-Q2", "Jobs programados")
             ContainerDb(backups, "Volumen de respaldos", "Disco distinto del de datos", "Respaldos locales")
         }
         Deployment_Node(device, "Dispositivo del operador", "Celular o PC con navegador") {
@@ -225,7 +229,9 @@ C4Deployment
 | ADR | Decisión | Estado |
 |---|---|---|
 | ADR-01 | **La "aplicación móvil" es la PWA de Next.js.** Coherente con el stack base del Acta (TypeScript, Next.js). Limitaciones a validar en RNF-COM-02: iOS/Safari no soporta *Background Sync* (la sincronización offline debe iniciarse con la app abierta), el almacenamiento local puede ser purgado por el navegador tras un periodo sin uso, y la cámara exige contexto seguro (HTTPS). Detalle en `SIGE_Arquitectura_Frontend_y_PWA_v1.md`. | Aceptada |
-| ADR-02 | Motor de tareas: Celery+Redis o Django-Q2 (ORM), recomendado Django-Q2 (D-02). | Pendiente |
+| ADR-02 | Motor de tareas: **Django-Q2 con broker ORM** (`qcluster`; locks con `pg_try_advisory_lock`; sin Redis). Decisión D-02. | Aceptada |
 | ADR-03 | HTTPS en LAN con CA interna (D-09). | Propuesta |
 | ADR-04 | Sesión con access token de 15 min + refresh opaco con rotación en cookie HttpOnly (SG-01, D-08). | Propuesta |
 | ADR-05 | Archivos (fotografías, importaciones) en almacén privado servido solo por la API autorizada (RN-TRX-02). | Propuesta |
+| ADR-06 | **Despliegue con contenedores (Docker Compose)** de todos los servicios, incluida PostgreSQL, con el volumen de datos y el de respaldos en discos distintos; reproducible en un equipo de reemplazo (RNF-POR-01). Detalle en `SIGE_Plan_de_Despliegue_v1.md`. | Aceptada |
+| ADR-07 | **Servidor encendido de forma continua con no-break**, sobre Ubuntu Server LTS; entrega de versiones por paquete firmado, sin Internet. | Aceptada |

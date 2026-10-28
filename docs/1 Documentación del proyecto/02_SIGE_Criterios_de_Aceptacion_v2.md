@@ -73,6 +73,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-001-08 · Alt** — **Dado que** el usuario tiene una sesión vigente, **cuando** recarga la página o reabre la aplicación, **entonces** la sesión se recupera con el token de renovación y se muestra la pantalla de su rol, con el rol y el nombre vigentes en ese momento, sin pedir credenciales.
 - **CA-001-09 · UX** — **Dado que** el operador tiene eventos pendientes sin sincronizar, **cuando** cierra sesión, **entonces** SIGE le advierte que quedan eventos pendientes y, al confirmar, los conserva en el dispositivo sin borrarlos (SEG §7).
 - **CA-001-10 · Alt** — **Dado que** la aplicación está abierta en dos pestañas y ambas deben renovar el acceso, **cuando** lo hacen casi al mismo tiempo, **entonces** las renovaciones se atienden una tras otra y la sesión no se cierra por detección de reutilización.
+- **CA-001-11 · Alt** — **Dado que** el Administrador inicial fue creado por consola, **cuando** abre el enlace de un solo uso y define su contraseña, **entonces** puede iniciar sesión, y el enlace deja de funcionar al usarse o al vencer (SEG §2).
 
 ### SIGE-US-002 — Bloqueo temporal por intentos fallidos y desbloqueo manual
 - **CA-002-01 · Límite** — **Dado que** el umbral es 5 intentos, **cuando** un usuario falla 4 veces consecutivas, **entonces** la cuenta sigue disponible y cada intento responde `401`; **y cuando** falla el 5.º, **entonces** la cuenta se bloquea temporalmente y esa misma respuesta es `429 ACCOUNT_LOCKED` con el tiempo de espera.
@@ -364,6 +365,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-030-05 · Feliz** — **Dado que** el proceso se ejecuta dos veces el mismo día, **cuando** termina, **entonces** no se generan registros duplicados.
 - **CA-030-06 · Feliz** — **Dado que** el ADM cambia la hora de verificación, **cuando** rige el nuevo valor, **entonces** el proceso se dispara a la nueva hora y la ausencia de días previos no se recalcula.
 - **CA-030-07 · Aud** — **Dado que** se asignó `FALTÓ`, **cuando** se consulta el historial, **entonces** el origen es `AUTOMÁTICO`, distinto de una modificación manual.
+- **CA-030-08 · Alt** — **Dado que** la guardia de sanidad dejó `OMITIDO` la verificación de un turno, **cuando** el ADM confirma que fue día lectivo y la ejecuta manualmente, **entonces** el proceso corre con la misma lógica, es idempotente y queda auditado con el usuario que lo ejecutó.
 
 ### SIGE-US-031 — Reclasificar la asistencia de quien llega después de un FALTÓ automático
 - **CA-031-01 · Feliz** — **Dado que** un estudiante quedó `FALTÓ` automático, **cuando** realiza un escaneo válido posterior, **entonces** se reclasifica: `ASISTIÓ` si su hora efectiva es ≤ la hora de corte, `LLEGÓ TARDE` si es posterior.
@@ -490,6 +492,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-042-06 · Aud** — **Dado que** se asignó `FALTÓ`, **cuando** se consulta el historial, **entonces** su origen es `AUTOMÁTICO`.
 - **CA-042-07 · Neg** — **Dado que** un docente tiene `FALTA JUSTIFICADA` (o un estado modificado manualmente) en su `ENTRADA` del día, **cuando** el PAD registra una `ENTRADA`, **entonces** se rechaza como duplicada con `details.reason = "MANUAL_STATE_PREVAILS"` y el estado manual no cambia.
 - **CA-042-08 · Neg** — **Dado que** llegó el umbral de uno o más docentes y hoy no existe ningún escaneo estudiantil ni docente (ni eventos offline pendientes conocidos), **cuando** corre el proceso, **entonces** no se asigna `FALTÓ` a ningún docente, el `JOB_RUN` del día queda `OMITIDO` y el Administrador recibe una sola alerta ese día; en cuanto existe actividad, el proceso evalúa con normalidad.
+- **CA-042-09 · Alt** — **Dado que** la guardia de sanidad docente dejó `OMITIDO` la verificación del día, **cuando** el ADM confirma que fue día lectivo y la ejecuta manualmente, **entonces** el proceso corre con la misma lógica, es idempotente y queda auditado con el usuario que lo ejecutó.
 
 ### SIGE-US-043 — Justificar o modificar la asistencia de un docente
 - **CA-043-01 · Feliz** — **Dado que** un PAD/ADM selecciona un registro docente, **cuando** captura motivo y confirma, **entonces** se aplica el nuevo estado.

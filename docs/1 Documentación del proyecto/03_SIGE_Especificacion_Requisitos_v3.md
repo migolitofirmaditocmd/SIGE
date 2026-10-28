@@ -368,17 +368,18 @@ El sistema DEBE contar con un procedimiento documentado y probado de recuperaci�
 
 ---
 
+
 ## 4. Requisitos No Funcionales (RNF)
 *(Clasificados según ISO/IEC/IEEE 25010)*
 
 ### 4.1 Eficiencia de desempeño
 
 **RNF-DES-01 — Tiempo de respuesta en punto de acceso** *(= RNF-01 original)*
-La validación y confirmación visual/auditiva de un código QR DEBE resolverse en menos de 250 ms bajo condiciones normales de red local.
+La validación y confirmación visual/auditiva de un código QR DEBE resolverse en menos de 250 ms bajo condiciones normales de red local. El tiempo se mide **de extremo a extremo en el dispositivo**, desde que la aplicación obtiene el código leído hasta que se muestra la confirmación visual y se inicia la sonora, en el percentil 95 y con los dispositivos de referencia de RNF-COM-02. Como referencia de diagnóstico, la parte del servidor no debe superar 150 ms en el percentil 95.
 - *Prioridad:* Must. **Trazabilidad:** OE-04 · Hito 03/06.
 
 **RNF-DES-02 — Capacidad de escaneo en hora pico**
-El sistema DEBE soportar, sin degradación perceptible del tiempo de respuesta (RNF-DES-01), al menos [N] escaneos por minuto durante la entrada/salida de la jornada escolar (valor de N a definir con la institución según matrícula real).
+El sistema DEBE soportar, sin degradación perceptible del tiempo de respuesta (RNF-DES-01), al menos **N** escaneos por minuto durante la entrada/salida de la jornada escolar, con N = 2 × (estudiantes del turno más grande ÷ 15), donde 15 es la duración en minutos de la ventana de entrada o salida. N se calcula con la matrícula real antes del Hito 05 y se registra en el control de cambios (por ejemplo, con 600 estudiantes en el turno más grande, N = 80)
 - *Prioridad:* Should. **Trazabilidad:** OE-04 · Hito 06 (pruebas piloto).
 
 ### 4.2 Seguridad
@@ -406,7 +407,7 @@ El módulo de escaneo DEBE almacenar en el dispositivo hasta 1,000 eventos de ca
 - *Prioridad:* Must. **Trazabilidad:** OE-04, OE-11 · Hito 06 · KPI-43.
 
 **RNF-FIA-02 — Disponibilidad durante jornada escolar**
-El sistema DEBE mantener disponibilidad del servidor local durante el horario de operación escolar definido por la institución, con un procedimiento de contingencia documentado ante caídas (ver RF-INF-03).
+El sistema DEBE mantener disponibilidad del servidor local durante el horario de operación escolar definido por la institución, con un procedimiento de contingencia documentado ante caídas (ver RF-INF-03). Metas iniciales de recuperación: **RTO de 4 horas** dentro de la jornada cuando el servidor se recupera en el mismo equipo, y **la siguiente jornada escolar** cuando hay que usar un equipo de reemplazo; **RPO** igual a la frecuencia del respaldo (24 horas por defecto). Son valores iniciales que se revisan con el primer tiempo real de la prueba de restauración.
 - *Prioridad:* Must. **Trazabilidad:** 	OE-11 (Servidor local) · Riesgo R-09.
 
 **RNF-FIA-03 — Respaldo y recuperación probados**
@@ -446,6 +447,10 @@ Todo el código fuente y las decisiones técnicas relevantes DEBEN versionarse e
 **RNF-MAN-02 — Separación de responsabilidades Frontend/Backend**
 La división de responsabilidades entre Next.js (frontend) y Django (backend/API) DEBE mantenerse documentada y consistente a lo largo del proyecto, evitando lógica de negocio duplicada en el frontend.
 - *Prioridad:* Must. **Trazabilidad:** Riesgo R-07.
+
+**RNF-MAN-03 — Testabilidad**
+El sistema DEBE poder verificarse de forma automática y repetible: toda regla que dependa de la hora DEBE obtenerla de un servicio de reloj sustituible, cada proceso programado DEBE poder ejecutarse a mano indicando fecha y turno, y los atajos de prueba (reloj fijo, límites reducidos, correo a un buzón de pruebas) DEBEN existir solo en la configuración de pruebas y nunca en producción.
+- *Prioridad:* Must. **Trazabilidad:** RNF-MAN-02, Plan de Pruebas §3.2.
 
 ### 4.7 Portabilidad
 

@@ -23,9 +23,9 @@
 | Base de datos de producción (`DB_NAME`) | ⟦sige⟧ | |
 | Rol propietario de la base (`DB_OWNER`) | ⟦sige_owner⟧ | Ejecuta migraciones y la restauración |
 | Rol de la aplicación (`DB_APP_ROLE`) | ⟦sige_app⟧ | Sin `DELETE` sobre `AUDIT_LOG`, `ATTENDANCE_*`, `INCIDENT_REPORT` ni `REPORT_TRANSITION_LOG`, y solo `INSERT` sobre `AUDIT_LOG` (SEG §8) |
-| Servicios del sistema | ⟦postgresql, redis (si D-02 lo requiere), sige-api, sige-worker, nginx o caddy⟧ | Nombres reales según el despliegue (systemd o contenedores) |
+| Servicios del sistema (Docker Compose) | `db`, `api`, `worker` (qcluster), `web` y `proxy` | Definidos en `docker-compose.yml` (Plan de Despliegue §5.4). No hay Redis (D-02 = Django-Q2) |
 | Usuario de servicio | ⟦sige⟧ | Propietario de los respaldos con permisos `0600` |
-| Directorio de la aplicación | ⟦/ruta/del/backend⟧ | Donde se ejecuta `manage.py` |
+| Directorio del despliegue | ⟦/srv/sige⟧ | Donde está `docker-compose.yml`; desde ahí se ejecuta `docker compose` |
 | Responsable técnico principal | ⟦nombre y contacto⟧ | |
 | Responsable suplente | ⟦nombre y contacto⟧ | |
 | Quien autoriza (institución) | ⟦Administrador o Directivo⟧ | Ver §2 |
@@ -50,7 +50,7 @@ Nombres físicos de tablas: `accounts_user` está confirmado en el Modelo §3.1.
 | Meta | Valor | Origen |
 |---|---|---|
 | **Pérdida máxima de datos (RPO)** | Hasta `BACKUP_FREQUENCY_HOURS` (24 h por defecto). Se pierde todo lo capturado después del último respaldo verificado. | PP §2.3 |
-| **Tiempo máximo de recuperación (RTO)** | **Sin definir** | RNF-FIA-02 exige disponibilidad en jornada escolar pero ningún documento fija un tiempo (P-R1, §10) |
+| **Tiempo máximo de recuperación (RTO)** | **4 horas** dentro de la jornada si el servidor se recupera en el mismo equipo (escenarios A y C); **la siguiente jornada escolar** si hay que usar un equipo de reemplazo (escenario B) | Valor inicial (Plan de Despliegue §7.2, RNF-FIA-02). Se revisa con el primer tiempo real de la prueba de restauración |
 
 ---
 
@@ -134,10 +134,8 @@ Si alguna de las dos falla, **descarte ese respaldo** y vuelva al paso 2 con el 
 Detenga en este orden, de cara al usuario hacia adentro, para que nadie escriba durante la restauración. PostgreSQL permanece encendido.
 
 ```bash
-sudo systemctl stop ⟦nginx|caddy⟧          # proxy: corta el acceso de la LAN
-sudo systemctl stop ⟦sige-worker⟧          # worker y planificador
-sudo systemctl stop ⟦sige-api⟧             # API
-sudo systemctl stop ⟦redis⟧                # solo si el despliegue lo usa (D-02)
+cd ⟦/srv/sige⟧
+docker compose stop proxy worker web api      # PostgreSQL permanece encendido
 ```
 
 > **Importante:** el worker debe estar detenido antes de seguir. Si el planificador corriera durante la restauración, podría ejecutar jobs vencidos sobre una base incompleta.
@@ -148,8 +146,8 @@ No la borre hasta validar la recuperada: puede contener datos posteriores al res
 
 ```bash
 # Cerrar conexiones restantes y renombrar
-sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();"
-sudo -u postgres psql -c "ALTER DATABASE $DB_NAME RENAME TO ${DB_NAME}_danada_$(date +%Y%m%d);"
+docker compose exec db psql -U ⟦postgres⟧ -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();"
+docker compose exec db psql -U ⟦postgres⟧ -c "ALTER DATABASE $DB_NAME RENAME TO ${DB_NAME}_danada_$(date +%Y%m%d);"
 ```
 
 Si PostgreSQL no puede abrir la base, omita este paso y anótelo en el Anexo A.
@@ -157,15 +155,17 @@ Si PostgreSQL no puede abrir la base, omita este paso y anótelo en el Anexo A.
 ### Paso 6. Restaurar en una base limpia
 
 ```bash
-sudo -u postgres createdb -O "$DB_OWNER" "$DB_NAME"
+docker compose exec db createdb -U ⟦postgres⟧ -O "$DB_OWNER" "$DB_NAME"
 
-sudo -u postgres pg_restore \
+# El volumen de respaldos está montado en el contenedor de la base, en /backups
+docker compose exec -T db pg_restore \
+  -U ⟦postgres⟧ \
   --dbname="$DB_NAME" \
   --role="$DB_OWNER" \
   --no-owner \
   --exit-on-error \
   --verbose \
-  "$BACKUP_FILE" 2>&1 | tee "/tmp/restauracion_$(date +%Y%m%d_%H%M).log"
+  "/backups/$(basename "$BACKUP_FILE")" 2>&1 | tee "/tmp/restauracion_$(date +%Y%m%d_%H%M).log"
 ```
 
 Notas:
@@ -178,16 +178,15 @@ Notas:
 
 ```bash
 # a) Estadísticas y conteos de tablas principales
-sudo -u postgres psql -d "$DB_NAME" -c "ANALYZE;"
-sudo -u postgres psql -d "$DB_NAME" -c "SELECT relname, n_live_tup FROM pg_stat_user_tables ORDER BY relname;"
+docker compose exec db psql -U ⟦postgres⟧ -d "$DB_NAME" -c "ANALYZE;"
+docker compose exec db psql -U ⟦postgres⟧ -d "$DB_NAME" -c "SELECT relname, n_live_tup FROM pg_stat_user_tables ORDER BY relname;"
 
 # b) El esquema coincide con la versión del código desplegado
-cd ⟦/ruta/del/backend⟧
-python manage.py check
-python manage.py migrate --check          # no debe haber migraciones pendientes
+docker compose run --rm api python manage.py check
+docker compose run --rm api python manage.py migrate --check          # no debe haber migraciones pendientes
 
 # c) Los permisos de la aplicación siguen como en producción
-sudo -u postgres psql -d "$DB_NAME" -c "\dp"
+docker compose exec db psql -U ⟦postgres⟧ -d "$DB_NAME" -c "\dp"
 ```
 
 Revise con el Administrador:
@@ -217,15 +216,14 @@ Esto se ejecuta con el rol propietario, no con el rol de la aplicación. `REUSE_
 
 ### Paso 9. Arrancar los servicios en el orden indicado
 
-Orden fijado en PP §3: **PostgreSQL, broker (si aplica), API, worker/planificador y, por último, el proxy**.
+Orden fijado en PP §3: **PostgreSQL, API, worker/planificador y, por último, el proxy**.
 
 ```bash
-sudo systemctl status postgresql            # ya encendido
-sudo systemctl start ⟦redis⟧                # solo si el despliegue lo usa
-sudo systemctl start ⟦sige-api⟧
+docker compose ps db                        # ya encendido
+docker compose up -d api
 # ← detenerse aquí: leer la advertencia de abajo antes de encender el worker
-sudo systemctl start ⟦sige-worker⟧
-sudo systemctl start ⟦nginx|caddy⟧
+docker compose up -d worker web
+docker compose up -d proxy
 ```
 
 > **Advertencia antes de encender el worker.** Si la restauración se hace después de la hora de verificación de ausencias (10:00 matutino, 16:00 vespertino) y el respaldo es anterior al inicio de la jornada, la base no tiene los escaneos de hoy. Al encender el worker:
@@ -297,8 +295,8 @@ RNF-FIA-03 y CA-057-05 exigen una restauración completa **antes de cada hito de
 2. Cree una base de prueba y restaure:
 
 ```bash
-sudo -u postgres createdb -O "$DB_OWNER" "${DB_NAME}_prueba"
-sudo -u postgres pg_restore --dbname="${DB_NAME}_prueba" --role="$DB_OWNER" --no-owner --exit-on-error "$BACKUP_FILE"
+docker compose exec db createdb -U ⟦postgres⟧ -O "$DB_OWNER" "${DB_NAME}_prueba"
+docker compose exec -T db pg_restore -U ⟦postgres⟧ --dbname="${DB_NAME}_prueba" --role="$DB_OWNER" --no-owner --exit-on-error "/backups/$(basename "$BACKUP_FILE")"
 ```
 
 3. Ejecute las validaciones del paso 7 contra `${DB_NAME}_prueba` (con la configuración de la aplicación apuntada a esa base, en un entorno aislado).
@@ -307,7 +305,7 @@ sudo -u postgres pg_restore --dbname="${DB_NAME}_prueba" --role="$DB_OWNER" --no
 
 **Criterio de aprobación:** `pg_restore` sin errores, `migrate --check` sin migraciones pendientes, permisos del rol de la aplicación correctos, conteos coherentes con producción al momento del respaldo, inicio de sesión del Administrador y un escaneo de prueba exitosos. Con el 100 % de los respaldos de prueba recuperados (CA-057-03).
 
-**Registre además:** el tiempo total que tomó la restauración. Es el primer dato real para fijar el RTO (P-R1, §10).
+**Registre además:** el tiempo total que tomó la restauración. Es el primer dato real para revisar el RTO inicial (§2).
 
 ---
 
@@ -322,7 +320,7 @@ sudo -u postgres pg_restore --dbname="${DB_NAME}_prueba" --role="$DB_OWNER" --no
 | Todo el mundo recibe 401 | Es lo esperado tras el paso 8 | Iniciar sesión de nuevo |
 | El `JOB_RUN` queda `OMITIDO` con alerta | La guardia de sanidad no vio escaneos hoy | Es esperable tras una restauración; ver advertencia del paso 9 |
 | Los jobs de ausencias no inician | Reloj con más de 2 minutos de diferencia | Corregir la hora y esperar el siguiente tick (cada 5 min) |
-| `database` falla en `/system/status/` | La aplicación no alcanza PostgreSQL | Revisar `postgresql`, el rol de la app y las credenciales del servicio |
+| `database` falla en `/system/status/` | La aplicación no alcanza PostgreSQL | Revisar el servicio `db` (`docker compose ps db` y sus registros), el rol de la app y las credenciales del archivo de entorno |
 | No hay espacio para restaurar | La base dañada ocupa el disco | Mover la base dañada a otro disco o comprimirla antes de continuar |
 
 ---
@@ -331,7 +329,7 @@ sudo -u postgres pg_restore --dbname="${DB_NAME}_prueba" --role="$DB_OWNER" --no
 
 | # | Pendiente | Quién |
 |---|---|---|
-| **P-R1** | **Definir el RTO** (tiempo máximo de recuperación en jornada escolar). Hoy ningún documento lo fija. Tras la primera prueba (§8) habrá un dato real. | Institución |
+| **P-R1** | **Cerrado:** RTO inicial de 4 horas en el mismo equipo y la siguiente jornada con equipo de reemplazo (§2). Se revisa con la primera prueba de restauración | Institución |
 | **P-R2** | **Dónde se guarda la huella SHA-256 y el nombre del archivo.** PP §2.3 calcula el SHA-256, pero `BACKUP_LOG` no tiene columna para la ruta ni la huella. Propuesta: que el job escriba `<archivo>.sha256` junto al respaldo y anote el nombre en `BACKUP_LOG.notes`. Es un ajuste a PP §2.3. | Equipo de desarrollo |
 | **P-R3** | Completar los parámetros del §1 (rutas, servicios, roles) al desplegar. | Operación |
 | **P-R4** | Confirmar la contingencia manual del §4 con la institución. | Institución |

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
+    'django_q',
 
     # Local apps
     'apps.core.apps.CoreConfig',
@@ -181,3 +182,22 @@ SPECTACULAR_SETTINGS = {
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = True
+
+# Django-Q2 Configuration (Decision D-02, ADR-02)
+# Broker ORM en PostgreSQL/SQLite local sin Redis
+Q_CLUSTER = {
+    'name': 'sige_tasks',
+    'workers': 2,
+    'recycle': 500,
+    'timeout': 60,
+    'retry': 120,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 1,
+    'label': 'Django Q2',
+    'orm': 'default',
+}
+
+# Operational Parameters Configuration (Defaults)
+PASSWORD_RESET_EXPIRY_MINUTES = env.int('PASSWORD_RESET_EXPIRY_MINUTES', default=30)
+

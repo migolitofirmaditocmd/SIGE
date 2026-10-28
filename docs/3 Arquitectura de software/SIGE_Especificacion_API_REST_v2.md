@@ -322,6 +322,7 @@ Toda respuesta de la API que contenga datos personales (estudiantes, tutores, do
 | `GET /reports/presets/?report_type_id=&severity_id=` (solo lectura) | DOC | RN-ADM-03: `REPORT_*` no tienen escritura para ningún rol |
 | `GET /audit-log/` | ADM | RF-AUT-05 |
 | `GET /ops/backups/` (último respaldo: fecha, resultado, tamaño, alertas) | ADM | RN-API-03, US-057 |
+| `POST /ops/jobs/{job_name}/run/` con `{ "date": "AAAA-MM-DD", "shift": "MATUTINO o VESPERTINO", "confirm_school_day": true }` | ADM | PP §3 (D-03): ejecuta a mano `check_student_absences` o `check_teacher_absences` tras confirmar que fue día lectivo. `shift` solo aplica a estudiantes. Es idempotente. Sin `confirm_school_day`, responde `422 VALIDATION_ERROR`. Devuelve el resultado del `JOB_RUN`. Queda en `AUDIT_LOG` con `origin='MANUAL'` y el usuario que la ejecutó |
 | `GET /dashboard/` | ADM, SL | RF-ADM-03, CA-056-03 |
 | `GET /system/status/` | cualquier usuario autenticado | C4-09: `server_time`, `database`, `internet`, `smtp`, `last_backup` |
 

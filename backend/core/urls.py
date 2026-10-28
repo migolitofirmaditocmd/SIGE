@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/v1/students/', include('apps.students.urls', namespace='students')),
     path('api/v1/qr/', include('apps.qr_codes.urls')),
     path('api/v1/credentials/', include('apps.qr_codes.credentials_urls', namespace='credentials')),
+    path('api/v1/ops/', include('apps.core.urls', namespace='ops')),
     # OpenAPI / Swagger (RF-API-01)
     path('api/v1/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/v1/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

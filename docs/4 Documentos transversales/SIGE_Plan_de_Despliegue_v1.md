@@ -30,14 +30,13 @@
 
 ### 1.2 Decisiones propuestas
 
-| # | Decisión | Propuesta | Alternativa |
 |---|---|---|---|
 | **D-DEP-01** | **Contenedores** | **Sí: Docker Compose** para todos los servicios, incluida PostgreSQL con su volumen de datos en un disco dedicado. Una sola descripción reproducible del servidor sirve a RNF-POR-01 y reduce las diferencias entre la preproducción y la producción | Instalación nativa con `systemd`. Menos piezas para el equipo de la institución, pero más fácil que dos equipos queden distintos. El plan incluye la tabla de equivalencias (§7.4) para cualquiera de las dos |
 | **D-DEP-02** | **Entrega sin Internet** | Paquete de entrega firmado con las imágenes exportadas, el archivo de composición, el ejemplo de variables de entorno y las sumas de verificación, transportado por memoria USB (§4) | Registro de imágenes local en la LAN (más complejo; solo si hay varias instalaciones) |
-| **D-DEP-03** | **Servidor encendido** | Encendido de forma continua, o programado para despertar antes de la jornada y antes del respaldo de las 02:00 | Apagado cada noche: el dispatcher recupera los jobs vencidos en el primer arranque (PP §3), pero el respaldo se retrasa hasta ese momento |
-| **D-DEP-04** | **Sistema operativo** | Una versión **LTS** de Linux de amplio soporte, con actualizaciones de seguridad programadas | Otra distribución que el equipo domine mejor |
+| **D-DEP-03** | **Servidor encendido** | **Encendido de forma continua**, con no-break; el respaldo de las 02:00 corre a su hora. El despertar programado solo se usa si la institución exige apagar el equipo por las noches | Apagado cada noche: el dispatcher recupera los jobs vencidos en el primer arranque (PP §3), pero el respaldo se retrasa hasta ese momento |
+| **D-DEP-04** | **Sistema operativo** | **Ubuntu Server LTS**, con actualizaciones de seguridad programadas | Otra distribución que el equipo domine mejor |
 
-> La decisión **D-02** (Celery con Redis, o Django-Q2 con broker en la base de datos) sigue abierta y debía marcarse **antes del Hito 03**. Cambia un servicio (Redis) y la forma de los locks. Este plan se escribe para ambas variantes y marca la diferencia donde importa.
+> **D-02 está decidida: Django-Q2 con broker ORM** (ADR-02), como recomendaba la Arquitectura C4. No hay Redis en el servidor local: los locks usan `pg_try_advisory_lock` y la cola de tareas vive en PostgreSQL, así que se respalda con la base. El worker y el planificador son un solo servicio (`qcluster`).
 
 ---
 
@@ -57,8 +56,8 @@ flowchart LR
             PROXY["Proxy inverso y TLS<br/>(Nginx o Caddy)<br/>443"]
             WEB["Frontend<br/>(Next.js)"]
             API["API<br/>(Django + DRF)"]
-            WRK["Worker y planificador<br/>(Celery o Django-Q2)"]
-            BRK[("Broker<br/>(Redis, solo si D-02 = Celery)")]
+            WRK["Worker y planificador<br/>(Django-Q2 · qcluster)"]
+            %% Sin Redis (D-02 = Django-Q2): la cola de tareas vive en PostgreSQL
             DB[("PostgreSQL 15+<br/>disco de datos")]
             PHO[("Almacén privado<br/>(fotografías y archivos de importación)")]
             BKP[("Volumen de respaldos<br/>disco distinto del de datos")]
@@ -73,8 +72,7 @@ flowchart LR
     PROXY -->|"HTTP interno · /api"| API
     API --> DB
     API --> PHO
-    API --> BRK
-    WRK --> BRK
+    %% API y worker intercambian tareas por una tabla de PostgreSQL
     WRK --> DB
     WRK -->|"respaldos"| BKP
     WRK -.->|"correo (requiere Internet)"| SMTP
@@ -89,10 +87,9 @@ flowchart LR
 | `web` | Next.js (salida *standalone*) | 3000 | No | Solo el proxy lo alcanza |
 | `api` | Django con un servidor WSGI/ASGI | 8000 | No | Incluye generación de QR y PDF (no es un contenedor aparte, C4) |
 | `worker` | Misma imagen de la API | — | No | Ausencias, respaldos, cola de correos y mantenimiento. Monta el volumen de respaldos |
-| `redis` | Redis | 6379 | No | **Solo si D-02 = Celery** |
 | `db` | PostgreSQL 15+ | 5432 | No | Volumen de datos en un disco dedicado |
 
-SEG §5 exige que PostgreSQL, Redis y el servidor de aplicación escuchen solo en la propia máquina y que el firewall permita únicamente el 443 desde la LAN. En contenedores se cumple **no publicando** esos puertos en el equipo anfitrión: viven en una red interna de composición.
+SEG §5 exige que PostgreSQL y el servidor de aplicación escuchen solo en la propia máquina y que el firewall permita únicamente el 443 desde la LAN. En contenedores se cumple **no publicando** esos puertos en el equipo anfitrión: viven en una red interna de composición.
 
 ### 2.3 Volúmenes
 
@@ -119,7 +116,7 @@ Los documentos solo dicen "una computadora proporcionada por la institución" co
 | **Disco de respaldos** | Disco o partición **distinta**, de al menos 5 veces el tamaño de la base | Disco físico distinto | Rotación de 7 diarios y 4 semanales (PP §2.3) |
 | Red | Puerto Ethernet, **IP fija o reservada** | Ethernet (no Wi-Fi) | Los dispositivos deben encontrar siempre el mismo servidor |
 | Energía | **No-break (UPS)** con apagado ordenado | UPS con aviso al sistema | Un corte de energía durante una escritura es el riesgo principal para la base |
-| Sistema operativo | Linux de soporte largo (D-DEP-04) | | C4 §5 |
+| Sistema operativo | Ubuntu Server LTS (D-DEP-04) | | C4 §5 |
 
 ### 3.2 Red y nombre del servidor
 
@@ -213,7 +210,6 @@ Crear `⟦/srv/sige/config/.env⟧` con permisos `0600` y propietario el usuario
 | `DB_NAME`, `DB_OWNER`, `DB_APP_ROLE` | Nombres de la base y de los roles |
 | `BACKUP_DIR` | Ruta del volumen de respaldos dentro del contenedor |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | Correo saliente (opcional; sin él, los envíos quedan `PENDIENTE`) |
-| `REDIS_URL` | Solo si D-02 = Celery |
 
 **Cómo regenerar secretos** (SEG §8 exige documentarlo en cada despliegue):
 
@@ -254,7 +250,7 @@ services:
 
   worker:                                          # worker y planificador
     image: sige-api:⟦versión⟧
-    command: ⟦comando del worker y planificador según D-02⟧
+    command: python manage.py qcluster
     restart: unless-stopped
     env_file: ⟦/srv/sige/config/.env⟧
     depends_on: { api: { condition: service_healthy } }
@@ -277,7 +273,7 @@ services:
     depends_on: [web, api]
     networks: [interna]
 
-  # redis:  (solo si D-02 = Celery)  sin puertos publicados, en la red interna
+  # Sin Redis (D-02 = Django-Q2): la cola de tareas vive en PostgreSQL
 
 networks:
   interna: { internal: false }                     # el proxy publica 443; ningún otro servicio publica puertos
@@ -285,7 +281,7 @@ networks:
 
 Reglas de la descripción:
 
-- **Orden de arranque** (PP §3, punto 4): base de datos, broker (si aplica), API, worker y planificador, y **por último el proxy**, que es el que abre la red.
+- **Orden de arranque** (PP §3, punto 4): base de datos, API, worker y planificador, y **por último el proxy**, que es el que abre la red.
 - **Reinicio automático** (`restart`) y arranque del motor al encender la computadora, para que el sistema vuelva solo tras un corte.
 - **Registros con rotación** (tamaño y número de archivos máximos) para que no llenen el disco.
 - El worker comparte la **zona horaria institucional**.
@@ -306,7 +302,7 @@ Reglas de la descripción:
 cd ⟦/srv/sige⟧
 sha256sum -c SHA256SUMS                       # verificación de la entrega (§4.3)
 docker load -i ⟦imagenes.tar⟧
-docker compose up -d db ⟦redis⟧
+docker compose up -d db
 docker compose ps                              # db en estado "healthy"
 ```
 
@@ -322,7 +318,7 @@ docker compose run --rm api python manage.py migrate --check     # sin migracion
 5. **Aplicar los permisos del rol de la aplicación** (script del paquete) y **verificarlos** con `\dp` (el criterio de CT-06).
 6. **Datos semilla.** Las migraciones de datos (MIG §4) cargan los **13 parámetros operativos** (Modelo §3.14, con los cinco que agrega el parche PX-02: respaldo cada 24 h, 3 reintentos de correo, 72 h de antigüedad offline, contraseña mínima de 10 y complejidad activa), los catálogos de reporte y un **ciclo escolar activo de prueba**.
    > **Ese ciclo de prueba debe sustituirse** por el ciclo real de la institución antes de dar de alta a nadie (MIG §4, punto 2). Está en la lista de verificación del §8.
-7. **Crear el primer Administrador.** Ningún documento define cómo; la propuesta es una orden de administración de consola (`manage.py`) que cree la cuenta con rol `ADMINISTRADOR` y contraseña temporal que deba cambiarse en el primer ingreso **(P-D5)**. El mismo mecanismo de consola sirve para desbloquear al Administrador si él mismo queda bloqueado (SEG §2).
+7. **Crear el primer Administrador** con la orden de consola `manage.py create_admin`: crea la cuenta con rol `ADMINISTRADOR`, sin contraseña, e imprime un **enlace de un solo uso** para que la persona defina la suya (mismo mecanismo y vigencia que el restablecimiento de contraseña, `PASSWORD_RESET_EXPIRY_MINUTES`; no usa correo). La orden se puede repetir para generar un enlace nuevo, y la misma vía de consola sirve para desbloquear al Administrador si él mismo queda bloqueado (SEG §2, puntos 8 y 9).
 
 ### 5.7 Arrancar y verificar
 
@@ -358,8 +354,8 @@ Con el sistema operativo y verificado: el Administrador configura **el ciclo esc
 
 | Acción | Orden | Notas |
 |---|---|---|
-| **Arranque** | Base de datos → broker (si aplica) → API → worker y planificador → **proxy al final** | Lo hace solo el motor de contenedores al encender la computadora; el proxy espera a que la API responda (PP §3, punto 4) |
-| **Apagado programado** | Proxy → worker y planificador → API → broker → base de datos; después apagar el equipo | Evita cortar una escritura. Si el equipo se apaga cada noche (D-DEP-03), el respaldo y las ausencias vencidas corren en el primer arranque |
+| **Arranque** | Base de datos → API → worker y planificador → **proxy al final** | Lo hace solo el motor de contenedores al encender la computadora; el proxy espera a que la API responda (PP §3, punto 4) |
+| **Apagado programado** | Proxy → worker y planificador → API → base de datos; después apagar el equipo | Evita cortar una escritura. Si el equipo se apaga cada noche (D-DEP-03), el respaldo y las ausencias vencidas corren en el primer arranque |
 | **Apagado por corte de energía** | Lo inicia el no-break con apagado ordenado | Ver el escenario S6 del §7.1 |
 
 ### 6.2 Actualizaciones
@@ -468,7 +464,7 @@ RF-INF-03 exige un procedimiento **documentado y probado** de recuperación del 
 | Meta | Valor | Origen |
 |---|---|---|
 | **RPO** (pérdida máxima de datos) | Hasta `BACKUP_FREQUENCY_HOURS` (24 h por defecto) | PP §2.3 |
-| **RTO** (tiempo máximo de recuperación en jornada) | **Sin definir** (P-D13). Se fija con el primer dato real de la prueba de restauración | RNF-FIA-02, runbook P-R1 |
+| **RTO** (tiempo máximo de recuperación en jornada) | **4 horas** si se recupera en el mismo equipo (escenarios S1 a S4, S6 y S9 a S11); **la siguiente jornada escolar** si hay que usar un equipo de reemplazo (S5). Valor inicial: se revisa con el primer tiempo real de la prueba de restauración | RNF-FIA-02, runbook §2 |
 
 **Cadena de escalamiento** (se completa al entregar el servidor):
 
@@ -485,7 +481,7 @@ Para cada incidente se anota, en la bitácora de operación: hora de detección,
 
 ### 7.4 Equivalencias con el runbook de restauración
 
-`runbook_restauracion.md` (v0.1) usa comandos de `systemctl` como marcadores. Con la decisión **D-DEP-01** (contenedores) se leen así:
+`runbook_restauracion.md` v0.1 usaba comandos de `systemctl` como marcadores; la v0.2 ya usa contenedores (parches PD-07). Esta tabla es la equivalencia:
 
 | Runbook | Con contenedores |
 |---|---|
@@ -497,7 +493,7 @@ Para cada incidente se anota, en la bitácora de operación: hora de detección,
 | `python manage.py migrate --check` | `docker compose run --rm api python manage.py migrate --check` |
 | Variables del runbook §1 | Las del §5.3 de este plan |
 
-Si D-DEP-01 se ratifica, estos nombres pasan a la tabla de parámetros del runbook (P-R3).
+D-DEP-01 está aprobada: estos nombres sustituyen a los marcadores del runbook (parches PD-07 de este paquete).
 
 ---
 
@@ -509,7 +505,7 @@ Se ejecutan **después de la instalación inicial** (§5.7), **después de cada 
 |---|---|---|---|
 | **S-01** | `GET /api/v1/system/status/` | Base de datos correcta, `server_time` coherente | RF-INF-01 |
 | **S-02** | Abrir SIGE por HTTPS desde dos dispositivos distintos | Sin advertencias de certificado; la cámara pide permiso | CT-01, RNF-SEG-01 |
-| **S-03** | Iniciar sesión como Administrador y cambiar la contraseña temporal | Entra y se exige el cambio | CA-001-01, §5.6 paso 7 |
+| **S-03** | Abrir el enlace de un solo uso, definir la contraseña e iniciar sesión como Administrador | Entra; el enlace ya no funciona al reutilizarlo | CA-001-01, CA-001-11, §5.6 paso 7 |
 | **S-04** | `migrate --check` | Sin migraciones pendientes | MIG |
 | **S-05** | Parámetros operativos sembrados | **13** parámetros con sus valores iniciales | Modelo §3.14 |
 | **S-06** | Ciclo escolar activo | Es el **real**, no el de prueba de MIG §4 | MIG §4 |
@@ -530,26 +526,26 @@ Se ejecutan **después de la instalación inicial** (§5.7), **después de cada 
 
 ---
 
-## 9. Decisiones propuestas y pendientes
+## 9. Decisiones tomadas y pendientes
 
-Todo lo marcado **(Propuesta)** está aquí para ratificarse. Hasta entonces el plan es válido con esos valores.
+Todo lo marcado **(Propuesta)** quedó **aprobado**. Esta tabla registra qué se decidió y qué falta.
 
-| # | Tema | Qué hace falta | Quién |
+| # | Tema | Decisión | Qué falta y quién |
 |---|---|---|---|
-| **D-DEP-01** | Contenedores con Docker Compose, incluida PostgreSQL | Ratificar o elegir instalación nativa (la tabla del §7.4 cubre ambas) | Equipo |
-| **D-DEP-02** | Entrega por paquete firmado en memoria USB | Ratificar | Equipo |
-| **D-DEP-03** | Servidor encendido de forma continua o despertar programado | Decidir con la institución | Institución |
-| **D-DEP-04** | Linux de soporte largo (distribución) | Elegir | Equipo |
-| **D-02** | Celery con Redis, o Django-Q2 con broker ORM (venció antes del Hito 03) | **Decidir ya**: cambia la composición, los locks y el comando del worker | Equipo |
-| **P-D2** | Dimensionamiento del servidor (§3.1) | Contrastar con la computadora real y con la prueba de carga | Institución y equipo |
-| **P-D5** | **Creación del primer Administrador** por orden de consola | Implementarla y documentarla | Desarrollo |
-| **P-D7** | Nombre interno e IP fija del servidor y su resolución en la LAN | Definir con quien administra la red | Institución |
-| **P-D8** | No-break con apagado ordenado | Adquirir o confirmar el existente | Institución |
-| **P-D9** | Vigencia del certificado (1 año) y su renovación | Ratificar | Equipo |
-| **P-D10** | Acceso de administración por SSH desde la LAN con llaves | Ratificar o prohibirlo | Equipo e institución |
-| **P-D11** | Frecuencia del simulacro de restauración (trimestral) | Ratificar | Equipo |
-| **P-D13** | **RTO** (= P-R1 del runbook) | Definirlo con el primer dato real de restauración | Institución |
-| **P-D14** | Nombres de servicio del runbook (§7.4) | Sustituirlos cuando se ratifique D-DEP-01 | Documentación |
+| **D-DEP-01** | Contenedores | **Docker Compose** para todos los servicios, incluida PostgreSQL (ADR-06) | Nada |
+| **D-DEP-02** | Entrega | Paquete firmado en memoria USB | Nada |
+| **D-DEP-03** | Servidor encendido | **Continuo**, con no-break (ADR-07) | Nada |
+| **D-DEP-04** | Sistema operativo | **Ubuntu Server LTS** (ADR-07) | Nada |
+| **D-02** | Motor de tareas | **Django-Q2 con broker ORM**, sin Redis (ADR-02) | Nada |
+| **P-D2** | Dimensionamiento | Los valores del §3.1 son el mínimo de arranque | Contrastarlos con la computadora real y con la prueba de carga: institución y equipo |
+| **P-D5** | Primer Administrador | `manage.py create_admin` con enlace de un solo uso (SEG §2, punto 9; CA-001-11) | Implementarla: desarrollo |
+| **P-D7** | Nombre e IP | IP reservada y nombre interno, ambos en el certificado | **Los valores concretos los define quien administra la red de la institución** |
+| **P-D8** | No-break | **Obligatorio**, con apagado ordenado | Adquirirlo o confirmar el existente: institución |
+| **P-D9** | Certificado | Vigencia de 1 año, aviso a 30 días | Nada |
+| **P-D10** | SSH | Solo desde la LAN, con llaves | Nada |
+| **P-D11** | Simulacro de restauración | Trimestral | Nada |
+| **P-D13** | RTO | 4 horas en el mismo equipo; la siguiente jornada con equipo de reemplazo (RNF-FIA-02) | Revisarlo tras la primera prueba de restauración |
+| **P-D14** | Runbook | Actualizado a contenedores (PD-07) | Aplicar los parches: documentación |
 
 ---
 

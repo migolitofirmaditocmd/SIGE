@@ -20,6 +20,10 @@ openpyxl>=3.1.2
 # PDF & Credential Generation (WBS 3.11, RF-CRE-01)
 reportlab>=4.0.0
 
+# Background Tasks & Scheduled Jobs (Decision D-02)
+django-q2>=1.7.0,<1.10.0
+
 # Testing & Code Quality
 pytest>=8.0.0
 pytest-django>=4.8.0
+opencv-python-headless>=4.10.0
