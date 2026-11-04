@@ -14,7 +14,7 @@ from typing import Any
 from django.conf import settings
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 import qrcode
-from qrcode.constants import ERROR_CORRECT_M
+from qrcode.constants import ERROR_CORRECT_M, ERROR_CORRECT_Q
 from reportlab.lib.colors import HexColor
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
@@ -25,7 +25,7 @@ from reportlab.pdfgen import canvas
 CR80_WIDTH_MM: float = 85.60
 CR80_HEIGHT_MM: float = 53.98
 STICKER_WIDTH_MM: float = 50.00
-STICKER_HEIGHT_MM: float = 30.00
+STICKER_HEIGHT_MM: float = 52.00
 
 # Paleta institucional
 COLOR_PRIMARY_HEX: str = "#1A365D"  # Azul profundo institucional
@@ -78,7 +78,7 @@ def generate_qr_pil_image(
     """
     qr = qrcode.QRCode(
         version=None,
-        error_correction=ERROR_CORRECT_M,
+        error_correction=ERROR_CORRECT_Q,
         box_size=box_size,
         border=border,
     )
@@ -171,22 +171,34 @@ def generate_credential_png(
         img = Image.new("RGB", (w_px, h_px), "white")
         draw = ImageDraw.Draw(img)
 
-        # Marco del sticker
-        draw.rectangle([0, 0, w_px - 1, h_px - 1], outline="#CBD5E0", width=2)
-
-        # Cabecera
-        font_header = _get_pil_font(22, bold=True)
-        draw.rectangle([0, 0, w_px, 45], fill=COLOR_PRIMARY_HEX)
-        draw.text(
-            (w_px // 2, 22),
-            "ESC. SEC. MIXTA 5 · STICKER QR",
-            fill="white",
-            font=font_header,
-            anchor="mm",
+        # Marco exterior suave para guía de corte / sticker
+        draw.rounded_rectangle(
+            [4, 4, w_px - 5, h_px - 5],
+            radius=16,
+            outline="#CBD5E1",
+            width=2,
         )
 
-        # Código QR a la izquierda
-        qr_size = h_px - 60
+        # 1. Leyenda superior: Nombre del estudiante al que le pertenece el código
+        name = (
+            student_data.get("display_name")
+            or student_data.get("full_name")
+            or "ESTUDIANTE"
+        ).strip()
+        font_name = _get_pil_font(23, bold=True)
+        words = name.split()
+        if len(name) > 22 and len(words) > 2:
+            mid = len(words) // 2
+            line1 = " ".join(words[:mid])
+            line2 = " ".join(words[mid:])
+            draw.text((w_px // 2, 38), line1, fill=COLOR_DARK_TEXT_HEX, font=font_name, anchor="mm")
+            draw.text((w_px // 2, 66), line2, fill=COLOR_DARK_TEXT_HEX, font=font_name, anchor="mm")
+            qr_y = 92
+        else:
+            draw.text((w_px // 2, 50), name, fill=COLOR_DARK_TEXT_HEX, font=font_name, anchor="mm")
+            qr_y = 85
+
+        # 2. Código QR en pequeño (centrado óptico de alta resolución con quiet zone)
         token_val = (
             student_data.get("token")
             or student_data.get("qr_token")
@@ -197,30 +209,22 @@ def generate_credential_png(
             raise ValueError(
                 f"Token QR ausente o vacío para el estudiante {student_data.get('display_name', 'Desconocido')}"
             )
-        qr_img = generate_qr_pil_image(str(token_val).strip(), box_size=6, border=1)
-        qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.NEAREST)
-        img.paste(qr_img, (15, 52))
 
-        # Texto informativo a la derecha
-        info_x = qr_size + 30
-        font_name = _get_pil_font(26, bold=True)
-        font_data = _get_pil_font(22, bold=False)
+        qr_size = 370
+        qr_pil = generate_qr_pil_image(str(token_val).strip(), box_size=8, border=3)
+        qr_pil = qr_pil.resize((qr_size, qr_size), Image.Resampling.NEAREST)
+        qr_x = (w_px - qr_size) // 2
+        img.paste(qr_pil, (qr_x, qr_y))
 
-        name = student_data.get("display_name", "")
-        if len(name) > 24:
-            name = name[:22] + "..."
-        draw.text((info_x, 65), name, fill=COLOR_DARK_TEXT_HEX, font=font_name)
+        # 3. Leyenda inferior: "CÓDIGO DE ASISTENCIA" cercana al código QR
+        qr_bottom = qr_y + qr_size
+        font_footer = _get_pil_font(18, bold=True)
         draw.text(
-            (info_x, 110),
-            f"Matrícula: {student_data.get('enrollment_id', '')}",
-            fill=COLOR_MUTED_TEXT_HEX,
-            font=font_data,
-        )
-        draw.text(
-            (info_x, 150),
-            f"Grupo: {student_data.get('academic_group', '')}",
-            fill=COLOR_PRIMARY_HEX,
-            font=font_data,
+            (w_px // 2, qr_bottom + 22),
+            "CÓDIGO DE ASISTENCIA",
+            fill="#475569",
+            font=font_footer,
+            anchor="mm",
         )
 
         buf = io.BytesIO()
