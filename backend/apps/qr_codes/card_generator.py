@@ -549,8 +549,11 @@ def generate_credential_pdf(
 
     En modo 'CREDENCIAL', 'CREDENCIAL_LOTE' o 'CREDENCIAL_INDIVIDUAL', maqueta en hoja
     tamaño Carta en formato horizontal (Landscape: 279.4 mm × 215.9 mm) en una cuadrícula
-    matricial de 2 filas × 4 columnas (4 estudiantes completos = 8 caras contiguas
-    [E1 Frente][E1 Detrás][E2 Frente][E2 Detrás] en la Fila 1 y [E3...][E4...] en la Fila 2).
+    matricial de 2 filas × 4 columnas con 4 estudiantes por página. Cada par
+    [Frente|Reverso] está unido sin espacio interno (gap = 0) para facilitar el recorte
+    y doblez individual: se recorta la tira y se dobla por la línea central entre el
+    Frente y el Reverso. El espacio sobrante (~17.4 mm) se concentra entre los dos pares
+    de cada fila.
 
     Args:
         students_data (list[dict[str, Any]]): Lista de diccionarios con datos de alumnos.
@@ -653,10 +656,23 @@ def generate_credential_pdf(
     card_h = PRINT_CARD_HEIGHT_MM * mm  # 97.40 mm
 
     margin_x = 8.0 * mm
-    gap_x = (page_w - (2 * margin_x) - (cols * card_w)) / (cols - 1)  # 5.80 mm
-
     top_margin = 9.0 * mm
     gap_y = 4.3 * mm
+
+    # Pares [Frente|Reverso] contiguos sin espacio interno para facilitar el
+    # doblez individual de cada credencial tras el recorte.
+    # Todo el espacio horizontal sobrante se concentra entre los dos pares.
+    #   gap_between_pairs = page_w - 2*margin_x - 4*card_w  (~17.4 mm)
+    gap_between_pairs = page_w - (2 * margin_x) - (cols * card_w)
+
+    # Posición X de cada columna: cols 0-1 = par izquierdo (sin gap interno),
+    # cols 2-3 = par derecho separado por gap_between_pairs.
+    col_x_positions: list[float] = [
+        margin_x,                                       # col 0: Frente par 1
+        margin_x + card_w,                              # col 1: Reverso par 1 (pegado)
+        margin_x + 2 * card_w + gap_between_pairs,      # col 2: Frente par 2
+        margin_x + 3 * card_w + gap_between_pairs,      # col 3: Reverso par 2 (pegado)
+    ]
 
     total_students = len(students_data)
     total_pages = max(1, (total_students + students_per_page - 1) // students_per_page)
@@ -678,7 +694,8 @@ def generate_credential_pdf(
             f"Página {page_idx + 1} de {total_pages}",
         )
 
-        # 2. Dibujar guías de corte en todas las 8 posiciones de la matriz
+        # 2. Dibujar guías de corte en todas las 8 posiciones de la matriz.
+        #    Las guías internas entre Frente y Reverso marcan la línea de doblez.
         c.setStrokeColor(HexColor("#94A3B8"))
         c.setLineWidth(0.5)
 
@@ -687,7 +704,7 @@ def generate_credential_pdf(
             # ReportLab y=0 está abajo; Row 0 es la superior
             y_pos = page_h - top_margin - ((r + 1) * card_h) - (r * gap_y)
             for col in range(cols):
-                x_pos = margin_x + (col * (card_w + gap_x))
+                x_pos = col_x_positions[col]
                 c.rect(x_pos, y_pos, card_w, card_h)
                 slot_coords.append((x_pos, y_pos))
 
