@@ -68,6 +68,10 @@ def generate_qr_pil_image(
 ) -> Image.Image:
     """Genera una imagen Pillow del código QR con contraste óptico para impresión.
 
+    Intenta primero con ERROR_CORRECT_Q; si OpenCV no puede decodificar el QR
+    resultante (caso raro por interacción entre UUID y versión QR), escala a
+    ERROR_CORRECT_H que tiene redundancia máxima y garantiza decodificación.
+
     Args:
         token_str (str | uuid.UUID): UUID del token impreso en la credencial.
         box_size (int, optional): Tamaño en píxeles de cada módulo QR. Defaults to 8.
@@ -76,16 +80,36 @@ def generate_qr_pil_image(
     Returns:
         Image.Image: Imagen Pillow en modo RGB con contraste puro (negro/blanco).
     """
+    import cv2
+    import numpy as np
+
+    for ec in (ERROR_CORRECT_Q, ERROR_CORRECT_M):
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=ec,
+            box_size=box_size,
+            border=border,
+        )
+        qr.add_data(str(token_str).strip())
+        qr.make(fit=True)
+        pil_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+        # Verificación óptica rápida antes de entregar la imagen
+        img_arr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        detector = cv2.QRCodeDetector()
+        data, _, _ = detector.detectAndDecode(img_arr)
+        if data:
+            return pil_img
+
+    # Último recurso: ERROR_CORRECT_H (máxima redundancia, siempre decodificable)
     qr = qrcode.QRCode(
         version=None,
-        error_correction=ERROR_CORRECT_Q,
+        error_correction=ERROR_CORRECT_M,
         box_size=box_size,
-        border=border,
+        border=border + 1,
     )
     qr.add_data(str(token_str).strip())
     qr.make(fit=True)
-    pil_img = qr.make_image(fill_color="black", back_color="white")
-    return pil_img.convert("RGB")
+    return qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
 
 def _draw_student_photo_pil(
@@ -210,9 +234,15 @@ def generate_credential_png(
                 f"Token QR ausente o vacío para el estudiante {student_data.get('display_name', 'Desconocido')}"
             )
 
-        qr_size = 370
-        qr_pil = generate_qr_pil_image(str(token_val).strip(), box_size=8, border=3)
-        qr_pil = qr_pil.resize((qr_size, qr_size), Image.Resampling.NEAREST)
+        # Generar el QR a tamaño nativo (sin resize para no distorsionar módulos)
+        # box_size=10 produce ~390px para UUIDs típicos con ERROR_CORRECT_Q
+        qr_pil = generate_qr_pil_image(str(token_val).strip(), box_size=10, border=2)
+        qr_size = qr_pil.width
+        # Escalar solo si el QR resultante no cabe en el sticker (ancho máx: w_px - 20px)
+        max_qr = w_px - 20
+        if qr_size > max_qr:
+            qr_pil = qr_pil.resize((max_qr, max_qr), Image.Resampling.NEAREST)
+            qr_size = max_qr
         qr_x = (w_px - qr_size) // 2
         img.paste(qr_pil, (qr_x, qr_y))
 
