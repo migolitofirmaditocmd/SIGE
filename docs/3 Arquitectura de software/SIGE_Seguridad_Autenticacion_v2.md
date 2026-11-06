@@ -30,6 +30,7 @@ Para prevenir ataques de fuerza bruta sobre las cuentas del personal:
 6.  **Anti-enumeración:** el conteo de intentos y el bloqueo se aplican **por nombre de usuario recibido, exista o no** (contador en caché/BD indexado por `username`), de modo que un usuario inexistente produce exactamente la misma secuencia de respuestas (mismo mensaje, mismo código y mismo tiempo de espera) que uno real.
 7.  **Límite por origen:** además, rate limiting por IP en `/auth/*` (DRF throttling) que responde 429 con `Retry-After`.
 8.  **Administrador bloqueado:** existe un procedimiento documentado de desbloqueo por consola del servidor (`manage.py`) para el caso en que el Administrador sea quien quedó bloqueado, ya que el desbloqueo por la aplicación solo lo realiza un Administrador.
+9.  **Primer Administrador:** la cuenta inicial se crea por la consola del servidor (`manage.py create_admin`) sin contraseña y devuelve un **enlace de un solo uso** para definirla, con la misma vigencia que el restablecimiento de contraseña (`PASSWORD_RESET_EXPIRY_MINUTES`). No depende del correo ni de Internet. La generación y el uso del enlace quedan en `AUDIT_LOG` con `origin='MANUAL'` (acción de consola).
 
 ---
 
@@ -50,7 +51,7 @@ La fuente única de verdad es **RN-AUT-06**. Esta tabla la refleja con mayor gra
 | **IMP:** Importación masiva (incluye plantilla y reporte) | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **QR:** Emitir QR (alta inicial, estudiante o docente) | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **QR:** Revocar y regenerar QR | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **CRE:** Exportar credenciales / stickers | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **CRE:** Exportar credenciales completas (lotes y reposiciones) | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **AST:** Escanear asistencia estudiantil | ❌ | ✅ | ❌ | ✅ | ❌ |
 | **AST:** Consultar asistencia detallada (grupo / estudiante) | ✅ | ✅ | ❌ | ✅ | ❌ |
 | **AST:** Justificar / modificar asistencia (estudiantil y docente) | ✅ | ❌ | ❌ | ✅ | ❌ |
@@ -92,7 +93,12 @@ La fuente única de verdad es **RN-AUT-06**. Esta tabla la refleja con mayor gra
 - [ ] **Filtrado por rol en un serializador central único** (RN-EST-12): `blood_type` y `allergies` visibles para ADM, PRE y PAD; `has_payment_debt` y `pending_subjects` solo para ADM y PAD (se **omiten** del JSON para PRE). No existe campo de monto de adeudo (RN-EST-12, RN-TRX-01).
 - [ ] **El mismo filtrado aplica a todo lugar donde viajen esos datos:** objetos de estudiante anidados en reportes, asistencia y comunicaciones; archivos exportados (credenciales, consolidados, reportes de importación); y visualización de `AUDIT_LOG`, cuyo contenido `previous_value`/`new_value` solo ve el Administrador.
 - [ ] **Tutores (RN-TRX-06):** los datos del tutor (`GUARDIAN`, `STUDENT_GUARDIAN`) heredan las mismas restricciones de acceso del expediente.
-- [ ] **Fotografías:** no se sirven como URL pública; se entregan por un endpoint autenticado que valida rol (RN-TRX-02).
+- [ ] **Fotografías de estudiantes (Datos Biométricos de Menores — LFPDPPP, RN-EST-15, RN-EST-16):**
+  - Almacenamiento desacoplado en volumen privado (`sige_media_volume`) con permisos del sistema de archivos `0640` (solo el usuario del servicio de Django puede leer/escribir).
+  - Se prohíbe terminantemente la exposición pública en el servidor web sin autenticación (`MEDIA_URL` no enlazada en la raíz estática pública).
+  - Todo archivo cargado (individual o en paquete ZIP masivo) pasa por una rutina obligatoria e irreversible de **sanitización de metadatos EXIF** (eliminando coordenadas GPS de geolocalización, identificadores de cámara/celular y fechas originales) antes de persistirse en disco (RN-EST-16).
+  - La descarga/streaming de imágenes (`GET /api/v1/students/{id}/photo/`) exige cabecera `Authorization: Bearer <token>` y valida roles autorizados (ADM, PRE, PAD, y DOC únicamente para estudiantes de sus grupos asignados).
+  - Se almacena el hash criptográfico SHA-256 (`photo_sha256`) en la BD para verificar integridad y generar ETags seguros para control de caché HTTP (`Cache-Control: private, max-age=86400`) sin comprometer los datos.
 - [ ] **Trazas y errores:** los registros de aplicación y los mensajes de error no incluyen datos de salud, adeudos ni datos de contacto.
 
 ### 4.5 Endpoints de credenciales QR (`/credentials/*`) — ASVS V6
@@ -104,7 +110,7 @@ La fuente única de verdad es **RN-AUT-06**. Esta tabla la refleja con mayor gra
 *   **Terminación TLS en el proxy inverso** (Nginx o Caddy) con TLS 1.2 como mínimo. Es el único puerto expuesto a la red local (443); HTTP (80) solo redirige. Django corre con `SECURE_PROXY_SSL_HEADER`, `SESSION/CSRF cookies Secure` y `SECURE_HSTS_SECONDS` activo una vez validado el certificado.
 *   **Certificado (D-09):** Let's Encrypt no es viable sin Internet ni dominio público. Se usa una **CA interna del proyecto** (por ejemplo, `mkcert` o `step-ca`) que emite el certificado del servidor para un nombre local fijo (p. ej. `sige.<escuela>.local`) y una dirección IP reservada en el router. El certificado raíz de la CA se instala y marca como confiable en cada dispositivo (PCs y celulares).
 *   **Riesgo operativo:** instalar y confiar una CA en iOS y Android tiene pasos específicos y es el principal obstáculo para que la PWA funcione. Debe incluirse en las pruebas de RNF-COM-02 (dispositivos soportados) y en la guía de despliegue (RNF-POR-01), junto con el calendario de renovación del certificado.
-*   **Servicios internos:** PostgreSQL, Redis (si aplica) y el servidor de aplicación escuchan solo en `127.0.0.1` o socket Unix. El firewall del servidor permite únicamente 443 desde la LAN. No hay acceso remoto desde Internet en esta fase (Acta, sección Infraestructura).
+*   **Servicios internos:** PostgreSQL y los servicios de aplicación no publican puertos hacia la LAN: con contenedores (ADR-06) viven en una red interna y solo el proxy publica el 443; sin contenedores, escuchan solo en `127.0.0.1` o socket Unix. El firewall del servidor permite únicamente 443 desde la LAN. No hay acceso remoto desde Internet en esta fase (Acta, sección Infraestructura).
 *   **Cabeceras del frontend (las aplica el proxy o Next.js):** `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'`; `Permissions-Policy: camera=(self), microphone=(), geolocation=()`; `Referrer-Policy: no-referrer`; `X-Content-Type-Options: nosniff`. Los scripts en línea que genera Next.js se autorizan con *hashes* en la compilación o con *nonce*; si no fuera viable, `'unsafe-inline'` en `script-src` es el último recurso y se documenta como excepción. El archivo `sw.js` se sirve con `Cache-Control: no-cache` para que las versiones nuevas del Service Worker se detecten. No se carga ningún recurso externo (fuentes, scripts, analítica): todo sale del servidor local (RN-INF-01).
 
 ## 6. Contraseñas y recuperación de acceso (RNF-SEG-03, RF-AUT-04)

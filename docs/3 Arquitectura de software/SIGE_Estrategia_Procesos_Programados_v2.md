@@ -10,19 +10,23 @@ Este documento define la arquitectura y el diseño de los procesos en segundo pl
 
 ## 1. Motor de Ejecución
 
-Se usa **[Celery + Redis | Django-Q2 con broker ORM]**. *(El equipo debe marcar una opción antes de iniciar el Hito 03; el resto del documento es válido para ambas y señala las diferencias.)*
+Se usa **Django-Q2 con broker ORM** (decisión D-02, ADR-02): un único proceso (`qcluster`) que toma las tareas de una tabla de PostgreSQL. No hay Redis ni Celery en el servidor local. Motivos: una pieza menos que operar y respaldar; las tareas pendientes sobreviven a un corte de energía porque están en la base y se respaldan con ella; y los locks usan la propia PostgreSQL.
 
-| Aspecto | Celery + Redis | Django-Q2 (broker ORM) |
-|---|---|---|
-| Procesos a operar en el servidor local | worker, beat, redis | cluster qcluster |
-| Locks de exclusión mutua | Redis lock | `pg_try_advisory_lock` de PostgreSQL |
-| Reintentos | `autoretry_for` (§3.1) | `max_attempts` + `retry` de la tarea |
-| Planificación | Beat + dispatcher por condición (§2.1) | Schedules + dispatcher por condición (§2.1) |
+| Aspecto | Con Django-Q2 (broker ORM) |
+|---|---|
+| Procesos a operar en el servidor local | `qcluster` (worker y planificador en un solo servicio) |
+| Locks de exclusión mutua | `pg_try_advisory_lock` de PostgreSQL |
+| Reintentos | `max_attempts` y `retry` por tarea. El **retroceso exponencial con jitter** de `send_notification_email` lo implementa la propia tarea, reprogramándose con una programación de ejecución única (`Schedule` de tipo `ONCE`) hasta `COMMUNICATION_MAX_AUTO_ATTEMPTS` |
+| Entrega de tareas | Al menos una vez: si el proceso muere, la tarea se vuelve a ofrecer tras `retry` segundos. Por eso **todo job es idempotente** (§1, principio 3) |
+| Planificación | Programaciones de Django-Q2 más el dispatcher por condición (§2.1) |
+| Resultados guardados | Se limitan con `save_limit` para que la tabla de resultados no crezca sin control |
 
 **Principios comunes**
 1. **Planificación por condición, no por reloj fijo.** Los parámetros de hora (`OPERATIONAL_PARAMETER`) son editables en caliente por el Administrador (CA-030-06), por lo que un `crontab` estático no puede seguirlos. Un *dispatcher* corre cada 5 minutos, evalúa qué jobs están vencidos y no tienen corrida registrada hoy, y encola solo esos. Esto además recupera automáticamente corridas perdidas si el servidor estuvo apagado (PP-09).
 2. **Registro de corridas (`JOB_RUN`, D-04):** cada ejecución escribe `job_name`, `run_date`, `scope` (p. ej. turno), `status`, `started_at`, `finished_at`, conteos y error. `UNIQUE(job_name, run_date, scope)` es el marcador de idempotencia y la fuente del estado de salud de los procesos que ve el Administrador. **Excepción para jobs de reevaluación intradía** (`check_teacher_absences`, §2.2): tienen un único renglón por día (`scope = 'GLOBAL'`) que la primera corrida crea y las siguientes **actualizan** (conteos acumulados y `finished_at`); su existencia no impide nuevas corridas, porque la idempotencia la dan la condición de selección y la restricción única de `ATTENDANCE_TEACHER`.
 3. **Todo job es idempotente por diseño** (§3.2): marcador de corrida + filtro de elegibles + restricción única en BD.
+4. **Ejecución a mano.** Cada job se puede ejecutar con `manage.py run_job <nombre> [--date AAAA-MM-DD] [--shift TURNO]` (operación técnica y pruebas). Las dos verificaciones de ausencias también las puede ejecutar el Administrador desde la API (`POST /ops/jobs/{job_name}/run/`, §3 punto 3).
+5. **Reloj inyectable.** Toda lógica que dependa de la hora la obtiene de un servicio de reloj sustituible, para poder probar cortes, vigencias y ausencias con horas controladas (RNF-MAN-03).
 
 ---
 
@@ -110,28 +114,15 @@ Se usa **[Celery + Redis | Django-Q2 con broker ORM]**. *(El equipo debe marcar 
 | `run_backup` (copia local) | `OSError`, `subprocess.CalledProcessError` | 3 | exponencial, tope 10 min |
 | `run_backup` (copia externa) | `OSError` | 3 | exponencial; su fallo no cambia `status` (§2.3) |
 
-Ejemplo (Celery):
+**Implementación con Django-Q2 (D-02):** `qcluster` con broker ORM, `max_attempts` y `retry` por tarea, y el resultado de cada corrida en `JOB_RUN`. En `send_notification_email`, ante `smtplib.SMTPException` u `OSError` la tarea registra el intento fallido (un renglón por intento, RN-COM-03), calcula el siguiente retardo con retroceso exponencial y *jitter* (tope 15 min) y se reprograma con una programación de ejecución única; al llegar a `COMMUNICATION_MAX_AUTO_ATTEMPTS` marca `FALLIDO`. Los demás jobs usan los reintentos y topes de la tabla anterior.
 
-```python
-from celery import shared_task
-import smtplib
-
-@shared_task(bind=True,
-             autoretry_for=(smtplib.SMTPException, OSError),
-             retry_backoff=True, retry_backoff_max=900, retry_jitter=True,
-             max_retries=3, acks_late=True)
-def send_notification_email(self, communication_log_id): ...
-```
-
-*Variante Django-Q2:* configurar `max_attempts` y `retry` por tarea y registrar el resultado en `JOB_RUN`.
-
-2. **Mutual Exclusion (Locks):** Se usarán *Redis Locks* para garantizar que un proceso pesado como la inyección masiva de faltas de alumnos no se cruce consigo mismo si la ejecución de las 10:00 se demora más de lo esperado.
+2. **Mutual Exclusion (Locks):** Se usarán *locks de PostgreSQL* (`pg_try_advisory_lock`) para garantizar que un proceso pesado como la inyección masiva de faltas de alumnos no se cruce consigo mismo si la ejecución de las 10:00 se demora más de lo esperado.
 3. **Guardias previas a la inserción masiva de faltas.** Antes de §2.1 y §2.2, el job valida:
    *   **Ciclo activo (ya disponible en el modelo):** existe un `ACADEMIC_CYCLE` con `is_active=true` y `start_date ≤ hoy ≤ end_date`. Si no, el job no corre y registra aviso en `JOB_RUN`.
-   *   **Guardia de sanidad estudiantil (D-03, por turno):** si a la hora de verificación un turno completo tiene **cero** escaneos registrados hoy y cero eventos offline pendientes de sincronizar conocidos por el servidor, el job **no inserta** faltas, deja `JOB_RUN.status='OMITIDO'` y genera una alerta visible al Administrador, quien puede ejecutar manualmente la verificación tras confirmar que fue un día lectivo. Motivo: los registros de asistencia son permanentes (RN-AST-06, RN-TRX-03) y la única corrección es justificar uno por uno (RN-AST-22). 
-   *   **Guardia de sanidad docente (propuesta, ver CA-042-08):** antes de insertar ausencias docentes, el job verifica que exista actividad de asistencia hoy: al menos un escaneo estudiantil, o un registro docente con origen `ESCANEO`, o un evento offline pendiente conocido por el servidor. Si no hay ninguno, el job **no inserta** faltas, deja el renglón diario de `JOB_RUN` en `OMITIDO` y genera **una sola** alerta al Administrador ese día, quien puede ejecutar la verificación manualmente tras confirmar que fue día lectivo. La guardia se reevalúa en cada tick. Motivo: igual que en D-03, los registros automáticos son permanentes (RN-AST-21, RN-TRX-03) y su única corrección es la justificación uno por uno (RN-AST-17).
+   *   **Guardia de sanidad estudiantil (D-03, por turno):** si a la hora de verificación un turno completo tiene **cero** escaneos registrados hoy y cero eventos offline pendientes de sincronizar conocidos por el servidor, el job **no inserta** faltas, deja `JOB_RUN.status='OMITIDO'` y genera una alerta visible al Administrador, quien puede ejecutar manualmente la verificación (`POST /ops/jobs/{job_name}/run/` con `confirm_school_day=true`) tras confirmar que fue un día lectivo. Motivo: los registros de asistencia son permanentes (RN-AST-06, RN-TRX-03) y la única corrección es justificar uno por uno (RN-AST-22). 
+   *   **Guardia de sanidad docente (propuesta, ver CA-042-08):** antes de insertar ausencias docentes, el job verifica que exista actividad de asistencia hoy: al menos un escaneo estudiantil, o un registro docente con origen `ESCANEO`, o un evento offline pendiente conocido por el servidor. Si no hay ninguno, el job **no inserta** faltas, deja el renglón diario de `JOB_RUN` en `OMITIDO` y genera **una sola** alerta al Administrador ese día, quien puede ejecutar la verificación manualmente (`POST /ops/jobs/{job_name}/run/` con `confirm_school_day=true`) tras confirmar que fue día lectivo. La guardia se reevalúa en cada tick. Motivo: igual que en D-03, los registros automáticos son permanentes (RN-AST-21, RN-TRX-03) y su única corrección es la justificación uno por uno (RN-AST-17).
    *   **Catálogo de días no laborables:** no está en el alcance actual; incorporarlo requiere control de cambios (el job lo consultaría como una tercera guardia).
 4. **Reloj, zona horaria y equipo apagado (RNF-FIA-04).**
-   *   Django `TIME_ZONE` y el planificador (`CELERY_TIMEZONE` o equivalente) usan la zona horaria institucional, con `USE_TZ=True`. Todas las horas de los parámetros se interpretan en esa zona.
+   *   Django `TIME_ZONE` (que el planificador de Django-Q2 también usa) es la zona horaria institucional, con `USE_TZ=True`. Todas las horas de los parámetros se interpretan en esa zona.
    *   El servidor mantiene su reloj sincronizado (chrony/NTP). Sin Internet existe un procedimiento documentado de verificación y ajuste manual al inicio de cada jornada; los jobs de ausencias no deben iniciar si el reloj difiere más de 2 minutos de la referencia local registrada.
-   *   La PC servidor puede estar apagada fuera de horario: como el dispatcher decide por condición (§1), cualquier job vencido se ejecuta en el primer tick tras el arranque (respaldos incluidos, §2.3). Se documenta en el runbook que el arranque del servidor debe iniciar, en este orden: PostgreSQL, el broker (si la decisión D-02 lo requiere), la API, el worker/planificador y, por último, el proxy inverso, de modo que la LAN no reciba tráfico hasta que la API responda. Tras el arranque, el primer tick del dispatcher ejecuta los jobs vencidos (§1).
+   *   La PC servidor puede estar apagada fuera de horario: como el dispatcher decide por condición (§1), cualquier job vencido se ejecuta en el primer tick tras el arranque (respaldos incluidos, §2.3). Se documenta en el runbook que el arranque del servidor debe iniciar, en este orden: PostgreSQL, la API, el worker y planificador (`qcluster`) y, por último, el proxy inverso, de modo que la LAN no reciba tráfico hasta que la API responda. Tras el arranque, el primer tick del dispatcher ejecuta los jobs vencidos (§1).

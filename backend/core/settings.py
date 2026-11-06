@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
+    'django_q',
 
     # Local apps
     'apps.core.apps.CoreConfig',
@@ -144,7 +146,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django REST Framework Configuration
+# Django REST Framework Configuration (RF-API-04, §1.5)
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
@@ -155,10 +157,47 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ],
+    # Paginación estándar (§1.5): page + page_size, máx. 100
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 25,
+    # Formato de error uniforme (RF-API-04)
+    'EXCEPTION_HANDLER': 'apps.core.exceptions.sige_exception_handler',
+    # Esquema OpenAPI (RF-API-01)
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# OpenAPI / Swagger (RF-API-01)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SIGE API',
+    'DESCRIPTION': (
+        'Sistema Integral de Gestión Escolar — '
+        'Escuela Secundaria Mixta 5. '
+        'API REST v1. Especificación: SIGE_Especificacion_API_REST_v2.md'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
 }
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = True
+
+# Django-Q2 Configuration (Decision D-02, ADR-02)
+# Broker ORM en PostgreSQL/SQLite local sin Redis
+Q_CLUSTER = {
+    'name': 'sige_tasks',
+    'workers': 2,
+    'recycle': 500,
+    'timeout': 60,
+    'retry': 120,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 1,
+    'label': 'Django Q2',
+    'orm': 'default',
+}
+
+# Operational Parameters Configuration (Defaults)
+PASSWORD_RESET_EXPIRY_MINUTES = env.int('PASSWORD_RESET_EXPIRY_MINUTES', default=30)
+

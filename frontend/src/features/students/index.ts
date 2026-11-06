@@ -1,16 +1,10 @@
 /**
- * Feature: Students (Estudiantes, Expedientes e Importación Masiva)
- * Responsabilidad: Gestión de expediente, validación de tutores e importación de lotes.
+ * Feature: Students (Estudiantes, Expedientes y Catálogos)
  */
 
-export interface StudentSummary {
-  id: string;
-  enrollment_id: string;
-  display_name: string;
-  curp?: string;
-  grade: number;
-  group: string;
-  shift: string;
-  status: "ACTIVE" | "INACTIVE" | "GRADUATED" | "EXPELLED";
-  completeness: "COMPLETO" | "INCOMPLETO";
-}
+export * from "./types";
+export * from "./services";
+export * from "./components/StudentSearchBar";
+export * from "./components/StudentDetailCard";
+export * from "./components/GroupSelector";
+export * from "./components/GroupStudentTable";

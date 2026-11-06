@@ -1,0 +1,1970 @@
+openapi: 3.0.3
+info:
+  title: SIGE API
+  version: 1.0.0
+  description: 'Sistema Integral de Gestión Escolar — Escuela Secundaria Mixta 5.
+    API REST v1. Especificación: SIGE_Especificacion_API_REST_v2.md'
+paths:
+  /api/v1/credentials/exports/:
+    post:
+      operationId: credentials_export_download
+      description: Genera y entrega el documento de credenciales para impresión (RF-CRE-01,
+        RF-CRE-02).
+      summary: Descargar credenciales o stickers (PDF/PNG)
+      tags:
+      - Identificación y Credenciales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialExportDownloadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CredentialExportDownloadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CredentialExportDownloadRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/credentials/exports/preview/:
+    post:
+      operationId: credentials_export_preview
+      description: Evalúa los candidatos y lista a los incluidos y excluidos con su
+        motivo (RN-CRE-01).
+      summary: Vista previa de exportación de credenciales
+      tags:
+      - Identificación y Credenciales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialExportPreviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CredentialExportPreviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CredentialExportPreviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialExportPreviewResponse'
+          description: ''
+  /api/v1/credentials/tokens/:
+    post:
+      operationId: credentials_issue_token
+      description: Genera un nuevo token criptográfico opaco y revoca el anterior
+        si existía (RN-QR-01, RN-QR-03).
+      summary: Emitir o renovar código QR de credencial
+      tags:
+      - Identificación y Credenciales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialTokenIssueRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CredentialTokenIssueRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CredentialTokenIssueRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialTokenIssueResponse'
+          description: ''
+  /api/v1/ops/jobs/{job_name}/run/:
+    post:
+      operationId: ops_jobs_run_create
+      description: Ejecuta de forma manual e idempotente un background job (check_student_absences
+        o check_teacher_absences). Requiere confirm_school_day=True; de lo contrario
+        responde 422 VALIDATION_ERROR. Queda auditado en AUDIT_LOG con origin='MANUAL'
+        y el usuario autenticado.
+      summary: Ejecutar manualmente un proceso programado (ADM)
+      parameters:
+      - in: path
+        name: job_name
+        schema:
+          type: string
+        required: true
+      tags:
+      - ops
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunJobRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RunJobRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RunJobRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobRun'
+          description: Resultado del JOB_RUN
+        '400':
+          description: Parámetros inválidos o formato erróneo
+        '403':
+          description: Permiso denegado (requiere rol Administrador)
+        '422':
+          description: Violación de regla de negocio o confirm_school_day ausente
+  /api/v1/qr/{token}/image/:
+    get:
+      operationId: qr_render_image
+      description: Retorna el PNG binario del código QR de la credencial.
+      summary: Renderizar imagen PNG de código QR
+      parameters:
+      - in: query
+        name: high_res
+        schema:
+          type: boolean
+        description: Generar en alta resolución para credencial impresa
+      - in: path
+        name: token
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Códigos QR
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/qr/issue/:
+    post:
+      operationId: qr_issue_token
+      description: Genera un nuevo token QR firmado con HMAC-SHA256 y revoca el anterior
+        si existía.
+      summary: Emitir o renovar credencial QR
+      tags:
+      - Códigos QR
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QRIssueRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QRIssueRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QRIssueRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QRIssueResponse'
+          description: ''
+  /api/v1/qr/validate/:
+    post:
+      operationId: qr_validate
+      description: Resuelve y valida un código QR escaneado por prefectura o docentes.
+      summary: Validar token QR escaneado
+      tags:
+      - Códigos QR
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QRValidateRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QRValidateRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QRValidateRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QRValidateResponse'
+          description: ''
+  /api/v1/students/:
+    get:
+      operationId: students_list
+      description: Lista estudiantes con filtros de grado, grupo, turno, estatus y
+        búsqueda por texto.
+      summary: Listado paginado y búsqueda de estudiantes
+      parameters:
+      - in: query
+        name: grade
+        schema:
+          type: integer
+        description: Grado escolar (1, 2, 3)
+      - in: query
+        name: group
+        schema:
+          type: string
+        description: Letra de grupo (A–F)
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Número de página
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: Tamaño de página (máx. 100)
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Búsqueda en nombre, matrícula y CURP
+      - in: query
+        name: shift
+        schema:
+          type: string
+        description: Turno (MATUTINO, VESPERTINO)
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Estatus (ACTIVO, BAJA, EGRESADO)
+      tags:
+      - Estudiantes
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudentReadList'
+          description: ''
+    post:
+      operationId: students_create
+      description: Crea un expediente de estudiante y sus tutores legales asociados
+        en una sola transacción.
+      summary: Crear estudiante con tutores
+      tags:
+      - Estudiantes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudentWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentRead'
+          description: ''
+  /api/v1/students/{id}/:
+    get:
+      operationId: students_detail
+      description: |-
+        Devuelve el expediente completo del estudiante (§2.4).
+
+        Args:
+            request: Request HTTP GET.
+            pk: UUID del estudiante.
+
+        Returns:
+            Response: Expediente con datos y vínculos de tutores.
+      summary: Expediente completo de un estudiante
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Estudiantes
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentRead'
+          description: ''
+    patch:
+      operationId: students_update
+      description: Actualiza datos del estudiante. La matrícula enrollment_id es inmutable
+        (RN-EST-02).
+      summary: Actualización parcial del expediente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Estudiantes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentWriteRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentRead'
+          description: ''
+  /api/v1/students/{id}/guardians/:
+    post:
+      operationId: students_add_guardian
+      description: Vincula un tutor existente o crea uno nuevo para el alumno (RN-EST-03,
+        RN-EST-13).
+      summary: Vincular tutor legal a estudiante
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Tutores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardianInlineRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GuardianInlineRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GuardianInlineRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentGuardian'
+          description: ''
+  /api/v1/students/{id}/photo/:
+    get:
+      operationId: students_download_photo
+      description: Descarga autenticada de la fotografía institucional.
+      summary: Descargar fotografía del estudiante
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Estudiantes
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoDownloadResponse'
+          description: ''
+    post:
+      operationId: students_upload_photo
+      description: Carga de fotografía (JPEG/PNG) para credencialización y expediente
+        institucional.
+      summary: Cargar fotografía del estudiante
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Estudiantes
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PhotoUploadRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PhotoUploadRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoUploadResponse'
+          description: ''
+  /api/v1/students/{id}/reinstate/:
+    post:
+      operationId: students_reinstate
+      description: Reincorpora un alumno de BAJA a ACTIVO con motivo obligatorio (RN-EST-06,
+        RN-EST-09).
+      summary: Reincorporar estudiante (BAJA → ACTIVO)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Estudiantes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentReinstateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudentReinstateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentReinstateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentReinstateResponse'
+          description: ''
+  /api/v1/students/{id}/status/:
+    post:
+      operationId: students_change_status
+      description: Aplica la transición a BAJA o EGRESADO con motivo obligatorio (RN-EST-04,
+        RN-EST-09).
+      summary: Baja lógica o egreso de estudiante
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Estudiantes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentStatusRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudentStatusRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentStatusRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentStatusResponse'
+          description: ''
+  /api/v1/students/guardians/{id}/:
+    patch:
+      operationId: guardians_update
+      description: Edita datos del tutor. Si está compartido, requiere confirm=true
+        (RN-EST-14).
+      summary: Actualizar datos de tutor legal
+      parameters:
+      - in: query
+        name: confirm
+        schema:
+          type: boolean
+        description: Confirmar actualización para tutor compartido
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Tutores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGuardianRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGuardianRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGuardianRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guardian'
+          description: ''
+  /api/v1/students/student-guardians/{id}/consent/:
+    patch:
+      operationId: student_guardians_update_consent
+      description: Modifica consentimiento y genera renglón de auditoría en GUARDIAN_CONSENT_LOG
+        (RN-EST-07).
+      summary: Actualizar consentimiento de tutor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Tutores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedConsentUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedConsentUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedConsentUpdateRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentUpdateResponse'
+          description: ''
+  /api/v1/students/student-guardians/{id}/invalidate-contact/:
+    post:
+      operationId: student_guardians_invalidate_contact
+      description: Marca el contacto como inválido con motivo obligatorio (RN-EST-11).
+      summary: Invalidar contacto de tutor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Tutores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvalidateContactRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InvalidateContactRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InvalidateContactRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidateContactResponse'
+          description: ''
+components:
+  schemas:
+    BlankEnum:
+      enum:
+      - ''
+    ConsentUpdateConsentStatusEnum:
+      enum:
+      - OTORGADO
+      - REVOCADO
+      type: string
+      description: |-
+        * `OTORGADO` - Otorgado
+        * `REVOCADO` - Revocado
+    ConsentUpdateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        consent_status:
+          type: string
+        previous_status:
+          type: string
+          nullable: true
+      required:
+      - consent_status
+      - id
+      - previous_status
+    CredentialExportDownloadRequest:
+      type: object
+      description: Serializador para descarga de archivos de credenciales (§2.3).
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          default: CREDENCIAL
+          description: |-
+            Modalidad: CREDENCIAL (requiere foto) o STICKER (solo QR).
+
+            * `CREDENCIAL` - CREDENCIAL
+            * `STICKER` - STICKER
+        entity_type:
+          allOf:
+          - $ref: '#/components/schemas/EntityTypeEnum'
+          default: STUDENT
+          description: |-
+            Tipo de entidad a exportar.
+
+            * `STUDENT` - STUDENT
+            * `TEACHER` - TEACHER
+        entity_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Lista de identificadores para exportación selectiva.
+        group_id:
+          type: string
+          nullable: true
+          minLength: 1
+          description: Identificador de grupo escolar para exportación masiva.
+        format:
+          allOf:
+          - $ref: '#/components/schemas/FormatEnum'
+          default: PDF
+          description: |-
+            Formato de exportación: PDF (lote o individual) o PNG (individual).
+
+            * `PDF` - PDF
+            * `PNG` - PNG
+    CredentialExportPreviewRequest:
+      type: object
+      description: Serializador para solicitud de vista previa de exportación (§2.3).
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          default: CREDENCIAL
+          description: |-
+            Modalidad: CREDENCIAL (requiere foto) o STICKER (solo QR).
+
+            * `CREDENCIAL` - CREDENCIAL
+            * `STICKER` - STICKER
+        entity_type:
+          allOf:
+          - $ref: '#/components/schemas/EntityTypeEnum'
+          default: STUDENT
+          description: |-
+            Tipo de entidad a exportar.
+
+            * `STUDENT` - STUDENT
+            * `TEACHER` - TEACHER
+        entity_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Lista de identificadores para exportación selectiva.
+        group_id:
+          type: string
+          nullable: true
+          minLength: 1
+          description: Identificador de grupo escolar para exportación masiva.
+    CredentialExportPreviewResponse:
+      type: object
+      properties:
+        included:
+          type: integer
+        excluded:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - excluded
+      - included
+    CredentialTokenIssueRequest:
+      type: object
+      description: Serializador para emisión y reemplazo de tokens QR (§2.3).
+      properties:
+        entity_type:
+          allOf:
+          - $ref: '#/components/schemas/EntityTypeEnum'
+          default: STUDENT
+          description: |-
+            Tipo de persona (STUDENT o TEACHER).
+
+            * `STUDENT` - STUDENT
+            * `TEACHER` - TEACHER
+        entity_id:
+          type: string
+          format: uuid
+          description: UUID del estudiante o docente titular.
+        reason:
+          type: string
+          default: ''
+          description: Motivo de la emisión o reemplazo (obligatorio si ya tiene QR
+            vigente).
+      required:
+      - entity_id
+    CredentialTokenIssueResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+          format: uuid
+        status:
+          type: string
+        issued_at:
+          type: string
+          format: date-time
+        entity_id:
+          type: string
+          format: uuid
+        enrollment_id:
+          type: string
+      required:
+      - enrollment_id
+      - entity_id
+      - issued_at
+      - message
+      - status
+      - token
+    EntityTypeEnum:
+      enum:
+      - STUDENT
+      - TEACHER
+      type: string
+      description: |-
+        * `STUDENT` - STUDENT
+        * `TEACHER` - TEACHER
+    FormatEnum:
+      enum:
+      - PDF
+      - PNG
+      type: string
+      description: |-
+        * `PDF` - PDF
+        * `PNG` - PNG
+    GradeEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      type: integer
+      description: |-
+        * `1` - 1°
+        * `2` - 2°
+        * `3` - 3°
+    GroupLetterEnum:
+      enum:
+      - A
+      - B
+      - C
+      - D
+      - E
+      - F
+      type: string
+      description: |-
+        * `A` - A
+        * `B` - B
+        * `C` - C
+        * `D` - D
+        * `E` - E
+        * `F` - F
+    Guardian:
+      type: object
+      description: |-
+        Serializador completo de Guardian (lectura y escritura).
+
+        Expone display_name y sort_name calculados (RN-TRX-10).
+        El apellido materno vacío se convierte a null (RN-TRX-08).
+
+        Attributes:
+            display_name: Nombre(s) Apellido_paterno Apellido_materno.
+            sort_name: Apellido_paterno Apellido_materno, Nombre(s).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Identificador único universal (UUIDv4)
+        first_name:
+          type: string
+          title: Nombre(s)
+          maxLength: 60
+          minLength: 2
+        last_name_father:
+          type: string
+          title: Apellido paterno
+          maxLength: 60
+          minLength: 2
+        last_name_mother:
+          type: string
+          nullable: true
+          title: Apellido materno
+          description: Opcional. Vacío se guarda como NULL (nunca cadena vacía).
+          maxLength: 60
+        display_name:
+          type: string
+          readOnly: true
+        sort_name:
+          type: string
+          readOnly: true
+        email:
+          nullable: true
+          title: Correo electrónico
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        phone_number:
+          type: string
+          nullable: true
+          title: Teléfono celular (10 dígitos)
+          maxLength: 10
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Fecha de creación
+      required:
+      - created_at
+      - display_name
+      - first_name
+      - id
+      - last_name_father
+      - sort_name
+    GuardianInlineRequest:
+      type: object
+      description: |-
+        Subserializador para tutores inline en POST /students/.
+
+        Permite crear un Guardian nuevo o referenciar uno existente
+        (RN-EST-13). Incluye los campos opcionales de coincidencia.
+      properties:
+        existing_guardian_id:
+          type: string
+          format: uuid
+          nullable: true
+        decline_match_reason:
+          type: string
+          nullable: true
+          minLength: 1
+        first_name:
+          type: string
+          nullable: true
+          minLength: 1
+        last_name_father:
+          type: string
+          nullable: true
+          minLength: 1
+        last_name_mother:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+          minLength: 1
+        phone_number:
+          type: string
+          nullable: true
+          minLength: 1
+        relationship:
+          allOf:
+          - $ref: '#/components/schemas/RelationshipEnum'
+          default: TUTOR_LEGAL
+        is_primary_contact:
+          type: boolean
+          default: false
+    InvalidateContactRequestRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+      required:
+      - reason
+    InvalidateContactResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        is_valid_contact:
+          type: boolean
+        invalid_reason:
+          type: string
+      required:
+      - id
+      - invalid_reason
+      - is_valid_contact
+    JobRun:
+      type: object
+      description: |-
+        Serializador para el modelo JobRun (§3.16).
+
+        Expone los resultados de la ejecución de procesos recurrentes y de fondo.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Identificador único universal (UUIDv4)
+        job_name:
+          type: string
+          readOnly: true
+          title: Nombre del proceso
+          description: Ej. 'check_student_absences', 'check_teacher_absences'
+        run_date:
+          type: string
+          format: date
+          readOnly: true
+          title: Fecha de ejecución
+        scope:
+          type: string
+          readOnly: true
+          default: GLOBAL
+          title: Alcance / Turno
+          description: Turno ('MATUTINO'/'VESPERTINO') o 'GLOBAL'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobRunStatusEnum'
+          readOnly: true
+          title: Estado de ejecución
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Inicio de corrida
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Fin de corrida
+        evaluated_count:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Total evaluados
+        created_count:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Total creados
+        error:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Detalle del error
+      required:
+      - created_count
+      - error
+      - evaluated_count
+      - finished_at
+      - id
+      - job_name
+      - run_date
+      - scope
+      - started_at
+      - status
+    JobRunStatusEnum:
+      enum:
+      - EN_CURSO
+      - COMPLETADO
+      - FALLIDO
+      - OMITIDO
+      type: string
+      description: |-
+        * `EN_CURSO` - En Curso
+        * `COMPLETADO` - Completado
+        * `FALLIDO` - Fallido
+        * `OMITIDO` - Omitido
+    ModeEnum:
+      enum:
+      - CREDENCIAL
+      - STICKER
+      type: string
+      description: |-
+        * `CREDENCIAL` - CREDENCIAL
+        * `STICKER` - STICKER
+    NullEnum:
+      enum:
+      - null
+    PaginatedStudentReadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentRead'
+    PatchedConsentUpdateRequest:
+      type: object
+      description: |-
+        Actualización de consentimiento de tutor (PATCH /student-guardians/{id}/consent/).
+
+        Attributes:
+            consent_status: Nuevo estado de consentimiento.
+            reason: Justificación del cambio.
+      properties:
+        consent_status:
+          $ref: '#/components/schemas/ConsentUpdateConsentStatusEnum'
+        reason:
+          type: string
+          default: ''
+          description: Motivo del cambio de consentimiento.
+    PatchedGuardianRequest:
+      type: object
+      description: |-
+        Serializador completo de Guardian (lectura y escritura).
+
+        Expone display_name y sort_name calculados (RN-TRX-10).
+        El apellido materno vacío se convierte a null (RN-TRX-08).
+
+        Attributes:
+            display_name: Nombre(s) Apellido_paterno Apellido_materno.
+            sort_name: Apellido_paterno Apellido_materno, Nombre(s).
+      properties:
+        first_name:
+          type: string
+          minLength: 2
+          title: Nombre(s)
+          maxLength: 60
+        last_name_father:
+          type: string
+          minLength: 2
+          title: Apellido paterno
+          maxLength: 60
+        last_name_mother:
+          type: string
+          nullable: true
+          title: Apellido materno
+          description: Opcional. Vacío se guarda como NULL (nunca cadena vacía).
+          maxLength: 60
+        email:
+          nullable: true
+          title: Correo electrónico
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        phone_number:
+          type: string
+          nullable: true
+          title: Teléfono celular (10 dígitos)
+          maxLength: 10
+    PatchedStudentWriteRequest:
+      type: object
+      description: |-
+        Serializador de escritura para POST /api/v1/students/ (§2.4).
+
+        Valida las reglas de negocio:
+            - RN-EST-02: enrollment_id único.
+            - RN-EST-03/11: mínimo un tutor con is_valid_contact=True.
+            - RN-EST-10: datos mínimos para guardar.
+            - RN-EST-13: detección de Guardian existente.
+            - RN-TRX-08/09: nombres válidos.
+
+        Attributes:
+            guardians: Lista de tutores a crear/asociar (obligatorio en POST).
+      properties:
+        enrollment_id:
+          type: string
+          minLength: 1
+          title: Matrícula / Código escolar
+          maxLength: 20
+        curp:
+          type: string
+          nullable: true
+          title: CURP Oficial (RENAPO)
+          maxLength: 18
+        first_name:
+          type: string
+          minLength: 2
+          title: Nombre(s)
+          maxLength: 60
+        last_name_father:
+          type: string
+          minLength: 2
+          title: Apellido paterno
+          maxLength: 60
+        last_name_mother:
+          type: string
+          nullable: true
+          title: Apellido materno
+          description: Opcional. Vacío se guarda como NULL (nunca cadena vacía).
+          maxLength: 60
+        grade:
+          nullable: true
+          title: Grado escolar
+          minimum: 0
+          maximum: 9223372036854775807
+          oneOf:
+          - $ref: '#/components/schemas/GradeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        group_letter:
+          title: Grupo (letra)
+          oneOf:
+          - $ref: '#/components/schemas/GroupLetterEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        shift:
+          allOf:
+          - $ref: '#/components/schemas/ShiftEnum'
+          title: Turno
+        birth_date:
+          type: string
+          format: date
+          nullable: true
+          title: Fecha de nacimiento
+        sex:
+          nullable: true
+          title: Sexo
+          oneOf:
+          - $ref: '#/components/schemas/SexEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        address_street:
+          type: string
+          nullable: true
+          title: Calle y número
+          maxLength: 200
+        address_colonia:
+          type: string
+          nullable: true
+          title: Colonia
+          maxLength: 100
+        address_municipio:
+          type: string
+          nullable: true
+          title: Municipio
+          maxLength: 100
+        address_estado:
+          type: string
+          nullable: true
+          title: Estado
+          maxLength: 60
+        address_postal_code:
+          type: string
+          nullable: true
+          title: Código postal
+          maxLength: 5
+        blood_type:
+          type: string
+          nullable: true
+          title: Tipo de sangre
+          description: Restringido a ADM, PRE, PAD (RN-EST-12).
+          maxLength: 5
+        allergies:
+          type: string
+          nullable: true
+          title: Alergias o consideraciones médicas
+          description: Restringido a ADM, PRE, PAD (RN-EST-12).
+        has_payment_debt:
+          type: boolean
+          nullable: true
+          title: ¿Tiene adeudo de pago?
+          description: Solo visible a ADM y PAD (RN-EST-12). Sin monto.
+        guardians:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuardianInlineRequest'
+          writeOnly: true
+          description: Al menos un tutor con contacto válido (RN-EST-03/11).
+    PhotoDownloadResponse:
+      type: object
+      properties:
+        photo_url:
+          type: string
+      required:
+      - photo_url
+    PhotoUploadRequestRequest:
+      type: object
+      properties:
+        photo:
+          type: string
+          format: binary
+      required:
+      - photo
+    PhotoUploadResponse:
+      type: object
+      properties:
+        photo_url:
+          type: string
+        completeness:
+          type: string
+      required:
+      - completeness
+      - photo_url
+    QRIssueRequestRequest:
+      type: object
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          default: Emisión por sistema
+      required:
+      - student_id
+    QRIssueResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+        status:
+          type: string
+        hmac_signature:
+          type: string
+        issued_at:
+          type: string
+          format: date-time
+        student_id:
+          type: string
+        enrollment_id:
+          type: string
+      required:
+      - enrollment_id
+      - hmac_signature
+      - issued_at
+      - message
+      - status
+      - student_id
+      - token
+    QRValidateRequestRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+      required:
+      - token
+    QRValidateResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        status:
+          type: string
+        token:
+          type: string
+        issued_at:
+          type: string
+          format: date-time
+        student:
+          type: object
+          additionalProperties: {}
+      required:
+      - issued_at
+      - status
+      - student
+      - token
+      - valid
+    RelationshipEnum:
+      enum:
+      - MADRE
+      - PADRE
+      - TUTOR_LEGAL
+      - OTRO
+      type: string
+      description: |-
+        * `MADRE` - Madre
+        * `PADRE` - Padre
+        * `TUTOR_LEGAL` - Tutor Legal
+        * `OTRO` - Otro Familiar / Tutor Autorizado
+    RunJobRequestRequest:
+      type: object
+      description: |-
+        Serializador para la solicitud de ejecución manual de un job programado (§3.6).
+
+        Attributes:
+            date (DateField): Fecha de negocio a procesar (por defecto la fecha actual).
+            shift (ChoiceField): Turno a evaluar ('MATUTINO' o 'VESPERTINO').
+            confirm_school_day (BooleanField): Confirmación de día lectivo para levantar guardias.
+      properties:
+        date:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha de negocio en formato YYYY-MM-DD. Opcional (por defecto
+            hoy).
+        shift:
+          allOf:
+          - $ref: '#/components/schemas/ShiftEnum'
+          default: MATUTINO
+          description: |-
+            Turno escolar. Relevante únicamente para check_student_absences.
+
+            * `MATUTINO` - Matutino
+            * `VESPERTINO` - Vespertino
+        confirm_school_day:
+          type: boolean
+          description: Confirmación explícita del Administrador de que la fecha fue
+            día lectivo (D-03).
+      required:
+      - confirm_school_day
+    SexEnum:
+      enum:
+      - M
+      - F
+      type: string
+      description: |-
+        * `M` - Masculino
+        * `F` - Femenino
+    ShiftEnum:
+      enum:
+      - MATUTINO
+      - VESPERTINO
+      type: string
+      description: |-
+        * `MATUTINO` - Matutino
+        * `VESPERTINO` - Vespertino
+    StudentGuardian:
+      type: object
+      description: |-
+        Serializa la relación Student–Guardian con datos del tutor inline.
+
+        Attributes:
+            guardian: Datos completos del tutor (read-only).
+            relationship_display: Etiqueta legible del parentesco.
+            consent_status_display: Etiqueta legible del consentimiento.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Identificador único universal (UUIDv4)
+        guardian:
+          allOf:
+          - $ref: '#/components/schemas/Guardian'
+          readOnly: true
+        relationship:
+          allOf:
+          - $ref: '#/components/schemas/RelationshipEnum'
+          title: Parentesco
+        relationship_display:
+          type: string
+          readOnly: true
+        is_primary_contact:
+          type: boolean
+          title: ¿Es contacto principal?
+        is_valid_contact:
+          type: boolean
+          title: ¿Contacto válido?
+          description: False si el email/teléfono fue invalidado manualmente (RN-EST-11).
+        consent_status:
+          allOf:
+          - $ref: '#/components/schemas/StudentGuardianConsentStatusEnum'
+          title: Estado de consentimiento
+          description: |-
+            RN-EST-07. Default PENDIENTE al crear.
+
+            * `PENDIENTE` - Pendiente
+            * `OTORGADO` - Otorgado
+            * `REVOCADO` - Revocado
+        consent_status_display:
+          type: string
+          readOnly: true
+        linked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Fecha/hora de alta del vínculo
+          description: 'Hallazgo C-3 (v3.2): base del primer renglón de GuardianConsentLog.'
+      required:
+      - consent_status_display
+      - guardian
+      - id
+      - linked_at
+      - relationship_display
+    StudentGuardianConsentStatusEnum:
+      enum:
+      - PENDIENTE
+      - OTORGADO
+      - REVOCADO
+      type: string
+      description: |-
+        * `PENDIENTE` - Pendiente
+        * `OTORGADO` - Otorgado
+        * `REVOCADO` - Revocado
+    StudentRead:
+      type: object
+      description: |-
+        Serializador de lectura del expediente de estudiante (§2.4).
+
+        Expone display_name, sort_name, academic_group y el estado del
+        QR activo. Los campos sensibles (blood_type, allergies,
+        has_payment_debt) se incluyen o excluyen según el rol del
+        solicitante (RN-EST-12); el filtrado lo aplica la vista.
+
+        Attributes:
+            display_name: Nombre calculado para la UI (RN-TRX-10).
+            sort_name: Nombre para ordenamiento (RN-TRX-10).
+            academic_group: Representación legible de grado/grupo/turno.
+            status_display: Etiqueta legible del estado.
+            completeness_display: Etiqueta legible de completitud.
+            active_qr_token_id: UUID del QR vigente o null.
+            guardians: Lista de vínculos Estudiante–Tutor.
+            consent_warning: True si algún tutor está PENDIENTE o REVOCADO (RN-EST-08).
+            photo_url: Ruta interna de la API, nunca URL pública (RN-TRX-02).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Identificador único universal (UUIDv4)
+        enrollment_id:
+          type: string
+          readOnly: true
+          title: Matrícula / Código escolar
+        curp:
+          type: string
+          readOnly: true
+          nullable: true
+          title: CURP Oficial (RENAPO)
+        first_name:
+          type: string
+          readOnly: true
+          title: Nombre(s)
+        last_name_father:
+          type: string
+          readOnly: true
+          title: Apellido paterno
+        last_name_mother:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Apellido materno
+          description: Opcional. Vacío se guarda como NULL (nunca cadena vacía).
+        display_name:
+          type: string
+          readOnly: true
+        sort_name:
+          type: string
+          readOnly: true
+        grade:
+          readOnly: true
+          nullable: true
+          title: Grado escolar
+          oneOf:
+          - $ref: '#/components/schemas/GradeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        group_letter:
+          allOf:
+          - $ref: '#/components/schemas/GroupLetterEnum'
+          readOnly: true
+          title: Grupo (letra)
+        shift:
+          allOf:
+          - $ref: '#/components/schemas/ShiftEnum'
+          readOnly: true
+          title: Turno
+        academic_group:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StudentReadStatusEnum'
+          readOnly: true
+          title: Estado escolar
+        status_display:
+          type: string
+          readOnly: true
+        completeness:
+          type: string
+          readOnly: true
+          title: Completitud del expediente
+          description: Calculado automáticamente. INCOMPLETO si falta birth_date o
+            photo_url.
+        completeness_display:
+          type: string
+          readOnly: true
+        missing_fields:
+          type: array
+          items:
+            type: string
+          description: |-
+            Lista los campos faltantes que hacen el expediente INCOMPLETO (RN-EST-10).
+
+            Args:
+                obj: Instancia de Student.
+
+            Returns:
+                list[str]: Nombres de campos faltantes.
+          readOnly: true
+        birth_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+          title: Fecha de nacimiento
+        sex:
+          readOnly: true
+          nullable: true
+          title: Sexo
+          oneOf:
+          - $ref: '#/components/schemas/SexEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        photo_url:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Ruta interna de fotografía
+          description: Ruta privada; nunca una URL pública (RN-TRX-02).
+        address_street:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Calle y número
+        address_colonia:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Colonia
+        address_municipio:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Municipio
+        address_estado:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Estado
+        address_postal_code:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Código postal
+        blood_type:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Tipo de sangre
+          description: Restringido a ADM, PRE, PAD (RN-EST-12).
+        allergies:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Alergias o consideraciones médicas
+          description: Restringido a ADM, PRE, PAD (RN-EST-12).
+        has_payment_debt:
+          type: boolean
+          readOnly: true
+          nullable: true
+          title: ¿Tiene adeudo de pago?
+          description: Solo visible a ADM y PAD (RN-EST-12). Sin monto.
+        guardians:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentGuardian'
+          readOnly: true
+        consent_warning:
+          type: boolean
+          description: |-
+            True si algún tutor tiene consentimiento PENDIENTE o REVOCADO.
+
+            Args:
+                obj: Instancia de Student.
+
+            Returns:
+                bool: True si se requiere atención en el consentimiento (RN-EST-08).
+          readOnly: true
+        active_qr_token_id:
+          type: string
+          nullable: true
+          description: |-
+            Retorna el UUID del QR vigente o None.
+
+            Args:
+                obj: Instancia de Student.
+
+            Returns:
+                str | None: UUID como cadena o None si no hay QR vigente.
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Última actualización
+      required:
+      - academic_group
+      - active_qr_token_id
+      - address_colonia
+      - address_estado
+      - address_municipio
+      - address_postal_code
+      - address_street
+      - allergies
+      - birth_date
+      - blood_type
+      - completeness
+      - completeness_display
+      - consent_warning
+      - created_at
+      - curp
+      - display_name
+      - enrollment_id
+      - first_name
+      - grade
+      - group_letter
+      - guardians
+      - has_payment_debt
+      - id
+      - last_name_father
+      - last_name_mother
+      - missing_fields
+      - photo_url
+      - sex
+      - shift
+      - sort_name
+      - status
+      - status_display
+      - updated_at
+    StudentReadStatusEnum:
+      enum:
+      - ACTIVO
+      - BAJA
+      - EGRESADO
+      type: string
+      description: |-
+        * `ACTIVO` - Activo
+        * `BAJA` - Baja
+        * `EGRESADO` - Egresado
+    StudentReinstateRequest:
+      type: object
+      description: |-
+        Serializador para POST /students/{id}/reinstate/ (BAJA → ACTIVO).
+
+        Attributes:
+            reason: Motivo de la reincorporación.
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          description: Motivo de la reincorporación del alumno.
+          maxLength: 500
+      required:
+      - reason
+    StudentReinstateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+      required:
+      - id
+      - status
+    StudentStatusRequest:
+      type: object
+      description: |-
+        Serializador para POST /students/{id}/status/ y /reinstate/.
+
+        Attributes:
+            status: Nuevo estado objetivo (BAJA o EGRESADO).
+            reason: Motivo obligatorio de la transición.
+      properties:
+        status:
+          $ref: '#/components/schemas/StudentStatusStatusEnum'
+        reason:
+          type: string
+          minLength: 1
+          description: Motivo obligatorio de la baja o egreso.
+          maxLength: 500
+      required:
+      - reason
+      - status
+    StudentStatusResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+      required:
+      - id
+      - status
+    StudentStatusStatusEnum:
+      enum:
+      - BAJA
+      - EGRESADO
+      type: string
+      description: |-
+        * `BAJA` - Baja
+        * `EGRESADO` - Egresado
+    StudentWriteRequest:
+      type: object
+      description: |-
+        Serializador de escritura para POST /api/v1/students/ (§2.4).
+
+        Valida las reglas de negocio:
+            - RN-EST-02: enrollment_id único.
+            - RN-EST-03/11: mínimo un tutor con is_valid_contact=True.
+            - RN-EST-10: datos mínimos para guardar.
+            - RN-EST-13: detección de Guardian existente.
+            - RN-TRX-08/09: nombres válidos.
+
+        Attributes:
+            guardians: Lista de tutores a crear/asociar (obligatorio en POST).
+      properties:
+        enrollment_id:
+          type: string
+          minLength: 1
+          title: Matrícula / Código escolar
+          maxLength: 20
+        curp:
+          type: string
+          nullable: true
+          title: CURP Oficial (RENAPO)
+          maxLength: 18
+        first_name:
+          type: string
+          minLength: 2
+          title: Nombre(s)
+          maxLength: 60
+        last_name_father:
+          type: string
+          minLength: 2
+          title: Apellido paterno
+          maxLength: 60
+        last_name_mother:
+          type: string
+          nullable: true
+          title: Apellido materno
+          description: Opcional. Vacío se guarda como NULL (nunca cadena vacía).
+          maxLength: 60
+        grade:
+          nullable: true
+          title: Grado escolar
+          minimum: 0
+          maximum: 9223372036854775807
+          oneOf:
+          - $ref: '#/components/schemas/GradeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        group_letter:
+          title: Grupo (letra)
+          oneOf:
+          - $ref: '#/components/schemas/GroupLetterEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        shift:
+          allOf:
+          - $ref: '#/components/schemas/ShiftEnum'
+          title: Turno
+        birth_date:
+          type: string
+          format: date
+          nullable: true
+          title: Fecha de nacimiento
+        sex:
+          nullable: true
+          title: Sexo
+          oneOf:
+          - $ref: '#/components/schemas/SexEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        address_street:
+          type: string
+          nullable: true
+          title: Calle y número
+          maxLength: 200
+        address_colonia:
+          type: string
+          nullable: true
+          title: Colonia
+          maxLength: 100
+        address_municipio:
+          type: string
+          nullable: true
+          title: Municipio
+          maxLength: 100
+        address_estado:
+          type: string
+          nullable: true
+          title: Estado
+          maxLength: 60
+        address_postal_code:
+          type: string
+          nullable: true
+          title: Código postal
+          maxLength: 5
+        blood_type:
+          type: string
+          nullable: true
+          title: Tipo de sangre
+          description: Restringido a ADM, PRE, PAD (RN-EST-12).
+          maxLength: 5
+        allergies:
+          type: string
+          nullable: true
+          title: Alergias o consideraciones médicas
+          description: Restringido a ADM, PRE, PAD (RN-EST-12).
+        has_payment_debt:
+          type: boolean
+          nullable: true
+          title: ¿Tiene adeudo de pago?
+          description: Solo visible a ADM y PAD (RN-EST-12). Sin monto.
+        guardians:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuardianInlineRequest'
+          writeOnly: true
+          description: Al menos un tutor con contacto válido (RN-EST-03/11).
+      required:
+      - enrollment_id
+      - first_name
+      - guardians
+      - last_name_father
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

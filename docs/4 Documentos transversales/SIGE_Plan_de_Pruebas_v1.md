@@ -10,8 +10,8 @@
 ## 0. Cómo leer este documento
 
 1. **Dos documentos.** Este plan define la estrategia, los niveles, los recorridos, los datos y los criterios de salida. El **Anexo A** trae la matriz de trazabilidad: **cada criterio de aceptación, con su nivel de prueba, sus casos, su recorrido E2E y su prioridad**.
-2. **El número de criterios no es 407.** La tabla de cobertura del documento de criterios (§6) dice 407, pero el archivo trae **442 criterios** y los parches ratificados agregan **15**, para un total vigente de **457 criterios**. El §5.3 muestra la diferencia por épica y el §9 trae el parche que corrige esa tabla. Todo lo que sigue usa las cifras reales.
-3. **Lo que está fijado y lo que propongo.** Los requisitos, reglas, criterios, KPIs de hito y niveles de exigencia vienen de los documentos del proyecto. Las **herramientas, umbrales de cobertura, tiempos y reglas de asignación** son propuestas mías y llevan la marca **(Propuesta)**; se concentran en el §12 para ratificarlas.
+2. **El número de criterios no es 407.** La tabla de cobertura del documento de criterios (§6) dice 407, pero el archivo trae **442 criterios** y los parches ratificados agregan **15**,para un total vigente de **457 criterios** (**461** al sumar CA-033-13, de PT-02, y los tres de esta revisión: CA-001-11, CA-030-08 y CA-042-09). El §5.3 muestra la diferencia por épica y el §9 trae el parche que corrige esa tabla. Todo lo que sigue usa las cifras reales.
+3. **Lo que está fijado y lo que propongo.** Los requisitos, reglas, criterios, KPIs de hito y niveles de exigencia vienen de los documentos del proyecto. Las **herramientas, umbrales de cobertura, tiempos y reglas de asignación** fueron propuestas mías y quedaron **aprobadas**; las marcas **(Propuesta)** que quedan en el texto se leen como decisiones aprobadas. El §12 registra qué se decidió.
 4. **La asignación de nivel y de prioridad por criterio se hizo por reglas** (§5.1) y la revisé por muestreo; no la validé uno por uno. Se afina historia por historia cuando cumpla el *Definition of Ready*.
 
 ---
@@ -122,6 +122,7 @@ Los criterios `[Límite]` (20) se concentran aquí. Cada regla se prueba con **v
 | Bloqueo por intentos | 4 intentos frente a 5 | CA-002-01 |
 | Buffer offline | 999 y 1,000 eventos | CA-032-03, CA-032-04 |
 | Colisión de QR | Máximo de 5 reintentos | CA-022-05 |
+| Fotografía de estudiante | Archivo de 2.0 MB vs 2.1 MB; dimensiones 360×450 px vs inferiores; formatos JPEG/PNG/WEBP vs inválidos | CA-064-01, CA-064-02 |
 
 ### 3.5 Pruebas de integración de procesos programados
 
@@ -158,13 +159,14 @@ No se pueden automatizar de forma fiable y se ejecutan con guías y registro:
 
 | Prueba | Qué se comprueba | Cuándo |
 |---|---|---|
-| **Lectura de QR en dispositivos representativos** | Meta del Acta Hito 04: **≥ 99 % de lecturas correctas**. Se define una muestra de lecturas por tipo de dispositivo y de impresión (credencial y sticker) | Hito 04 |
+| **Lectura de QR en dispositivos representativos** | Meta del Acta Hito 04: **≥ 99 % de lecturas correctas**. Muestra: **300 lecturas por combinación** de tipo de dispositivo y formato de impresión (credencial completa con anverso/reverso en hoja Carta y reposición individual), 200 en condiciones normales y 100 en exterior con luz solar; se aprueba con una tasa observada de al menos 99 % en cada combinación | Hito 04 |
 | **Legibilidad a pleno sol** | Contraste y retroalimentación visual y sonora en exteriores (CT-11) | Hito 04 y piloto |
 | **Instalación de la CA interna y de la PWA** | En cada modelo y versión de la matriz de RNF-COM-02 | Antes del Hito 04 |
 | **Credenciales impresas** | QR legible tras impresión y desgaste razonable (CA-025-03) | Hito 04 |
 | **Usabilidad con estudiantes y personal** | KPIs del Hito 06 (≥ 90 % de tareas, ≥ 80 % de valoración positiva) | Hito 06 |
 
 ---
+
 
 ## 4. Recorridos E2E
 
@@ -189,7 +191,7 @@ Una base de datos reiniciada con semillas por cada recorrido (o por cada grupo d
 | **E2E-04** | Alta de estudiante con tutor, tutor compartido y registro incompleto que se completa | PAD | 008, 009, 010, 012 | 8 | — |
 | **E2E-05** | Expediente: consulta y filtros, cambio de grupo, baja, reingreso y consentimiento | PAD, ADM | 011, 013, 014, 015, 016 | 10 | — |
 | **E2E-06** | Importación: plantilla, carga, vista previa, confirmación y reporte | PAD, ADM | 017 a 021 | 14 | Archivos de prueba (§8.1) |
-| **E2E-07** | QR: generar, validar lote, revocar y reemplazar, exportar y reexportar | PAD, ADM | 022 a 026 | 11 | Descarga de archivos |
+| **E2E-07** | QR y Credenciales: generar, validar lote, revocar y reemplazar, carga de fotos (individual y ZIP) y exportar credenciales completas con foto en PDF Carta horizontal y reposición | PAD, ADM | 022 a 026, 064 | 15 | Descarga de archivos; integración gráfica de fotos |
 | **E2E-08** | Escaneo en línea: válido, tardío, rebote, QR inválido o revocado, estudiante dado de baja | PRE, PAD | 027, 028, 029 | 9 | Cámara simulada; vista móvil |
 | **E2E-09** | Ausencia automática y reclasificación: `FALTÓ` a la hora de verificación y un escaneo posterior lo corrige | PRE, PAD | 030, 031 | 5 | Job ejecutado a mano con reloj controlado |
 | **E2E-10** | Modo sin conexión: capturar, buffer, recargar sin red, reconectar, sincronizar y ver el resumen | PRE, PAD | 032, 033 | 15 | Navegador sin red; Service Worker; vista móvil |
@@ -262,7 +264,7 @@ Reglas adicionales sobre los complementarios:
 | EP-10 Continuidad | 2 | 12 | 0 | 8 | 0 | 0 | 4 | 12 | 0 | 0 |
 | **Total** | **62** | **457** | 16 | 399 | 37 | 1 | 4 | **219** | 218 | 20 |
 
-Las columnas U, I, E, R y O cuentan el **nivel principal** de cada criterio.
+Las columnas U, I, E, R y O cuentan el **nivel principal** de cada criterio. Las cifras están al corte de PAQ3 (457 criterios); la adenda del Anexo A suma 4 criterios (EP-01 +1, EP-05 +2 y EP-06 +1) y lleva el total a 461.
 
 ### 5.3 La tabla de cobertura del documento de criterios está desactualizada
 
@@ -286,7 +288,7 @@ La diferencia viene sobre todo de EP-02 (+21), EP-03 (+6) y EP-09 (+4). El parch
 
 ### 5.4 Criterios agregados por los parches y brechas detectadas
 
-**Los 15 criterios nuevos** (de los parches PAQ1 y PAQ3) ya están en el Anexo A, marcados como *(nuevo)*: CA-001-08 a 10, CA-004-07, CA-032-08 a 10, CA-033-10 a 12, CA-040-11, CA-042-07, CA-042-08, CA-057-07 y CA-060-10.
+**Los 15 criterios nuevos** (de los parches PAQ1 y PAQ3) ya están en el Anexo A, marcados como *(nuevo)*; la adenda del Anexo A agrega CA-033-13, CA-030-08, CA-042-09 y CA-001-11: CA-001-08 a 10, CA-004-07, CA-032-08 a 10, CA-033-10 a 12, CA-040-11, CA-042-07, CA-042-08, CA-057-07 y CA-060-10.
 
 **Brechas** que aparecieron al trazar las pruebas:
 
@@ -403,17 +405,17 @@ Los CT no se repiten en cada historia (CA §2) y se verifican con pruebas propia
 ````markdown
 | Épica | Historias | Criterios |
 |---|---|---|
-| EP-01 Autenticación y acceso | 7 | 52 |
+| EP-01 Autenticación y acceso | 7 | 53 |
 | EP-02 Estudiantes | 9 | 76 |
 | EP-03 Importación | 5 | 35 |
 | EP-04 QR y credenciales | 5 | 32 |
-| EP-05 Asistencia estudiantil | 11 | 86 |
-| EP-06 Asistencia docente | 11 | 82 |
+| EP-05 Asistencia estudiantil | 11 | 88 |
+| EP-06 Asistencia docente | 11 | 83 |
 | EP-07 Reportes | 7 | 48 |
 | EP-08 Comunicación | 2 | 13 |
 | EP-09 Administración | 3 | 21 |
 | EP-10 Continuidad | 2 | 12 |
-| **Total** | **62** | **457** (442 del archivo v2 más 15 de los parches PAQ1 y PAQ3; más los 16 transversales, que no cambian). |
+| **Total** | **62** | **461** (442 del archivo v2, 15 de los parches PAQ1 y PAQ3 y 4 de PT-02 y de la revisión de decisiones; más los 16 transversales, que no cambian). |
 ````
 
 ### PT-02 · Criterio de sesión vencida durante la desconexión (brecha 1)

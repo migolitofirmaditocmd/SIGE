@@ -173,7 +173,9 @@ erDiagram
         enum status
         enum completeness
         date birth_date
-        string photo_url
+        string photo_path
+        string photo_sha256
+        datetime photo_updated_at
         string curp
         string sex
         string address_street
@@ -523,8 +525,14 @@ Catálogo administrado exclusivamente por `Administrador` (RN-ADM-01).
 | `address_*`, `sex` | STRING | Opcionales (RF-EST-01); mapean 1:1 a `DOMICILIO/COLONIA/MUNICIPIO/ESTADO/C.P.` del Excel |
 | `blood_type`, `allergies` | STRING / TEXT | RN-EST-12: salud, opcional y de acceso restringido |
 | `has_payment_debt` | BOOLEAN | RN-EST-12: indicador de adeudo de pago (sí/no), mapea a `DEBE PGO`; alcance aprobado (Acta v10, §7.1, CC-01). No se almacena monto (RN-TRX-01) |
-| `completeness` | `ENUM('COMPLETO', 'INCOMPLETO')`, calculado al guardar | RN-EST-10: `INCOMPLETO` si falta `birth_date` o `photo_url`. Un estudiante `INCOMPLETO` conserva el estatus `ACTIVO` y puede tener QR y exportar sticker; la credencial completa exige `photo_url`, no `birth_date` (RN-CRE-01) |
+| `completeness` | `ENUM('COMPLETO', 'INCOMPLETO')`, calculado al guardar | RN-EST-10: `INCOMPLETO` si falta `birth_date` o `photo_path`. Un estudiante `INCOMPLETO` conserva el estatus `ACTIVO` y puede tener QR generado en BD; la emisión de su credencial física completa (anverso y reverso) exige `photo_path`, no `birth_date` (RN-CRE-01) |
+| `photo_path` | `VARCHAR(500) NULL` | RN-EST-15, RN-EST-16, RN-TRX-02: Ruta relativa privada en el volumen de almacenamiento desacoplado (`media/students/photos/...`). Nunca es una URL pública sin autenticación ni un BLOB binario pesado en PostgreSQL |
+| `photo_sha256` | `CHAR(64) NULL` | Hash criptográfico SHA-256 para validación de integridad del archivo, prevención de manipulación no autorizada y soporte de ETags / caché HTTP condicional |
+| `photo_updated_at` | `TIMESTAMP WITH TIME ZONE NULL` | Marca de tiempo de la última carga o modificación de la fotografía para trazabilidad y cache-busting |
 | `group_id` | FK | Mínimo obligatorio (RN-EST-10); incluye grado, grupo, ciclo y turno por relación |
+
+> **Arquitectura de almacenamiento de fotografías:**  
+> Por principios de rendimiento en bases de datos relacionales y optimización de copias de seguridad (RN-API-03), los binarios de imágenes (JPEG/PNG/WEBP) no se almacenan como `BYTEA`/`BLOB` dentro de PostgreSQL. Se utiliza un volumen persistente desacoplado (`sige_media_volume`), y la base de datos almacena exclusivamente la ruta relativa normalizada (`photo_path`), el hash de integridad (`photo_sha256`) y la estampa temporal (`photo_updated_at`). Al procesarse la carga (individual o masiva en ZIP), el backend elimina automáticamente metadatos EXIF (coordenadas GPS, modelo de cámara) para garantizar el cumplimiento de la LFPDPPP y protección de datos personales de menores.
 
 **Serializador de API:** los campos `blood_type`, `allergies`, `has_payment_debt` y la relación `STUDENT_PENDING_SUBJECT` se excluyen…
 
@@ -644,11 +652,12 @@ Acuse de cada evento offline procesado. Permite reintentar la sincronización si
 | `file_path`, `file_sha256` | STRING NULLABLE, STRING NULLABLE | Ruta en el almacén privado y huella del archivo cargado. En `confirm` el servidor vuelve a leer y validar el archivo (RN-IMP-04, RN-IMP-07). `file_path` pasa a `NULL` cuando el archivo se purga |
 | `expires_at` | TIMESTAMP | Vigencia de la vista previa (24 h por defecto). Vencida, el job de mantenimiento marca el lote `CANCELADO` y elimina el archivo (minimización de datos de menores, RN-TRX-01); el lote y sus `IMPORT_ROW_ERROR` se conservan (RN-TRX-03) |
 
+
 ### 3.13 `AUDIT_LOG` (app `audit`)
 Tabla de solo inserción (`INSERT`-only a nivel de permisos de base de datos). Registra **inicios de sesión (exitosos y fallidos)**, cambios de rol, modificaciones de asistencia, de reportes y de estatus de estudiante/docente (RF-AUT-05, RN-AUT-05). *(El registro de inicios de sesión se agrega explícitamente en v3, hallazgo C-6; antes la descripción de esta tabla no lo mencionaba pese a estar exigido por RF-AUT-05.)* `user_id` es **NULLABLE**; cuando `origin='AUTOMATICO'`, `user_id` es `NULL` y el proceso que lo generó se identifica por el campo `action` (p. ej. `'job:absence_check_students'`). El campo `origin` utiliza `ENUM('ESCANEO', 'AUTOMATICO', 'MANUAL')` (RN-TRX-07).
 `reason` es TEXT NULLABLE. La aplicación lo exige (no nulo ni vacío) en las acciones que por regla requieren motivo: desactivación y reactivación de docente (RN-AST-28), justificación y modificación manual de asistencia (RN-AST-05, RN-AST-17), revocación y reemplazo de QR (RN-QR-03) y corrección excepcional de campos inmutables (RN-EST-02, RN-AST-26). Es la fuente del **historial** de motivos; `ATTENDANCE_*.justification_reason` y `QR_TOKEN.revoked_reason` conservan solo el vigente. *(Nuevo en v3.2, hallazgo E-2.)*
 
-**Restauración de la base de datos (CA-057-07):** tras restaurar un respaldo se inserta un renglón con `action = 'ops:restore'` y `origin = 'MANUAL'`. `user_id` es `NULL` cuando la restauración se hizo por consola sin sesión web; el responsable, el respaldo usado y el resultado van en `new_value`. Es la única acción manual que puede tener `user_id` nulo.
+**Restauración de la base de datos (CA-057-07):** tras restaurar un respaldo se inserta un renglón con `action = 'ops:restore'` y `origin = 'MANUAL'`. `user_id` es `NULL` cuando la restauración se hizo por consola sin sesión web; el responsable, el respaldo usado y el resultado van en `new_value`. Las acciones de consola (`ops:restore` y `auth:admin_bootstrap`) son las únicas acciones manuales que pueden tener `user_id` nulo.
 
 ### 3.14 `OPERATIONAL_PARAMETER` (app `settings`)
 Filas iniciales (semilla): `REBOUND_WINDOW_MINUTES` (5), `STUDENT_ABSENCE_CHECK_TIME_MATUTINO` (10:00), `STUDENT_ABSENCE_CHECK_TIME_VESPERTINO` (16:00), `TEACHER_ABSENCE_CHECK_OFFSET_MINUTES` (30), `TEACHER_DEFAULT_TOLERANCE_MINUTES` (0), `ACCOUNT_LOCKOUT_MAX_ATTEMPTS` (5), `ACCOUNT_LOCKOUT_DURATION_MINUTES` (15), `PASSWORD_MIN_LENGTH` (10), `PASSWORD_REQUIRE_COMPLEXITY` (`true`: al menos una mayúscula, una minúscula y un dígito), `PASSWORD_RESET_EXPIRY_MINUTES` (30), `COMMUNICATION_MAX_AUTO_ATTEMPTS` (3), `BACKUP_FREQUENCY_HOURS` (24) y `OFFLINE_MAX_AGE_HOURS` (72). Editable únicamente por `Administrador` (RN-ADM-02); todo cambio pasa por `AUDIT_LOG`.

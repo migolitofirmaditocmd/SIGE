@@ -1,6 +1,7 @@
 import React from "react";
+import Link from "next/link";
 import { Card, Button, Badge } from "@/shared/ui";
-import { QrCode, Users, ShieldCheck, ClipboardList, CheckCircle2, Server, ArrowRight, Laptop } from "lucide-react";
+import { QrCode, Users, ShieldCheck, ClipboardList, CheckCircle2, Server, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -25,27 +26,29 @@ export default function HomePage() {
 
       {/* Contenido Principal */}
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 flex-1 flex flex-col gap-8">
-        {/* Banner de Estado de Hito 3.3 */}
+        {/* Banner de Estado de Hito 2 */}
         <Card className="bg-white border-l-4 border-l-[#0A3D91] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-[#0A3D91] bg-blue-50 px-2.5 py-0.5 rounded-full">
-                WBS 3.3 · Entregable Oficial
+                Hito 2 · Entregables 4.7 y 4.8
               </span>
-              <Badge status="ASISTIO" label="Configuración Completada" size="sm" />
+              <Badge status="ACTIVO" label="Panel Operativo" size="sm" />
             </div>
             <h2 className="text-xl font-bold text-[#0B1320]">
-              Proyecto Base Next.js & TypeScript Operativo
+              Panel Administrativo de Estudiantes Operativo
             </h2>
             <p className="text-sm text-[#334155]">
-              Arquitectura modular PWA inicializada con App Router, Tailwind CSS, sistema de tokens Squircle UI y buffer IndexedDB listo para escaneo sin conexión.
+              Consulta individual con buscador por nombre/matrícula, visualización de foto, código QR oficial y listado tabular por grupo escolar.
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <Button variant="primary" size="md">
-              <span>Ingresar al Sistema</span>
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+            <Link href="/admin/estudiantes">
+              <Button variant="primary" size="md">
+                <span>Ir al Panel de Estudiantes</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
           </div>
         </Card>
 
@@ -71,21 +74,26 @@ export default function HomePage() {
               </div>
             </Card>
 
-            <Card variant="elevated" className="flex flex-col justify-between hover:border-[#0A3D91]">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#0A5A2A] flex items-center justify-center">
-                  <Users className="w-5 h-5" />
+            <Link href="/admin/estudiantes" className="block group">
+              <Card variant="elevated" className="h-full flex flex-col justify-between hover:border-[#0A3D91] group-hover:shadow-md transition-all">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#0A5A2A] flex items-center justify-center">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-bold text-[#0B1320] group-hover:text-[#0A3D91] transition-colors">Expedientes y Grupos</h4>
+                  <p className="text-xs text-[#334155] leading-relaxed">
+                    Consulta individual por buscador, ficha técnica con QR y foto, y catálogo tabular filtrado por grupo académico.
+                  </p>
                 </div>
-                <h4 className="font-bold text-[#0B1320]">Expedientes e Importación</h4>
-                <p className="text-xs text-[#334155] leading-relaxed">
-                  Carga masiva por hoja de cálculo, validación de tutores legales y gestión de ficha médica/administrativa.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-500">Personal Administrativo</span>
-                <span className="text-xs font-semibold text-[#0A5A2A]">Catálogos v3.2</span>
-              </div>
-            </Card>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs text-slate-500">Personal Administrativo</span>
+                  <span className="text-xs font-semibold text-[#0A5A2A] flex items-center gap-1">
+                    <span>Consultar</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </Card>
+            </Link>
 
             <Card variant="elevated" className="flex flex-col justify-between hover:border-[#0A3D91]">
               <div className="space-y-3">

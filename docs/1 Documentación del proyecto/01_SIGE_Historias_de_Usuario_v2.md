@@ -193,7 +193,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 > **Como** personal administrativo, **quiero** guardar un estudiante cuyos datos aún están incompletos y ver claramente qué campos faltan, **para** completarlos después sin perder lo ya capturado.
 
 - **Contexto:** anotación del F-EST: los datos incompletos sí pueden existir como *registro incompleto* si están presentes los campos mínimos para crearlo.
-- **Reglas de negocio:** F-EST (los campos faltantes deben quedar identificados) · RN-EST-03 (el tutor sigue siendo obligatorio) · RN-EST-05 (solo `ACTIVO` recibe asistencia y reportes) · RN-EST-10 (el incompleto conserva el estatus `ACTIVO`, puede recibir asistencia y reportes, y puede obtener su QR y sticker; la credencial completa exige la fotografía, RN-CRE-01).
+- **Reglas de negocio:** F-EST (los campos faltantes deben quedar identificados) · RN-EST-03 (el tutor sigue siendo obligatorio) · RN-EST-05 (solo `ACTIVO` recibe asistencia y reportes) · RN-EST-10 (el incompleto conserva el estatus `ACTIVO`, puede recibir asistencia y reportes, y genera su QR en base de datos; la credencial completa física exige obligatoriamente la fotografía, RN-CRE-01).
 - **Datos:** lista de campos faltantes visible en la ficha. Mínimos: nombre(s), apellido paterno, matrícula, grado, grupo, ciclo y tutor válido.
 - **UX/UI y estados:** indicador "Incompleto" en listas y ficha, con checklist de faltantes; al completar el último campo el indicador desaparece; guardado parcial con confirmación.
 - **Flujos alternativos:** si no se cumplen los requisitos mínimos, el registro no se guarda.
@@ -218,6 +218,19 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 - **UX/UI y estados:** acción "Separar tutor" en la ficha del vínculo; confirmación explicando que se creará un `GUARDIAN` independiente solo para ese estudiante, sin tocar a los demás.
 - **Flujos alternativos:** el tutor separado conserva su propio historial de consentimiento a partir del momento de la separación.
 - **Dependencias:** US-010 · **Trazabilidad:** RF-EST-07 · RN-EST-13 · OE-02.
+
+### SIGE-US-064 — Cargar y actualizar fotografía oficial del estudiante
+**Épica:** EP-02 · **Módulo:** EST · **Actor:** PAD (y ADM) · **Prioridad:** Must · **Hito:** 01/02
+> **Como** personal administrativo, **quiero** subir o actualizar la fotografía oficial de un estudiante (de forma individual o mediante un paquete masivo en ZIP por matrícula), **para** completar su expediente digital y permitir la generación automática de su credencial física oficial con fotografía y código QR.
+
+- **Reglas de negocio:** RN-EST-10 (requisito diferido para completitud del expediente) · RN-EST-15 (especificaciones técnicas: formato JPG/PNG/WEBP, fondo blanco, relación 4:5, peso máx. 2 MB) · RN-EST-16 (protección de datos de menores, sanitización EXIF obligatoria y almacenamiento privado) · RN-CRE-01 (fotografía obligatoria para exportar credencial completa) · RN-AUT-05 (registro de auditoría).
+- **Datos:**
+  - *Carga individual:* archivo de imagen `multipart/form-data`, previsualización con recorte interactivo 4:5.
+  - *Carga masiva en ZIP:* archivo comprimido con imágenes nombradas según matrícula escolar (`{matricula}.jpg`), reporte de procesamiento con alumnos asociados con éxito, matrículas inexistentes e imágenes rechazadas por formato o corrupción.
+- **Persistencia en Base de Datos:** registro de la ruta interna `photo_path`, hash criptográfico `photo_sha256` y marca de tiempo `photo_updated_at` en la tabla `STUDENT`.
+- **UX/UI y estados:** vista de expediente con widget de foto; botón "Subir fotografía" y botón "Importar paquete ZIP de fotos por grupo"; estados: cargando, procesando sanitización EXIF, éxito, error de formato/peso, matrícula no encontrada.
+- **Flujos alternativos:** archivo mayor a 2 MB o formato distinto a JPG/PNG/WEBP → error inmediato sin guardar; imagen con orientación rotada → corrección automática antes de persistir; estudiante con foto previa → confirmación de reemplazo y actualización de `photo_sha256`.
+- **Dependencias:** US-008 · **Trazabilidad:** RF-EST-08, RF-CRE-01 · RN-EST-10, RN-EST-15, RN-EST-16, RN-CRE-04 · OE-01, OE-02.
 
 ### SIGE-US-011 — Consultar y filtrar expedientes
 **Épica:** EP-02 · **Módulo:** EST · **Actor:** ADM, PRE, PAD · **Prioridad:** Must · **Hito:** 02
@@ -357,25 +370,26 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 - **Datos:** motivo (`pérdida`/`robo`/`daño`/`duplicidad`; obl.), estado del QR (`REVOCADO`), fecha de revocación, usuario.
 - **UX/UI y estados (F-QR B):** registrar motivo → verificar rol → ¿QR vigente? → revocar → bitácora → subproceso de token (F-QR T) → nuevo QR enlazado al anterior. La UI oculta la acción a roles no ADM; el backend la rechaza en todo caso.
 - **Flujos alternativos:** sin QR vigente → se pasa directo a generar; rol distinto de ADM → "Se requiere autorización de rol Administrador".
-- **Dependencias:** US-022, US-026.
+- **Dependencias:** US-022, US-026 (la reposición tras revocación se tramita mediante la emisión de la credencial completa de US-026, RN-CRE-03).
 - **Trazabilidad:** RF-QR-03 · OE-01 · F-QR B.
 
-### SIGE-US-025 — Exportar el QR para la credencial física
+### SIGE-US-025 — Exportar lote de credenciales completas en hoja Carta horizontal
 **Épica:** EP-04 · **Módulo:** CRE · **Actor:** PAD, ADM · **Prioridad:** Must · **Hito:** 01
-> **Como** personal administrativo, **quiero** exportar los códigos QR en alta resolución y con el formato adecuado, **para** incorporarlos en el diseño de credenciales nuevas o imprimirlos como sticker sobre credenciales ya impresas.
+> **Como** personal administrativo, **quiero** exportar las credenciales completas de un grupo de estudiantes en hojas tamaño Carta horizontal (4 credenciales completas con su parte frontal y trasera contiguas por página, totalizando 8 caras en matriz 2×4), **para** imprimirlas masivamente y entregarlas a los estudiantes de nuevo ingreso.
 
-- **Reglas de negocio:** RN-CRE-01 (solo estudiantes `ACTIVO` con QR vigente; la credencial completa exige además fotografía cargada y el sticker no; los que no cumplan se excluyen y se listan aparte como pendientes, con el motivo) · fuera de alcance: diseño, impresión y entrega física (acta §7).
-- **Datos:** imagen del QR (alta resolución), PDF por lote/estudiante, listado de pendientes.
-- **UX/UI y estados (F-QR C):** el sistema entrega el archivo; el personal decide: credencial física no disponible o dañada → agregar QR a credencial nueva; credencial disponible → sticker. La credencial completa exige fotografía; el sticker no (RN-CRE-01).
+- **Reglas de negocio:** RN-CRE-01 (solo estudiantes `ACTIVO` con QR vigente y fotografía cargada; quienes no cumplan se excluyen y se reportan en lista de pendientes con el motivo `SIN_FOTOGRAFIA` o `SIN_QR_VIGENTE`) · RN-CRE-02 (maquetación en PDF Carta horizontal 279.4 × 215.9 mm; 4 credenciales por página con frentes y reversos adyacentes: Fila 1 `[E1 Frente][E1 Detrás][E2 Frente][E2 Detrás]`, Fila 2 `[E3 Frente][E3 Detrás][E4 Frente][E4 Detrás]`, dimensiones de tarjeta vertical 54 × 85.6 mm, líneas de corte) · fuera de alcance: diseño físico, impresión y entrega física (acta §7).
+- **Datos:** PDF consolidado maquetado en Carta horizontal 300 DPI, listado de estudiantes pendientes/excluidos con motivo.
+- **UX/UI y estados (F-QR C):** el usuario selecciona el grupo y solicita la vista previa → SIGE muestra total de incluidos y detalle de excluidos con motivo → al confirmar, se descarga directamente el documento PDF sin almacenar copia en servidor (RN-TRX-01/02).
 - **Dependencias:** US-022, US-023. **Trazabilidad:** RF-CRE-01 · OE-01 · KPI-06.
 
-### SIGE-US-026 — Reexportar QR de forma selectiva
+### SIGE-US-026 — Generar credencial completa de reposición individual
 **Épica:** EP-04 · **Módulo:** CRE · **Actor:** PAD, ADM · **Prioridad:** Should · **Hito:** 01
-> **Como** personal administrativo, **quiero** reexportar el QR de un estudiante o de un grupo, **para** imprimir el sticker de reposición tras una revocación sin regenerar todo el lote.
+> **Como** personal administrativo, **quiero** generar de forma individual la credencial física completa (anverso y reverso) de un estudiante, **para** reponer su credencial extraviada o deteriorada tras una revocación, o para casos de ingreso extemporáneo, sin reexportar a todo el grupo.
 
-- **Reglas de negocio:** RN-CRE-01 · RN-QR-01 (solo se exporta el QR vigente, jamás uno revocado).
-- **UX/UI y estados:** selector por estudiante o por grupo; vista previa del subconjunto antes de exportar.
-- **Dependencias:** US-024, US-025. **Trazabilidad:** RF-CRE-02 · OE-01.
+- **Reglas de negocio:** RN-CRE-01 · RN-CRE-03 (la reposición es obligatoriamente la credencial completa, no sticker) · RN-QR-01 (solo se exporta con el nuevo token QR vigente, jamás con un QR revocado) · RN-QR-03.
+- **Datos:** PDF individual tamaño Carta o paquete de imágenes PNG (300 DPI) con anverso y reverso del estudiante seleccionado.
+- **UX/UI y estados:** búsqueda y selección individual de estudiante → verificación de QR vigente y foto cargada → vista previa del anverso y reverso → descarga inmediata del archivo de reposición.
+- **Dependencias:** US-024, US-025. **Trazabilidad:** RF-CRE-02 · OE-01 · RN-CRE-03.
 
 ---
 
@@ -760,7 +774,7 @@ Este documento traduce los requisitos (RF/RNF), las reglas de negocio (RN) y los
 | A-13 | En F-AST §1 la validación en BD (E2–E5) ocurre **antes** de evaluar la conexión (E6); sin conexión esas validaciones no pueden ejecutarse. El rechazo por buffer lleno es interpretación de RNF-FIA-01. | Offline: se guarda solo el token leído y todo se valida al sincronizar (US-032/033). | Reordenar el diagrama. | RN-MOV-02, RN-MOV-03 y diagrama de asistencia (P-RN-22; P-RF-15, P-RF-16; P-D-01) |
 | A-14 | **Registro incompleto:** no se define "requisitos mínimos", ni si un incompleto es `ACTIVO`, ni la definición de "contacto válido"; RN-EST-03 dice que se bloquea hasta tener tutor. Las aristas "Sí" de F-EST para "¿Faltan datos obligatorios?" son ambiguas. | Tutor siempre obligatorio; el incompleto no genera credencial (RN-CRE-01). | Definir mínimos, estatus y "contacto válido". | RN-EST-03, RN-EST-10 y RN-EST-11 (P-RN-02, P-RN-04; P-RF-03, P-RF-05; P-D-02) |
 | A-15 | **Importación:** el flujo coloca la vista previa después de crear/asignar grupo (se interpretó como *staging*); una salvaguarda de duplicado termina **toda** la importación, mientras RN-IMP-03 rechaza solo la fila; el rol que importa no está definido. | Filas independientes; ADM y PAD importan. | Aclarar la salvaguarda y el rol. | RN-IMP-04 a RN-IMP-07 (P-RN-05; P-RF-07; P-D-02) |
-| A-16 | RN-CRE-01 exige fotografía y habla de PDF; RF-CRE-01 solo menciona la imagen del QR (incluido el sticker). | La foto se exige en la exportación de credencial completa; para sticker no está definido. | Aclarar. | RN-CRE-01 (P-RN-06; P-RF-09) |
+| A-16 | RN-CRE-01 exige fotografía y PDF en Carta horizontal (4 credenciales / 8 caras por página); RF-CRE-01 define anverso y reverso contiguos. | La foto se exige para la credencial completa (anverso/reverso); no se admiten credenciales sin fotografía oficial. | Definir maquetación y reglas de credencial completa. | RN-CRE-01, RN-CRE-02, RN-CRE-03, RF-CRE-01, RF-CRE-02 |
 | A-17 | No se define la **duración** del bloqueo por intentos fallidos. | Parámetro configurable. | Definir valor por defecto. | RN-AUT-03 (P-RN-08; P-RF-10) |
 | A-18 | No se define la **fuente de la hora** (servidor vs dispositivo) para determinar puntualidad, sobre todo en eventos offline. | Se usa la hora de captura; la validación es del backend. | Fijar sincronización horaria del servidor y política para offline. | RN-TRX-04 y RNF-FIA-04 (P-RN-23; P-RF-16) |
 | A-19 | El acta dice que los docentes usarán la información consolidada de asistencia, pero el rol DOC no la tiene en RF/actores. | Acceso ADM/PAD/SL; los docentes la reciben vía PAD. | Definir acceso de docentes. | RF-AST-07 (P-RF-11) |
