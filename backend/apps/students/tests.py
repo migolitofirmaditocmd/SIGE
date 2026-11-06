@@ -23,6 +23,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.students.models import (
+    GroupProxy,
     Guardian,
     GuardianConsentLog,
     Student,
@@ -772,3 +773,32 @@ class TestInvalidateContactAPI:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["error_code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.django_db
+class TestGroupListAPI:
+    """Tests del endpoint GET /api/v1/students/groups/."""
+
+    def test_listar_grupos_academicos_retorna_200_con_conteo(
+        self, client: APIClient, student: Student
+    ) -> None:
+        """GET /api/v1/students/groups/ devuelve la lista de grupos con display_name y student_count."""
+        group = GroupProxy.objects.create(
+            grade=student.grade,
+            group_letter=student.group_letter,
+            shift=student.shift,
+        )
+        student.group = group
+        student.save(update_fields=["group"])
+
+        resp = client.get("/api/v1/students/groups/")
+        assert resp.status_code == status.HTTP_200_OK
+        data = resp.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        item = [g for g in data if g["id"] == str(group.id)][0]
+        assert item["grade"] == student.grade
+        assert item["group_letter"] == student.group_letter
+        assert item["shift"] == student.shift
+        assert item["display_name"] == f"{student.grade}°{student.group_letter} Matutino"
+        assert item["student_count"] == 1

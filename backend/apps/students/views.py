@@ -38,9 +38,10 @@ from apps.core.exceptions import (
     SIGEAPIException,
     StudentNotActiveError,
 )
-from .models import Guardian, GuardianConsentLog, Student, StudentGuardian
+from .models import GroupProxy, Guardian, GuardianConsentLog, Student, StudentGuardian
 from .serializers import (
     ConsentUpdateSerializer,
+    GroupListSerializer,
     GuardianInlineSerializer,
     GuardianSerializer,
     StudentGuardianSerializer,
@@ -876,3 +877,42 @@ class StudentPhotoView(APIView):
             {"photo_url": student.photo_url},
             status.HTTP_200_OK,
         )
+
+
+# ------------------------------------------------------------------
+# GET /api/v1/students/groups/
+# ------------------------------------------------------------------
+
+class GroupListView(APIView):
+    """Listado de grupos académicos con conteo de estudiantes matriculados.
+
+    Permite al panel administrativo y a prefectura consultar el catálogo
+    activo de grupos para filtrado por grupo en tablas y selectores de UI.
+    """
+
+    @extend_schema(
+        operation_id="groups_list",
+        summary="Listado de grupos académicos",
+        description="Retorna la lista de grupos activos con el conteo de estudiantes asignados.",
+        responses={200: GroupListSerializer(many=True)},
+        tags=["Catálogos"],
+    )
+    def get(self, request: Request) -> Response:
+        """Devuelve todos los grupos académicos ordenados por grado, grupo y turno.
+
+        Args:
+            request (Request): Request HTTP GET.
+
+        Returns:
+            Response: Lista JSON de grupos con display_name y student_count.
+        """
+        from django.db.models import Count
+
+        groups = (
+            GroupProxy.objects
+            .filter(is_active=True)
+            .annotate(student_count=Count("students"))
+            .order_by("grade", "group_letter", "shift")
+        )
+        serializer = GroupListSerializer(groups, many=True)
+        return _no_store_response(serializer.data, status.HTTP_200_OK)

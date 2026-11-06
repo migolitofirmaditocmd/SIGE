@@ -11,6 +11,7 @@ from django.urls import path
 
 from .views import (
     ConsentUpdateView,
+    GroupListView,
     GuardianDetailView,
     InvalidateContactView,
     StudentDetailView,
@@ -25,14 +26,20 @@ app_name = "students"
 
 urlpatterns = [
     # ---------------------------------------------------------------
-    # Estudiantes (§2.4)
+    # Estudiantes y Catálogos (§2.4)
     # ---------------------------------------------------------------
-    # GET  /api/v1/students/        — listado paginado
+    # GET  /api/v1/students/        — listado paginado y búsqueda
     # POST /api/v1/students/        — crear estudiante
     path(
         "",
         StudentListCreateView.as_view(),
         name="student-list-create",
+    ),
+    # GET  /api/v1/students/groups/ — listado de grupos académicos con métricas
+    path(
+        "groups/",
+        GroupListView.as_view(),
+        name="group-list",
     ),
     # GET   /api/v1/students/{id}/   — expediente completo
     # PATCH /api/v1/students/{id}/   — actualización parcial

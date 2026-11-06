@@ -41,7 +41,7 @@ def _strip_null(value: str | None) -> str | None:
 
 
 # ------------------------------------------------------------------
-# GroupSerializer (inline, mínimo)
+# GroupSerializer
 # ------------------------------------------------------------------
 
 class GroupSummarySerializer(serializers.Serializer):
@@ -54,6 +54,46 @@ class GroupSummarySerializer(serializers.Serializer):
 
     class Meta:
         fields = ["id", "grade", "group_letter", "shift"]
+
+
+class GroupListSerializer(serializers.Serializer):
+    """Serializador para el listado de grupos académicos con métricas.
+
+    Expone los campos esenciales de cada grupo escolar junto con la etiqueta
+    legible y el conteo de estudiantes actualmente matriculados.
+
+    Attributes:
+        id (UUIDField): Identificador único universal del grupo.
+        grade (IntegerField): Grado escolar (1, 2, 3).
+        group_letter (CharField): Letra de grupo (A, B, C, D, etc.).
+        shift (CharField): Turno ('MATUTINO' o 'VESPERTINO').
+        display_name (CharField): Etiqueta amigable, ej. '1°A Matutino'.
+        student_count (IntegerField): Total de alumnos inscritos.
+        is_active (BooleanField): Indica si el grupo se encuentra operativo.
+    """
+
+    id = serializers.UUIDField()
+    grade = serializers.IntegerField()
+    group_letter = serializers.CharField()
+    shift = serializers.CharField()
+    display_name = serializers.SerializerMethodField()
+    student_count = serializers.IntegerField(default=0)
+    is_active = serializers.BooleanField(default=True)
+
+    def get_display_name(self, obj: Any) -> str:
+        """Calcula el nombre legible del grupo para presentación en interfaz.
+
+        Args:
+            obj: Instancia de GroupProxy o diccionario anotado.
+
+        Returns:
+            str: Cadena formateada como '1°A Matutino' o '2°B Vespertino'.
+        """
+        grade = getattr(obj, "grade", None)
+        letter = getattr(obj, "group_letter", "")
+        shift = getattr(obj, "shift", "")
+        shift_label = "Matutino" if shift == "MATUTINO" else "Vespertino"
+        return f"{grade}°{letter} {shift_label}"
 
 
 # ------------------------------------------------------------------
