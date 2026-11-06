@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { AcademicGroup, Student } from "../types";
-import { fetchStudentsByGroup } from "../services";
+import { fetchStudentsByGroup, getStudentPhotoUrl } from "../services";
 import { Badge, Button } from "@/shared/ui";
 import { User, Loader2, Eye, Phone } from "lucide-react";
 
@@ -110,7 +110,7 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
                     <div className="inline-flex items-center justify-center">
                       {student.photo_url ? (
                         <img
-                          src={student.photo_url}
+                          src={getStudentPhotoUrl(student.id, student.updated_at)}
                           alt={student.display_name}
                           className="w-9 h-11 object-cover rounded-md border border-slate-300"
                         />

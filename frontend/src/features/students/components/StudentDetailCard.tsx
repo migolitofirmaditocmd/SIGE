@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import { Student } from "../types";
-import { getQrImageUrl } from "../services";
-import { Badge, Card } from "@/shared/ui";
+import { getQrImageUrl, getStudentPhotoUrl, uploadStudentPhoto } from "../services";
+import { Badge, Card, Button } from "@/shared/ui";
 import {
   User,
   QrCode,
@@ -12,45 +12,171 @@ import {
   MapPin,
   HeartPulse,
   CheckCircle2,
+  Camera,
+  Upload,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 interface StudentDetailCardProps {
   student: Student;
   onClose?: () => void;
+  onStudentUpdated?: (updated: Student) => void;
 }
 
 export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
   student,
   onClose,
+  onStudentUpdated,
 }) => {
+  const [photoTimestamp, setPhotoTimestamp] = useState<number>(0);
+  const [hasPhoto, setHasPhoto] = useState<boolean>(Boolean(student.photo_url));
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadMessage, setUploadMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const primaryGuardian =
     student.guardians.find((g) => g.is_primary_contact) ||
     student.guardians[0];
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo en el cliente
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setUploadMessage({
+        type: "error",
+        text: "Solo se permiten imágenes en formato JPEG o PNG.",
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadMessage(null);
+
+      const result = await uploadStudentPhoto(student.id, file);
+
+      // Actualizar estado local
+      const now = Date.now();
+      setPhotoTimestamp(now);
+      setHasPhoto(true);
+      setUploadMessage({
+        type: "success",
+        text: "Fotografía guardada exitosamente en la base de datos.",
+      });
+
+      // Notificar al componente padre
+      if (onStudentUpdated) {
+        onStudentUpdated({
+          ...student,
+          photo_url: result.photo_url,
+          completeness: result.completeness as "COMPLETO" | "INCOMPLETO",
+          updated_at: new Date(now).toISOString(),
+        });
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      setUploadMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Error al subir la fotografía.",
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const photoSrc = hasPhoto
+    ? getStudentPhotoUrl(student.id, photoTimestamp)
+    : null;
+
   return (
     <Card className="bg-white border-[#0A3D91]/20 shadow-md p-6 flex flex-col gap-6">
-      {/* Encabezado: Foto / Placeholder, Nombre, Matrícula y Estatus */}
+      {/* Input oculto para carga de fotografía */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Encabezado: Foto / Placeholder con botón de carga, Nombre, Matrícula y Estatus */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-200">
-        <div className="flex items-center gap-4">
-          {/* Fotografía o Placeholder */}
-          <div className="relative shrink-0">
-            {student.photo_url ? (
-              <img
-                src={student.photo_url}
-                alt={student.display_name}
-                className="w-20 h-24 object-cover rounded-xl border-2 border-slate-300 shadow-sm"
-              />
-            ) : (
-              <div className="w-20 h-24 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 flex flex-col items-center justify-center p-1 text-center">
-                <User className="w-8 h-8 text-amber-600 mb-1" />
-                <span className="text-[10px] font-bold text-amber-800 leading-tight">
-                  Falta Foto
-                </span>
-                <span className="text-[8px] text-amber-600 leading-none mt-0.5">
-                  Sin archivo
-                </span>
-              </div>
-            )}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* Fotografía o Placeholder + Botón de Carga */}
+          <div className="flex flex-col items-center gap-2 shrink-0">
+            <div className="relative">
+              {photoSrc ? (
+                <img
+                  src={photoSrc}
+                  alt={student.display_name}
+                  className="w-20 h-24 object-cover rounded-xl border-2 border-slate-300 shadow-sm"
+                />
+              ) : (
+                <div className="w-20 h-24 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 flex flex-col items-center justify-center p-1 text-center">
+                  <User className="w-8 h-8 text-amber-600 mb-1" />
+                  <span className="text-[10px] font-bold text-amber-800 leading-tight">
+                    Falta Foto
+                  </span>
+                  <span className="text-[8px] text-amber-600 leading-none mt-0.5">
+                    Sin archivo
+                  </span>
+                </div>
+              )}
+
+              {/* Botón flotante rápido sobre la imagen */}
+              <button
+                onClick={handleUploadClick}
+                disabled={isUploading}
+                title={hasPhoto ? "Cambiar fotografía" : "Cargar fotografía oficial"}
+                className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-[#0A3D91] hover:bg-[#072B68] text-white rounded-full flex items-center justify-center shadow-md border-2 border-white transition-all disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
+
+            {/* Botón explícito de Cargar / Cambiar Foto */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              className="h-7 px-2 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                  <span>Guardando...</span>
+                </>
+              ) : hasPhoto ? (
+                <>
+                  <Camera className="w-3 h-3 mr-1" />
+                  <span>Cambiar foto</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-3 h-3 mr-1" />
+                  <span>Cargar foto</span>
+                </>
+              )}
+            </Button>
           </div>
 
           {/* Nombre y Matrícula */}
@@ -78,13 +204,31 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
                 CURP: <span className="font-semibold">{student.curp}</span>
               </p>
             )}
+
+            {/* Mensaje de estado de subida */}
+            {uploadMessage && (
+              <div
+                className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 ${
+                  uploadMessage.type === "success"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                {uploadMessage.type === "success" ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                )}
+                <span>{uploadMessage.text}</span>
+              </div>
+            )}
           </div>
         </div>
 
         {onClose && (
           <button
             onClick={onClose}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+            className="text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors self-start sm:self-auto"
           >
             Cerrar ficha
           </button>

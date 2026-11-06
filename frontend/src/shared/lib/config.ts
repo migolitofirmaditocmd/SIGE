@@ -7,3 +7,4 @@ export const config = {
   offlineBufferMaxEvents: 1000, // Límite de eventos de asistencia offline (RN-MOV-03)
   attendanceGraceMinutes: 15,
 };
+

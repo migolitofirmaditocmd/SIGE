@@ -802,3 +802,57 @@ class TestGroupListAPI:
         assert item["shift"] == student.shift
         assert item["display_name"] == f"{student.grade}°{student.group_letter} Matutino"
         assert item["student_count"] == 1
+
+
+@pytest.mark.django_db
+class TestStudentPhotoAPI:
+    """Tests para carga y descarga de fotografía del estudiante."""
+
+    def test_subir_foto_estudiante_actualiza_registro(
+        self, client: APIClient, student: Student
+    ) -> None:
+        """POST /students/{id}/photo/ guarda la fotografía y calcula su hash SHA-256."""
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        img = Image.new("RGB", (100, 100), color="blue")
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+
+        uploaded = SimpleUploadedFile("avatar.jpg", buf.read(), content_type="image/jpeg")
+
+        resp = client.post(
+            f"/api/v1/students/{student.id}/photo/",
+            {"photo": uploaded},
+            format="multipart",
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert "photo_url" in resp.data
+        assert "photo_sha256" in resp.data
+
+        student.refresh_from_db()
+        assert student.photo_url is not None
+        assert student.photo_sha256 is not None
+        assert len(student.photo_sha256) == 64
+
+        # Comprobar descarga de imagen
+        get_resp = client.get(f"/api/v1/students/{student.id}/photo/")
+        assert get_resp.status_code == status.HTTP_200_OK
+        assert "image/jpeg" in get_resp.headers["Content-Type"]
+
+    def test_subir_foto_tipo_invalido_devuelve_400(
+        self, client: APIClient, student: Student
+    ) -> None:
+        """POST con archivo no JPEG/PNG devuelve 400 VALIDATION_ERROR."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        uploaded = SimpleUploadedFile("doc.txt", b"Texto plano", content_type="text/plain")
+        resp = client.post(
+            f"/api/v1/students/{student.id}/photo/",
+            {"photo": uploaded},
+            format="multipart",
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.data["error_code"] == "VALIDATION_ERROR"

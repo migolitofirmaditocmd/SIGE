@@ -91,3 +91,40 @@ export async function fetchStudentById(id: string): Promise<Student> {
 export function getQrImageUrl(token: string): string {
   return `${API_BASE}/api/v1/qr/${token}/image/`;
 }
+
+/**
+ * Carga la fotografía de un estudiante a la API y base de datos (POST multipart).
+ */
+export async function uploadStudentPhoto(
+  studentId: string,
+  file: File
+): Promise<{ photo_url: string; photo_sha256?: string; completeness: string }> {
+  const formData = new FormData();
+  formData.append("photo", file);
+
+  const res = await fetch(`${API_BASE}/api/v1/students/${studentId}/photo/`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(
+      errorData?.message || `Error ${res.status} al subir fotografía`
+    );
+  }
+
+  return await res.json();
+}
+
+/**
+ * Retorna la URL directa para renderizar la fotografía del estudiante desde el backend.
+ */
+export function getStudentPhotoUrl(
+  studentId: string,
+  timestamp?: string | number
+): string {
+  const t = timestamp ? `?t=${timestamp}` : "";
+  return `${API_BASE}/api/v1/students/${studentId}/photo/${t}`;
+}
+

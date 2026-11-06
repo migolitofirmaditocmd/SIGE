@@ -20,12 +20,19 @@ Reglas aplicadas:
     - RN-EST-14: edición de Guardian compartido requiere confirm=True.
 """
 
+import hashlib
+import io
 import uuid
+from pathlib import Path
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import QuerySet
+from django.http import FileResponse
+from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from PIL import Image
 from rest_framework import filters, serializers, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -834,16 +841,58 @@ class StudentPhotoView(APIView):
                 http_status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # TODO: eliminar EXIF con Pillow y guardar en almacén privado.
-        # Ruta interna de ejemplo:
-        internal_path = f"students/{pk}/photo.{'jpg' if 'jpeg' in content_type else 'png'}"
-        student.photo_url = internal_path
-        student.save(update_fields=["photo_url", "completeness", "updated_at"])
+        # Procesar la imagen con Pillow: eliminar metadatos EXIF y convertir a RGB
+        try:
+            image_raw = Image.open(photo)
+            image_clean = Image.new("RGB", image_raw.size, (255, 255, 255))
+            if image_raw.mode in ("RGBA", "LA", "P"):
+                image_clean.paste(image_raw, mask=image_raw.split()[-1] if image_raw.mode == "RGBA" else None)
+            else:
+                image_clean.paste(image_raw.convert("RGB"))
+
+            # Guardar en el directorio de medios institucional
+            media_dir = Path(settings.MEDIA_ROOT) / "students"
+            media_dir.mkdir(parents=True, exist_ok=True)
+            photo_filename = f"{student.id}.jpg"
+            photo_dest = media_dir / photo_filename
+
+            buf = io.BytesIO()
+            image_clean.save(buf, format="JPEG", quality=92, optimize=True)
+            photo_bytes = buf.getvalue()
+
+            with open(photo_dest, "wb") as f_out:
+                f_out.write(photo_bytes)
+
+            sha256_hash = hashlib.sha256(photo_bytes).hexdigest()
+        except Exception as err:
+            raise SIGEAPIException(
+                error_code="VALIDATION_ERROR",
+                message=f"No se pudo procesar la imagen enviada: {err}",
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Actualizar campos en el expediente del estudiante (RN-EST-10, RN-EST-15)
+        rel_path = f"students/{photo_filename}"
+        student.photo_url = rel_path
+        student.photo_sha256 = sha256_hash
+        student.photo_updated_at = timezone.now()
+        student._recalculate_completeness()
+        student.save(
+            update_fields=[
+                "photo_url",
+                "photo_sha256",
+                "photo_updated_at",
+                "completeness",
+                "updated_at",
+            ]
+        )
 
         return _no_store_response(
             {
                 "photo_url": f"/api/v1/students/{pk}/photo/",
+                "photo_sha256": student.photo_sha256,
                 "completeness": student.completeness,
+                "completeness_display": student.get_completeness_display(),
             },
             status.HTTP_200_OK,
         )
@@ -856,14 +905,14 @@ class StudentPhotoView(APIView):
         tags=["Estudiantes"],
     )
     def get(self, request: Request, pk: str) -> Response:
-        """Sirve la fotografía del estudiante (autenticada).
+        """Sirve la fotografía del estudiante (autenticada o renderizable en navegador).
 
         Args:
-            request: Request HTTP GET.
-            pk: UUID del estudiante.
+            request (Request): Request HTTP GET.
+            pk (str): UUID del estudiante.
 
         Returns:
-            Response: Imagen o 404 si no existe fotografía.
+            Response: Flujo binario de imagen JPEG o 404 si no existe fotografía.
         """
         student = _get_student_or_404(pk)
         if not student.photo_url:
@@ -872,7 +921,24 @@ class StudentPhotoView(APIView):
                 message="Este estudiante no tiene fotografía registrada.",
                 http_status=status.HTTP_404_NOT_FOUND,
             )
-        # TODO: servir el archivo desde el almacén privado (C4-04).
+
+        # Si el cliente solicita explícitamente JSON:
+        if request.query_params.get("format") == "json":
+            return _no_store_response(
+                {"photo_url": f"/api/v1/students/{pk}/photo/"},
+                status.HTTP_200_OK,
+            )
+
+        # Servir el archivo físico binario directamente
+        full_path = Path(student.photo_url)
+        if not full_path.is_absolute() and hasattr(settings, "MEDIA_ROOT"):
+            full_path = Path(settings.MEDIA_ROOT) / student.photo_url
+
+        if full_path.exists() and full_path.is_file():
+            resp = FileResponse(open(full_path, "rb"), content_type="image/jpeg")
+            resp["Cache-Control"] = "no-store"
+            return resp
+
         return _no_store_response(
             {"photo_url": student.photo_url},
             status.HTTP_200_OK,
