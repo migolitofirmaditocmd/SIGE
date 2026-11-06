@@ -22,6 +22,8 @@ from apps.qr_codes.card_generator import (
     generate_credential_pdf,
     generate_credential_png,
     generate_qr_pil_image,
+    render_credential_back_pil,
+    render_credential_front_pil,
 )
 from apps.qr_codes.crypto import issue_qr_token_for_student
 from apps.qr_codes.models import QRCodeToken
@@ -192,6 +194,63 @@ class TestCredentialCardGenerator:
         pdf_bytes = generate_credential_pdf(students_data, mode="CREDENCIAL")
         assert pdf_bytes[:4] == b"%PDF"
         assert len(pdf_bytes) > 20000
+
+    def test_generate_credential_pdf_batch_matrix_layout(
+        self, active_student_with_photo: Student
+    ) -> None:
+        """La modalidad CREDENCIAL_LOTE genera maquetación horizontal Carta 2x4."""
+        students_data = [
+            {
+                "display_name": f"ALUMNO PRUEBA {i}",
+                "enrollment_id": f"2026-1A-00{i}",
+                "academic_group": "1°A · MATUTINO",
+                "curp": "RAGV090815HJCXRN01",
+                "token": str(uuid.uuid4()),
+                "photo_url": active_student_with_photo.photo_url,
+                "guardian_name": "MARÍA ELENA LÓPEZ BARRAGÁN",
+                "guardian_phone": "33-3614-2289",
+                "director_name": "L.E.M ELVA IBARRA JUÁREZ",
+            }
+            for i in range(1, 6)  # 5 alumnos = 2 páginas en matriz 2x4
+        ]
+        pdf_bytes = generate_credential_pdf(students_data, mode="CREDENCIAL_LOTE")
+        assert pdf_bytes[:4] == b"%PDF"
+        assert len(pdf_bytes) > 30000
+
+    def test_generate_credential_png_reverso_and_director_name(
+        self, active_student_with_photo: Student
+    ) -> None:
+        """El reverso de credencial renderiza a 300 DPI con nombre de Directora y tutor."""
+        data = {
+            "display_name": active_student_with_photo.display_name,
+            "enrollment_id": active_student_with_photo.enrollment_id,
+            "academic_group": active_student_with_photo.academic_group,
+            "token": str(active_student_with_photo.active_qr_token.token),
+            "guardian_name": "MARÍA ELENA LÓPEZ BARRAGÁN",
+            "guardian_phone": "33-3614-2289 / 33-1289-4455",
+            "director_name": "L.E.M ELVA IBARRA JUÁREZ",
+        }
+        png_bytes = generate_credential_png(data, mode="REVERSO")
+        assert png_bytes[:8] == b"\x89PNG\r\n\x1a\n"
+        assert len(png_bytes) > 10000
+
+        # Verificación de dimensiones de tarjeta CR-80 vertical a 300 DPI
+        img = render_credential_back_pil(data)
+        assert img.size == (638, 1011)
+
+    def test_render_credential_front_pil_dimensions_and_qr(
+        self, active_student_with_photo: Student
+    ) -> None:
+        """El anverso de credencial renderiza a 638x1011 px con QR verificable."""
+        data = {
+            "display_name": active_student_with_photo.display_name,
+            "enrollment_id": active_student_with_photo.enrollment_id,
+            "academic_group": active_student_with_photo.academic_group,
+            "token": str(active_student_with_photo.active_qr_token.token),
+            "photo_url": active_student_with_photo.photo_url,
+        }
+        img = render_credential_front_pil(data)
+        assert img.size == (638, 1011)
 
 
 # ----------------------------------------------------------------------

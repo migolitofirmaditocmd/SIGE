@@ -51,9 +51,9 @@ class CredentialExportPreviewSerializer(serializers.Serializer):
     """Serializador para solicitud de vista previa de exportación (§2.3)."""
 
     mode = serializers.ChoiceField(
-        choices=["CREDENCIAL", "STICKER"],
+        choices=["CREDENCIAL", "STICKER", "CREDENCIAL_LOTE", "CREDENCIAL_INDIVIDUAL"],
         default="CREDENCIAL",
-        help_text="Modalidad: CREDENCIAL (requiere foto) o STICKER (solo QR).",
+        help_text="Modalidad: CREDENCIAL / CREDENCIAL_LOTE / CREDENCIAL_INDIVIDUAL (requiere foto) o STICKER (solo QR).",
     )
     entity_type = serializers.ChoiceField(
         choices=["STUDENT", "TEACHER"],

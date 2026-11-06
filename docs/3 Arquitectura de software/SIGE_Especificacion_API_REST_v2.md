@@ -132,18 +132,53 @@ Toda respuesta de la API que contenga datos personales (estudiantes, tutores, do
     *   **RN-EST-05 / RN-AST-23:** Rechaza con `422 STUDENT_NOT_ACTIVE` (`entity_type = STUDENT`) o `422 TEACHER_NOT_ACTIVE` (`entity_type = TEACHER`) si la persona no está `ACTIVO`.
     *   **RN-QR-02:** El token generado no debe poder derivar datos personales.
 
-#### `POST /api/v1/credentials/exports/preview/` — Vista previa de una exportación
-*   **Roles:** ADM, PAD (RN-AUT-06). **Trazabilidad:** RF-CRE-01, RF-CRE-02, RN-CRE-01.
-*   **Request:** `{ "mode": "CREDENCIAL" | "STICKER", "entity_type": "STUDENT" | "TEACHER", "entity_ids": ["uuid", "..."], "group_id": "uuid" }`. Se envía **exactamente uno** de `entity_ids` (individual o subconjunto, RF-CRE-02) o `group_id` (lote por grupo, solo con `STUDENT`). Hay un máximo configurable de personas por exportación.
-*   **Respuesta `200 OK`:** `{ "included": 38, "excluded": [ { "entity_id": "uuid", "display_name": "...", "reason": "SIN_FOTOGRAFIA" | "NO_ACTIVO" | "SIN_QR_VIGENTE" } ] }`. Nunca se omite en silencio a alguien: los excluidos se listan con su motivo (RN-CRE-01).
-*   **Reglas:** solo se incluyen personas `ACTIVO` con QR `VIGENTE`. `mode = CREDENCIAL` exige además fotografía cargada; `mode = STICKER` no la exige (RN-CRE-01).
+#### `POST /api/v1/credentials/exports/preview/` — Vista previa de una exportación de credenciales
+*   **Roles:** ADM, PAD (RN-AUT-06). **Trazabilidad:** RF-CRE-01, RF-CRE-02, RN-CRE-01, RN-CRE-02, RN-CRE-03.
+*   **Request:**
+    ```json
+    {
+      "mode": "CREDENCIAL_LOTE" | "CREDENCIAL_INDIVIDUAL",
+      "entity_type": "STUDENT" | "TEACHER",
+      "group_id": "uuid",
+      "entity_ids": ["uuid", "..."]
+    }
+    ```
+    *   `mode = "CREDENCIAL_LOTE"`: exportación masiva de credenciales completas para un grupo escolar en hoja Carta horizontal (matriz 2×4, 4 credenciales por página). Exige `group_id` (o lista `entity_ids`).
+    *   `mode = "CREDENCIAL_INDIVIDUAL"`: reposición individual integral para un estudiante o docente específico (frente y reverso). Exige un único id en `entity_ids`.
+    *   Se envía **exactamente uno** de `entity_ids` o `group_id` (`group_id` exclusivo de `STUDENT`).
+*   **Respuesta `200 OK`:**
+    ```json
+    {
+      "mode": "CREDENCIAL_LOTE",
+      "page_format": "LETTER_LANDSCAPE",
+      "cards_per_page": 4,
+      "total_faces_per_page": 8,
+      "included": 38,
+      "estimated_pages": 10,
+      "excluded": [
+        {
+          "entity_id": "uuid",
+          "display_name": "...",
+          "reason": "SIN_FOTOGRAFIA" | "NO_ACTIVO" | "SIN_QR_VIGENTE"
+        }
+      ]
+    }
+    ```
+*   **Reglas:** solo se incluyen personas `ACTIVO` con token QR `VIGENTE` y fotografía cargada (RN-CRE-01). Los excluidos nunca se omiten en silencio: se reportan con su motivo para gestión administrativa.
 
-#### `POST /api/v1/credentials/exports/` — Exportar credenciales o stickers
-*   **Roles:** ADM, PAD. **Trazabilidad:** RF-CRE-01, RF-CRE-02, RN-CRE-01, RN-TRX-02.
-*   **Request:** el de la vista previa más `"format": "PDF" | "PNG"`. `PNG` (imagen de alta resolución del QR) solo se admite para una única persona; `PDF` aplica a lote o a una persona.
-*   **Respuesta `200 OK`:** el archivo (`application/pdf` o `image/png`) con las personas incluidas. No se guarda copia en el servidor (las fotografías son datos de menores, RN-TRX-01 y RN-TRX-02).
-*   **Errores:** `422 BUSINESS_RULE_VIOLATION` si ninguna persona cumple las condiciones; `422 VALIDATION_ERROR` si se envían ambos o ninguno de `entity_ids` y `group_id`, o si se pide `PNG` para más de una persona; `403 PERMISSION_DENIED` si el rol no es ADM ni PAD.
-*   **Uso típico de RF-CRE-02:** reexportar el sticker de reposición tras una revocación (RF-QR-03): `mode = STICKER` con el `entity_id` de la persona.
+#### `POST /api/v1/credentials/exports/` — Exportar credenciales completas (PDF / PNG)
+*   **Roles:** ADM, PAD. **Trazabilidad:** RF-CRE-01, RF-CRE-02, RN-CRE-01, RN-CRE-02, RN-CRE-03, RN-TRX-02.
+*   **Request:** los mismos parámetros de la vista previa más `"format": "PDF" | "PNG"`.
+    *   `"format": "PDF"`:
+        *   En `CREDENCIAL_LOTE`: genera el documento PDF en hoja tamaño Carta (279.4 mm × 215.9 mm) orientación horizontal. Cada página contiene 4 credenciales completas (8 caras en cuadrícula 2×4) con anverso y reverso contiguos por alumno (`[E1 Frente][E1 Detrás][E2 Frente][E2 Detrás]` / `[E3 Frente][E3 Detrás][E4 Frente][E4 Detrás]`), líneas de corte y resolución 300 DPI (RN-CRE-02).
+        *   En `CREDENCIAL_INDIVIDUAL`: genera el documento PDF individual tamaño Carta con el par frente/reverso centrado y marcas de corte para reposición inmediata.
+    *   `"format": "PNG"`: permitido únicamente en `CREDENCIAL_INDIVIDUAL`, devuelve un archivo comprimido o respuesta multipart con las imágenes de alta resolución (`frente.png` y `reverso.png` a 300 DPI) para alimentación en impresoras de tarjetas PVC.
+*   **Respuesta `200 OK`:** el archivo binario (`application/pdf` o `application/zip`) con las credenciales incluidas. No se guarda copia física ni digital de las credenciales generadas en el servidor para proteger los datos y fotografías de menores (RN-TRX-01 y RN-TRX-02).
+*   **Errores:**
+    *   `422 BUSINESS_RULE_VIOLATION`: si ninguna persona del lote cumple las condiciones de exportación.
+    *   `422 VALIDATION_ERROR`: si se envían ambos o ninguno de `entity_ids` y `group_id`, o si se solicita `format="PNG"` en `mode="CREDENCIAL_LOTE"`.
+    *   `403 PERMISSION_DENIED`: si el rol del usuario no es `ADMINISTRADOR` ni `PERSONAL_ADMINISTRATIVO`.
+*   **Uso típico de reposición (RF-CRE-02, RN-CRE-03):** tras revocar un token por robo/extravío (`POST /credentials/tokens/`), se invoca `POST /credentials/exports/` con `mode = "CREDENCIAL_INDIVIDUAL"` y el `entity_id` de la persona para obtener su credencial física completa actualizada.
 
 ---
 
@@ -184,8 +219,57 @@ Toda respuesta de la API que contenga datos personales (estudiantes, tutores, do
     *   **RN-TRX-08 / RN-TRX-09:** nombre en tres campos, longitud 2–60, caracteres permitidos, sin valores sustitutos.
     *   **RN-AUT-06:** `has_payment_debt` y `pending_subjects` solo los captura ADM/PAD.
 
-#### POST `/api/v1/students/{id}/photo/` y GET `/api/v1/students/{id}/photo/`
-*   Carga (multipart; `image/jpeg` o `image/png`; tamaño máximo configurable; se valida el tipo real por contenido y se eliminan metadatos EXIF) y descarga autenticada. Los archivos viven en el almacén privado (C4-04). **Roles:** carga `ADM`, `PAD`; lectura `ADM`, `PRE`, `PAD`. **Reglas:** RN-EST-10, RN-TRX-02.
+#### POST `/api/v1/students/{id}/photo/`
+*   **Capacidad:** subir o reemplazar la fotografía oficial de un estudiante.
+*   **Roles:** `ADM`, `PAD`. Otros roles reciben 403.
+*   **Request:** `multipart/form-data` con campo `file` (`image/jpeg`, `image/png` o `image/webp`).
+*   **Validaciones (400 Bad Request / 422 Unprocessable):**
+    *   **Formato y MIME real:** inspección de número mágico (`image/jpeg`, `image/png`, `image/webp`).
+    *   **Tamaño:** peso máximo de 2 MB (RN-EST-15).
+    *   **Sanitización EXIF:** eliminación obligatoria e irreversible de metadatos de geolocalización GPS y cámara (RN-EST-16).
+    *   **Procesamiento:** estandarización de proporción 4:5 vertical y almacenamiento en volumen seguro desacoplado (`media/students/photos/...`).
+*   **Response (200 OK):**
+```json
+{
+  "student_id": "uuid",
+  "photo_path": "students/photos/2026-2027/2_A/16092179_a1b2c3d4.jpg",
+  "photo_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "photo_updated_at": "2026-11-06T15:45:00Z",
+  "completeness": "COMPLETO",
+  "missing_fields": []
+}
+```
+
+#### GET `/api/v1/students/{id}/photo/`
+*   **Capacidad:** streaming seguro y autenticado de la fotografía digital del estudiante.
+*   **Roles:** `ADM`, `PRE`, `PAD`, y `DOC` (únicamente si el estudiante pertenece a sus grupos asignados). Acceso anónimo o sin token JWT responde 401/403 (RN-EST-16).
+*   **Headers de respuesta:** `Content-Type: image/jpeg`, `ETag: "<photo_sha256>"`, `Cache-Control: private, max-age=86400`. Si el cliente envía `If-None-Match` coincidente, responde `304 Not Modified`.
+
+#### DELETE `/api/v1/students/{id}/photo/`
+*   **Capacidad:** eliminar la fotografía actual del estudiante.
+*   **Roles:** `ADM`, `PAD`.
+*   **Efecto:** remueve el archivo físico del volumen, establece `photo_path=NULL`, `photo_sha256=NULL`, `photo_updated_at=NULL`, recalcula `completeness='INCOMPLETO'` y registra evento de auditoría (RN-AUT-05).
+*   **Response (200 OK):** `{ "message": "Fotografía eliminada", "completeness": "INCOMPLETO" }`.
+
+#### POST `/api/v1/students/photos/bulk-upload/`
+*   **Capacidad:** carga masiva de fotografías empaquetadas en un archivo comprimido ZIP para un grupo o ciclo escolar.
+*   **Roles:** `ADM`, `PAD`.
+*   **Request:** `multipart/form-data` con campo `file` (`.zip`) y parámetro opcional `group_id` o `cycle_id`.
+*   **Estructura esperada:** archivos nombrados por matrícula (`{matricula}.jpg`, `{matricula}.png`, `{matricula}.webp`).
+*   **Response (200 OK):**
+```json
+{
+  "total_archivos_zip": 42,
+  "asociados_exitosamente": 40,
+  "no_encontrados": [
+    { "archivo": "99999999.jpg", "matricula": "99999999", "motivo": "Matrícula no registrada en el grupo" }
+  ],
+  "errores_formato": [
+    { "archivo": "16092180.bmp", "motivo": "Formato no permitido (solo JPEG, PNG, WEBP)" }
+  ],
+  "reporte_descargable_url": "/api/v1/students/photos/bulk-reports/{report_id}/"
+}
+```
 
 ---
 
@@ -303,6 +387,10 @@ Toda respuesta de la API que contenga datos personales (estudiantes, tutores, do
 | `POST /guardians/{id}/split/` | ADM, PAD | RF-EST-07, RN-EST-13 |
 | `POST /student-guardians/{id}/invalidate-contact/` (motivo) | ADM, PAD | RN-EST-11 |
 | `PATCH /student-guardians/{id}/consent/` | ADM, PAD | RN-EST-07, `GUARDIAN_CONSENT_LOG` |
+| `POST /students/{id}/photo/` | ADM, PAD | RF-EST-08, RN-EST-15, RN-EST-16 (multipart, sanitización EXIF, actualiza `photo_path` y `completeness`) |
+| `GET /students/{id}/photo/` | ADM, PRE, PAD, DOC* | RF-EST-08, RN-EST-16 (streaming seguro autenticado con ETag y Cache-Control; DOC solo sus grupos) |
+| `DELETE /students/{id}/photo/` | ADM, PAD | RF-EST-08, RN-EST-10 (borrado seguro y recalcula `completeness='INCOMPLETO'`) |
+| `POST /students/photos/bulk-upload/` | ADM, PAD | RF-EST-08, RN-CRE-01 (carga masiva en ZIP por matrícula con reporte descargable) |
 
 ### 3.5 Comunicaciones (Módulo COM)
 

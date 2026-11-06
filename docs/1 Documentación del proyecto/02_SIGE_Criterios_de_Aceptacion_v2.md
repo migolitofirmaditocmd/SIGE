@@ -177,6 +177,14 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-010-15 · Feliz** — **Dado que** un tutor tenía su teléfono marcado como inválido manualmente y el PAD lo corrige, **cuando** se guarda el nuevo teléfono, **entonces** la invalidación manual se retira y el indicador de contacto válido se recalcula.
 - **CA-010-16 · Feliz** — **Dado que** el PAD separa a un tutor vinculado por error a un estudiante, **cuando** confirma, **entonces** se crea un `GUARDIAN` independiente solo para ese estudiante y los demás vínculos del tutor original no cambian.
 
+### SIGE-US-064 — Cargar y actualizar fotografía oficial del estudiante
+- **CA-064-01 · Feliz (Carga Individual)** — **Dado que** el estudiante existe en base de datos, **cuando** el PAD/ADM sube una imagen válida (`JPEG`, `PNG`, `WEBP`) ≤ 2 MB con dimensiones en proporción 4:5, **entonces** el backend sanitiza metadatos EXIF, almacena el archivo en el volumen seguro, calcula el hash SHA-256 (`photo_sha256`), actualiza la marca temporal (`photo_updated_at`), persiste la ruta interna (`photo_path`) y recalcula la completitud (`completeness = 'COMPLETO'` si `birth_date` está presente).
+- **CA-064-02 · Neg (Validación de Archivo y Peso)** — **Dado que** el usuario intenta subir un archivo mayor a 2 MB o con formato no soportado (ej. `.pdf`, `.gif`, `.exe`), **cuando** envía la petición, **entonces** el servidor rechaza la operación con código HTTP 400 y mensaje de validación descriptivo sin alterar el expediente.
+- **CA-064-03 · Regulatorio (Sanitización de Datos de Menores)** — **Dado que** una fotografía capturada con dispositivo móvil contiene metadatos EXIF (coordenadas GPS de ubicación, fecha/hora y fabricante de cámara), **cuando** se procesa la carga en el servidor, **entonces** el binario final guardado en disco carece de todo metadato EXIF, salvaguardando la privacidad del estudiante (RN-EST-16, LFPDPPP).
+- **CA-064-04 · Feliz (Carga Masiva ZIP)** — **Dado que** se dispone de un archivo ZIP estructurado con fotografías nombradas por matrícula escolar (ej. `16092179.jpg`, `16139985.png`), **cuando** el PAD/ADM lo carga para un grupo escolar, **entonces** el backend procesa cada imagen de forma atómica por estudiante, asociando exitosamente cada foto a su alumno correspondiente y emitiendo un reporte descargable con el resumen de éxitos e incidencias.
+- **CA-064-05 · Parcial (Manejo de Incidencias en Lote ZIP)** — **Dado que** un archivo ZIP contiene imágenes con matrículas no registradas en la base de datos o archivos corruptos, **cuando** finaliza la carga masiva, **entonces** los estudiantes válidos se actualizan correctamente y las matrículas no encontradas o archivos con error se desglosan en el reporte sin revertir las cargas exitosas.
+- **CA-064-06 · Perm (Restricción de Acceso y Streaming Seguro)** — **Dado que** las fotografías de menores son datos biométricos sensibles, **cuando** un cliente web/móvil solicita visualizar una fotografía, **entonces** la API exige cabecera `Authorization: Bearer <token>` con rol autorizado (ADM, PAD, PRE o DOC en sus grupos asignados); los accesos anónimos o no autorizados se rechazan con HTTP 401/403 y se prohíbe el listado o acceso directo vía servidor web estático sin autenticación.
+
 ### SIGE-US-011 — Consultar y filtrar expedientes
 - **CA-011-01 · Feliz** — **Dado que** un PRE/PAD/ADM abre el listado, **cuando** filtra por nombre, matrícula, grupo, grado o estatus, **entonces** obtiene resultados paginados que cumplen.
 - **CA-011-02 · Feliz** — **Dado que** aplica varios filtros a la vez, **cuando** consulta, **entonces** se combinan.
@@ -308,19 +316,20 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-024-06 · Aud** — **Dado que** se revocó un QR, **cuando** se consulta la bitácora y el histórico, **entonces** ambos conservan la referencia al identificador revocado y a su reemplazo.
 - **CA-024-07 · Neg** — **Dado que** falta el motivo, **cuando** el ADM intenta confirmar, **entonces** se rechaza.
 
-### SIGE-US-025 — Exportar el QR para la credencial física
-- **CA-025-01 · Feliz** — **Dado que** un estudiante `ACTIVO` tiene QR vigente y fotografía, **cuando** el PAD exporta, **entonces** obtiene su QR en alta resolución/PDF.
-- **CA-025-02 · Neg** — **Dado que** un estudiante no está `ACTIVO` o no tiene QR vigente, **cuando** se exporta, **entonces** se excluye y se lista como pendiente con motivo; **y dado que** no tiene fotografía, **cuando** se exporta como sticker, **entonces** sí se incluye.
-- **CA-025-03 · Feliz** — **Dado que** el lote se exporta, **cuando** se verifica el QR de una muestra, **entonces** 100 % es legible y corresponde al estudiante correcto.
-- **CA-025-04 · Neg** — **Dado que** un QR está revocado, **cuando** se exporta, **entonces** no aparece en el archivo.
-- **CA-025-05 · UX** — **Dado que** se exporta, **cuando** el personal ve el resultado, **entonces** puede distinguir el formato para credencial nueva y el de sticker.
-- **CA-025-06 · Perm** — **Dado que** el rol no es PAD/ADM, **cuando** intenta exportar, **entonces** se deniega.
+### SIGE-US-025 — Exportar lote de credenciales completas en hoja Carta horizontal
+- **CA-025-01 · Feliz** — **Dado que** los estudiantes de un grupo están `ACTIVO`, tienen QR vigente y fotografía oficial cargada, **cuando** el PAD solicita la exportación del lote, **entonces** SIGE genera un documento PDF en orientación horizontal tamaño Carta (279.4 mm × 215.9 mm), maquetando 4 credenciales completas por página en una matriz de 2 filas por 4 columnas (8 caras en total: frente y reverso contiguos por estudiante: Fila 1 `[E1 Frente][E1 Detrás][E2 Frente][E2 Detrás]`, Fila 2 `[E3 Frente][E3 Detrás][E4 Frente][E4 Detrás]`).
+- **CA-025-02 · Neg** — **Dado que** uno o más estudiantes del grupo carecen de fotografía oficial cargada o de QR vigente o están en estatus `BAJA`/`EGRESADO`, **cuando** se solicita la vista previa y exportación, **entonces** son excluidos del documento PDF y presentados en un listado de incidencias pendientes con su motivo específico (`SIN_FOTOGRAFIA`, `SIN_QR_VIGENTE`, `NO_ACTIVO`).
+- **CA-025-03 · Feliz** — **Dado que** el lote masivo se genera en PDF, **cuando** se somete a verificación óptica automatizada, **entonces** el 100 % de los códigos QR ubicados en el reverso son legibles y resuelven inequívocamente al estudiante titular.
+- **CA-025-04 · Neg** — **Dado que** un QR está en estatus `REVOCADO`, **cuando** se exporta el lote, **entonces** ningún estudiante con QR revocado aparece maquetado con dicho token en el archivo.
+- **CA-025-05 · UX** — **Dado que** el PDF se abre para impresión, **cuando** el operador lo visualiza, **entonces** constata la presencia de marcas perimetrales de corte para guillotina, dimensiones exactas de tarjeta vertical (54 mm × 85.6 mm) y resolución fotográfica a 300 DPI.
+- **CA-025-06 · Perm** — **Dado que** el actor no posee rol ADM ni PAD, **cuando** intenta solicitar la exportación de credenciales, **entonces** la API y la interfaz deniegan la operación (HTTP 403).
+- **CA-025-07 · Límite** — **Dado que** el total de estudiantes a exportar en el grupo no es múltiplo exacto de 4, **cuando** se genera la última página del PDF, **entonces** los espacios sobrantes de la matriz 2×4 permanecen en blanco con sus líneas guía de corte intactas, sin distorsionar el tamaño ni la posición de las tarjetas presentes.
 
-### SIGE-US-026 — Reexportar QR de forma selectiva
-- **CA-026-01 · Feliz** — **Dado que** el PAD elige un estudiante o un grupo, **cuando** reexporta, **entonces** solo se genera el QR vigente del subconjunto y no se reexporta el lote completo.
-- **CA-026-02 · Feliz** — **Dado que** un QR fue reemplazado por revocación, **cuando** se reexporta a ese estudiante, **entonces** el archivo contiene el nuevo QR (sticker de reposición) y no el revocado.
-- **CA-026-03 · Neg** — **Dado que** un estudiante del grupo no cumple RN-CRE-01, **cuando** se reexporta, **entonces** se excluye y se lista como pendiente.
-- **CA-026-04 · UX** — **Dado que** el usuario selecciona el subconjunto, **cuando** aún no exporta, **entonces** ve una vista previa de a cuántos estudiantes aplica.
+### SIGE-US-026 — Generar credencial completa de reposición individual
+- **CA-026-01 · Feliz** — **Dado que** el personal administrativo selecciona un estudiante individual `ACTIVO` con foto y QR vigente, **cuando** solicita la reposición, **entonces** el sistema genera de forma exclusiva la credencial completa de ese estudiante (anverso y reverso) en PDF individual o paquete PNG de 300 DPI, sin reexportar a su grupo.
+- **CA-026-02 · Feliz** — **Dado que** un estudiante sufrió revocación de su QR por extravío o deterioro (US-024) y se le generó un nuevo token vigente, **cuando** se emite su reposición individual, **entonces** la credencial física generada incorpora obligatoriamente el nuevo token QR y descarta cualquier referencia al token revocado.
+- **CA-026-03 · Neg** — **Dado que** el estudiante seleccionado carece de fotografía cargada o está en `BAJA`, **cuando** se solicita la reposición, **entonces** el sistema bloquea la emisión e indica la causa de impedimento.
+- **CA-026-04 · UX** — **Dado que** se solicita la reposición individual, **cuando** el usuario confirma, **entonces** visualiza una vista previa gráfica de ambas caras (frente y reverso) antes de confirmar la descarga definitiva.
 
 ---
 
@@ -451,7 +460,7 @@ Una historia entra a sprint cuando se responde "sí" a: ¿se sabe quién la nece
 - **CA-038-09 · Neg** — **Dado que** ya existe un docente (activo o `INACTIVO`) con el mismo identificador, **cuando** el PAD guarda un alta nueva, **entonces** se rechaza y no se crea ni modifica ninguna ficha.
 - **CA-038-10 · Neg** — **Dado que** falta el nombre(s), el apellido paterno o el identificador, **cuando** el PAD guarda, **entonces** no se guarda nada.
 - **CA-038-11 · Feliz** — **Dado que** el PAD captura solo los datos mínimos, **cuando** guarda, **entonces** el docente queda `ACTIVO` sin marca de incompleto, aunque no tenga fotografía, correo ni teléfono.
-- **CA-038-12 · Alt** — **Dado que** un docente `ACTIVO` con QR vigente no tiene fotografía, **cuando** se exporta su QR, **entonces** se incluye como sticker y se excluye (con motivo) de la credencial completa.
+- **CA-038-12 · Alt** — **Dado que** un docente `ACTIVO` con QR vigente no tiene fotografía, **cuando** se solicita exportar su credencial física completa, **entonces** se excluye de la exportación (con motivo `SIN_FOTOGRAFIA`, RN-CRE-01).
 
 ### SIGE-US-039 — Programar días y horarios de asistencia de cada docente
 - **CA-039-01 · Feliz** — **Dado que** el PAD captura días, hora de entrada y hora de salida de un docente, **cuando** guarda, **entonces** la programación queda asociada al docente.

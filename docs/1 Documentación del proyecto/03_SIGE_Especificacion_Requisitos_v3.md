@@ -33,7 +33,7 @@ Antes de entrar al detalle técnico, aquí va una explicación en términos simp
 | **EST** | Gestión de Estudiantes | La "ficha" de cada alumno: nombre, grupo, foto, tutor, si sigue activo o ya se dio de baja. Es la base de datos maestra de la que todo lo demás depende. |
 | **IMP** | Importación masiva | Para no dar de alta a 500 alumnos a mano: subes un Excel/CSV con el formato correcto y el sistema los carga solo, avisando cuáles filas fallaron y por qué. |
 | **QR** | Identificación QR | Le genera a cada alumno un código único (como un "gafete digital") que lo identifica en el sistema sin mostrar sus datos personales a simple vista. |
-| **CRE** | Credenciales | Toma esos códigos QR y los entrega al personal administrativo para que los agreguen en la credencial fisica para su impresión o como sticker para ser añadido a credenciales fisicas ya impresas. |
+| **CRE** | Credenciales | Módulo de Credencialización Integral: Genera e incorpora automáticamente los códigos QR en las credenciales físicas de los estudiantes (anverso y reverso) en formato PDF tamaño Carta horizontal (4 credenciales completas por hoja = 8 caras organizadas en matriz 2×4 para nuevo ingreso/lotes) y en modalidad individual para reposición integral por extravío o deterioro. |
 | **AUT** | Autenticación y usuarios | El "login" del sistema: quién puede entrar, con qué contraseña, y qué rol tiene (Admin, Prefecto, Docente, etc.), para que cada quien vea solo lo que le toca. |
 | **AST** | Asistencia | El corazón operativo diario: cuando un alumno escanea su QR en la entrada, aquí se decide si llegó a tiempo, tarde, o si faltó, y se guarda el historial. |
 | **REP** | Reportes escolares | El flujo de "reportes de conducta/académicos/emocionales": el maestro lo levanta, el prefecto lo revisa, administración decide si se avisa a la familia. |
@@ -113,6 +113,14 @@ El sistema DEBE permitir registrar, de forma opcional, tipo de sangre, alergias,
 El sistema DEBE reconocer que dos estudiantes comparten al mismo tutor cuando coincide su nombre completo y, además, su correo o su teléfono (RN-EST-13). El personal administrativo DEBE poder separar manualmente a un tutor reconocido por error, sin afectar a los demás estudiantes vinculados. Toda edición de los datos de contacto o de nombre de un tutor asociado a más de un estudiante DEBE mostrar, antes de confirmarse, cuántos y cuáles estudiantes se verán afectados (RN-EST-14).
 - *Prioridad:* Should. **Trazabilidad:** OE-02 · RF-EST-03 · RN-EST-13, RN-EST-14.
 
+**RF-EST-08 — Carga, almacenamiento y gestión de fotografía del estudiante**
+El sistema DEBE permitir registrar, actualizar y almacenar de forma segura la fotografía digitalizada de cada estudiante en el sistema, vinculada a su ficha de la entidad `STUDENT` a través de la ruta interna `photo_path` y su hash de integridad `photo_sha256`:
+- **Modalidad Individual:** Carga directa mediante formulario web/móvil (multipart/form-data) con previsualización interactiva y recorte en proporción 4:5 vertical (estándar credencial infantil).
+- **Modalidad Masiva por Lote:** Carga mediante archivo comprimido ZIP para un grupo o ciclo escolar completo, en el cual cada archivo de imagen esté nombrado con la matrícula oficial del estudiante (ej. `16092179.jpg`, `16139985.png`). El sistema procesa el paquete asociando cada fotografía a su alumno correspondiente e indicando en un reporte detallado los éxitos, matrículas no encontradas y archivos con formato o dimensiones inválidas.
+- **Validaciones Técnicas y Procesamiento:** El sistema DEBE validar que los archivos correspondan a formatos `JPEG`, `PNG` o `WEBP`, peso máximo de 2 MB y resolución adecuada (mín. 360 × 450 px a 300 DPI). Al recibir el archivo, el backend DEBE procesar y sanitizar la imagen eliminando obligatoriamente metadatos EXIF (geolocalización GPS, dispositivo de captura, fecha/hora de toma) para proteger la privacidad de los menores de edad (RN-EST-16) antes de almacenarla en el volumen persistente seguro (`sige_media_volume`).
+- **Integración con Credencialización:** La presencia de la fotografía es requisito obligatorio para marcar el expediente como `COMPLETO` (RN-EST-10) y es condición indispensable para que el generador de credenciales (`RF-CRE-01` y `RF-CRE-02`) incorpore automáticamente la imagen del alumno en el anverso de su credencial física oficial.
+- *Prioridad:* Must. **Trazabilidad:** OE-01, OE-02 · Hito 01/02 · RN-EST-10, RN-EST-15, RN-EST-16, RF-CRE-01.
+
 **RF-IMP-01 — Importación masiva de estudiantes (CSV/XLSX)** *(expande RF-01)*
 El sistema DEBE permitir cargar archivos CSV y XLSX basados estrictamente en un diccionario de datos publicado por el equipo de desarrollo, ejecutando el proceso en modo transaccional por fila (una fila inválida no bloquea a las demás) y emitiendo, al finalizar, un reporte descargable con: total de filas procesadas, filas insertadas, filas con error y el detalle del error por fila (columna y motivo).
 - *Fuera de alcance (heredado del acta):* limpieza o transformación de datos históricos no estructurados — la institución debe entregar los archivos ya conformes al diccionario de datos. Tampoco se contempla la importación masiva de docentes (la matriz de alcance del acta limita la carga masiva a estudiantes); el alta de docentes es individual, por interfaz web.
@@ -149,15 +157,22 @@ El sistema DEBE permitir, únicamente al rol Administrador, revocar el identific
 - *Prioridad:* Should. **Trazabilidad:** OE-01 · Hito 01 (complementario).
 
 **RF-QR-04 — QR del personal docente**
-El sistema DEBE generar, para cada docente `ACTIVO`, un identificador único, opaco e irrepetible, con las mismas reglas que RF-QR-01 (sin datos personales legibles; unicidad contra tokens vigentes y revocados). El Personal administrativo y el Administrador PUEDEN generarlo; solo el Administrador PUEDE revocarlo y regenerarlo (mismas reglas que RF-QR-03), y el QR docente es independiente del QR de estudiantes (RN-QR-05, RN-QR-06). Su exportación sigue RF-CRE-01/RF-CRE-02. Al desactivarse un docente su QR vigente no se revoca y se conserva para una eventual reactivación (RN-AST-29). La exportación sigue RN-CRE-01: la credencial completa exige fotografía y el sticker no.
+El sistema DEBE generar, para cada docente `ACTIVO`, un identificador único, opaco e irrepetible, con las mismas reglas que RF-QR-01 (sin datos personales legibles; unicidad contra tokens vigentes y revocados). El Personal administrativo y el Administrador PUEDEN generarlo; solo el Administrador PUEDE revocarlo y regenerarlo (mismas reglas que RF-QR-03), y el QR docente es independiente del QR de estudiantes (RN-QR-05, RN-QR-06). Su exportación sigue RF-CRE-01/RF-CRE-02. Al desactivarse un docente su QR vigente no se revoca y se conserva para una eventual reactivación (RN-AST-29). La exportación de credenciales exige fotografía cargada conforme a RN-CRE-01.
 - *Prioridad:* Must. **Trazabilidad:**  OE-01, OE-04 · Hito 03 · KPI-72 · RN-AST-11, RN-QR-05, RN-QR-06.
 
-**RF-CRE-01 — Exportación de credenciales para impresión** *(expande RF-04)*
-El sistema DEBE generar, para cada estudiante o docente `ACTIVO` con QR vigente, una imagen de alta resolución del QR individual y un PDF por lote o individual, en dos modalidades: **credencial completa** (requiere fotografía cargada) y **sticker** de QR (no requiere fotografía) para pegarse sobre una credencial ya impresa. Los estudiantes que no cumplan las condiciones DEBEN excluirse y listarse aparte como pendientes con el motivo (RN-CRE-01). El diseño, impresión y entrega física quedan fuera del alcance.
-- *Prioridad:* Must. **Trazabilidad:** OE-01 · Hito 01 · KPI-06.
+**RF-CRE-01 — Generación y exportación masiva de credenciales por lote en formato Carta horizontal** *(expande RF-04)*
+El sistema DEBE generar, para los estudiantes o docentes `ACTIVO` con QR vigente y fotografía cargada, un documento PDF consolidado por lote (por grupo o ciclo escolar para nuevo ingreso), maquetado en hojas tamaño Carta (Letter: 279.4 mm × 215.9 mm) en orientación horizontal. Cada página del PDF DEBE albergar exactamente 4 credenciales completas distribuidas en una cuadrícula de 2 filas por 4 columnas (8 caras en total), ordenadas de forma contigua por estudiante:
+- **Fila 1:** [Estudiante 1 - Frente] [Estudiante 1 - Detrás] [Estudiante 2 - Frente] [Estudiante 2 - Detrás]
+- **Fila 2:** [Estudiante 3 - Frente] [Estudiante 3 - Detrás] [Estudiante 4 - Frente] [Estudiante 4 - Detrás]
+Cada credencial DEBE incorporar:
+1. **Parte Frontal (Anverso):** Marco institucional (Escuela Secundaria Mixta 5 y Secretaría de Educación Jalisco), fotografía digitalizada del alumno, nombre completo estructurado, matrícula oficial, grado, grupo, turno y ciclo escolar.
+2. **Parte Trasera (Reverso):** Código QR de asistencia generado automáticamente a partir del token criptográfico seguro (resoluble sin datos personales en claro, RNF-SEG-02), datos médicos de emergencia (tipo de sangre, alergias), contacto de tutor legal y leyenda oficial de vigencia.
+Las dimensiones de cada credencial deben corresponder a estándar de tarjeta vertical (54 mm × 85.6 mm) con marcas perimetrales de corte para guillotina. Los estudiantes que no cumplan los requisitos (falta de foto o QR vigente) DEBEN excluirse de la maquetación y reportarse en un listado de incidencias pendientes (RN-CRE-01).
+- *Prioridad:* Must. **Trazabilidad:** OE-01 · Hito 01 · KPI-06 · RN-CRE-01, RN-CRE-02.
 
-**RF-CRE-02 — Reimpresión selectiva de credenciales**
-El sistema DEBERÍA permitir reexportar el código QR (imagen/PDF) de un subconjunto de estudiantes (por grupo o de forma individual) — por ejemplo, para generar el sticker de reposición tras una revocación (RF-QR-03) — sin necesidad de reexportar el lote completo.
+**RF-CRE-02 — Reposición individual de credenciales completas para casos excepcionales**
+El sistema DEBE permitir generar de forma individual la credencial física completa (anverso y reverso) de un estudiante o docente específico — por ejemplo, tras una revocación y regeneración de QR por pérdida, robo o daño físico (RF-QR-03) o por ingreso extemporáneo —, emitiendo el documento en PDF individual tamaño Carta listo para impresión o en un paquete de imágenes de alta resolución (300 DPI) para impresoras de credenciales. La reposición ya NO debe realizarse únicamente con sticker provisional, sino mediante la credencial institucional íntegra con su nuevo código QR activo, sin necesidad de reexportar a todo el grupo escolar.
+- *Prioridad:* Should. **Trazabilidad:** OE-01 · Hito 01 · KPI-06 · RN-CRE-01, RN-CRE-03.
 
 ---
 
@@ -464,7 +479,7 @@ El procedimiento de instalación y configuración del servidor local DEBE quedar
 
 | Módulo | Requisitos clave | OE | Hito principal | KPIs asociados |
 |---|---|---|---|---|
-| Estudiantes / Importación | RF-EST-01..05, RF-IMP-01..02 | OE-02 | Hito 02 | KPI-07, KPI-09, KPI-75 |
+| Estudiantes / Importación | RF-EST-01..08, RF-IMP-01..02 | OE-02 | Hito 02 | KPI-07, KPI-09, KPI-75 |
 | QR / Credenciales | RF-QR-01..04 | OE-01 | Hito 01 | KPI-01 a KPI-06, KPI-72 |
 | Autenticación / RBAC | RF-AUT-01..05 | OE-03 | Hito 02 | KPI-08 |
 | Asistencia | RF-AST-01..12 | OE-04 | Hito 03 / Hito 07 | KPI-13 a KPI-18, KPI-59 a KPI-64, KPI-72 a KPI-74 |
@@ -481,7 +496,7 @@ El procedimiento de instalación y configuración del servidor local DEBE quedar
 ## 6. Resumen de priorización MoSCoW (fase Hito 01–02)
 
 **Must (bloquean el cierre de Hito 01/02):**
-RF-EST-01, RF-EST-03, RF-EST-04, RF-IMP-01, RF-QR-01, RF-QR-02, RF-CRE-01, RF-AUT-01, RF-AUT-02, RF-AUT-03, RF-AUT-05, RF-ADM-01, RNF-SEG-01, RNF-SEG-02, RNF-SEG-03, RNF-SEG-04,RF-QR-04, RF-AST-11, RF-AST-12.
+RF-EST-01, RF-EST-03, RF-EST-04, RF-EST-08, RF-IMP-01, RF-QR-01, RF-QR-02, RF-CRE-01, RF-AUT-01, RF-AUT-02, RF-AUT-03, RF-AUT-05, RF-ADM-01, RNF-SEG-01, RNF-SEG-02, RNF-SEG-03, RNF-SEG-04, RF-QR-04, RF-AST-11, RF-AST-12.
 
 **Should (deseables en Hito 01/02, exigibles a más tardar en Hito 03/04):**
 RF-EST-02, RF-IMP-02, RF-QR-03, RF-CRE-02, RF-AUT-04, RF-ADM-02.

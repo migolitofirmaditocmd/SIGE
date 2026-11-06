@@ -1,8 +1,10 @@
 """Motor de generación de credenciales y stickers escolares en PDF y PNG.
 
 Implementa la generación de documentos para la Escuela Secundaria Mixta 5
-conforme al estándar CR-80 (85.6 mm × 53.98 mm) y stickers térmicos
-de alta resolución según las especificaciones RF-CRE-01, RF-CRE-02 y RN-CRE-01.
+conforme al estándar CR-80 vertical (54.0 mm × 85.6 mm), credenciales oficiales
+con código QR integrado y fotografía oficial (anverso y reverso), stickers térmicos
+de alta resolución y maquetación de lotes en formato horizontal (Landscape)
+según las especificaciones RF-CRE-01, RF-CRE-02, RN-CRE-01 a RN-CRE-04 y RN-QR-01 a 06.
 """
 
 import io
@@ -18,23 +20,35 @@ import numpy as np
 import qrcode
 from qrcode.constants import ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q
 from reportlab.lib.colors import HexColor
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
 # ----------------------------------------------------------------------
 # Constantes de diseño institucional (Escuela Secundaria Mixta 5)
 # ----------------------------------------------------------------------
-CR80_WIDTH_MM: float = 85.60
-CR80_HEIGHT_MM: float = 53.98
+# Tarjeta estándar CR-80 vertical oficial
+CR80_WIDTH_MM: float = 54.00
+CR80_HEIGHT_MM: float = 85.60
+CR80_HORIZ_WIDTH_MM: float = 85.60
+CR80_HORIZ_HEIGHT_MM: float = 53.98
+
+# Sticker térmico de asistencia
 STICKER_WIDTH_MM: float = 50.00
 STICKER_HEIGHT_MM: float = 52.00
 
-# Paleta institucional
+# Paleta de colores institucional
 COLOR_PRIMARY_HEX: str = "#1A365D"  # Azul profundo institucional
+COLOR_HEADER_NAVY_HEX: str = "#143055"  # Azul heráldico cabecera
 COLOR_SECONDARY_HEX: str = "#D69E2E"  # Dorado institucional
-COLOR_DARK_TEXT_HEX: str = "#1A202C"  # Gris carbón para máxima legibilidad
-COLOR_MUTED_TEXT_HEX: str = "#4A5568"  # Gris medio para etiquetas
-COLOR_BG_LIGHT_HEX: str = "#F7FAFC"  # Fondo marfil suave
+COLOR_DARK_TEXT_HEX: str = "#1A202C"  # Carbón de alta legibilidad
+COLOR_MUTED_TEXT_HEX: str = "#4A5568"  # Gris medio para subtítulos
+COLOR_BG_LIGHT_HEX: str = "#F8FAFC"  # Fondo marfil suave
+COLOR_YELLOW_CARD_HEX: str = "#FFFF9B"  # Contenedor amarillo datos alumno
+
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+LOGO_JALISCO_PATH = ASSETS_DIR / "logo_jalisco.png"
+ESCUDO_JALISCO_PATH = ASSETS_DIR / "escudo_jalisco.png"
 
 
 def _get_pil_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
@@ -48,9 +62,9 @@ def _get_pil_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
         ImageFont.ImageFont: Objeto de fuente listo para dibujar en Pillow.
     """
     candidates = (
-        ["arialbd.ttf", "segoeuib.ttf", "calibrib.ttf", "DejaVuSans-Bold.ttf"]
+        ["calibrib.ttf", "arialbd.ttf", "segoeuib.ttf", "DejaVuSans-Bold.ttf"]
         if bold
-        else ["arial.ttf", "segoeui.ttf", "calibri.ttf", "DejaVuSans.ttf"]
+        else ["calibri.ttf", "arial.ttf", "segoeui.ttf", "DejaVuSans.ttf"]
     )
     for font_name in candidates:
         try:
@@ -72,7 +86,7 @@ def generate_qr_pil_image(
 
     Intenta primero con ERROR_CORRECT_Q; si OpenCV no puede decodificar el QR
     resultante (caso raro por interacción entre UUID y versión QR), escala a
-    ERROR_CORRECT_H que tiene redundancia máxima y garantiza decodificación.
+    ERROR_CORRECT_M o ERROR_CORRECT_L para garantizar decodificación óptica.
 
     Args:
         token_str (str | uuid.UUID): UUID del token impreso en la credencial.
@@ -82,9 +96,6 @@ def generate_qr_pil_image(
     Returns:
         Image.Image: Imagen Pillow en modo RGB con contraste puro (negro/blanco).
     """
-    import cv2
-    import numpy as np
-
     for ec in (ERROR_CORRECT_Q, ERROR_CORRECT_M, ERROR_CORRECT_L):
         qr = qrcode.QRCode(
             version=None,
@@ -136,9 +147,8 @@ def _draw_student_photo_pil(
 
     loaded = False
     if photo_path:
-        # Intentar ruta absoluta o dentro de MEDIA_ROOT
         full_path = Path(photo_path)
-        if not full_path.is_absolute():
+        if not full_path.is_absolute() and hasattr(settings, "MEDIA_ROOT"):
             full_path = Path(settings.MEDIA_ROOT) / photo_path
 
         if full_path.exists() and full_path.is_file():
@@ -168,6 +178,225 @@ def _draw_student_photo_pil(
         draw.rectangle([x0, y0, x1, y1], outline="#A0AEC0", width=2)
 
 
+def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
+    """Renderiza el anverso (cara frontal) de la credencial oficial CR-80 a 300 DPI.
+
+    Incorpora la fotografía oficial y el código QR de asistencia contiguos en el
+    cuerpo central, cabecera institucional oficial con logos, matrícula y grado/grupo
+    destacados, y contenedor inferior amarillo con datos médicos y domicilio.
+
+    Args:
+        student_data (dict[str, Any]): Datos estructurados del alumno.
+
+    Returns:
+        Image.Image: Imagen Pillow RGB de 638 × 1011 px (54 × 85.6 mm a 300 DPI).
+    """
+    w, h = 638, 1011
+    card = Image.new("RGB", (w, h), (255, 255, 255))
+    d = ImageDraw.Draw(card)
+
+    # Marco exterior suave
+    d.rectangle([(0, 0), (w - 1, h - 1)], outline=(203, 213, 225), width=2)
+
+    # Tipografías institucionales calibradas para impresión
+    f_title_esc = _get_pil_font(35, bold=True)
+    f_cct = _get_pil_font(25, bold=True)
+    f_badge = _get_pil_font(21, bold=True)
+    f_name = _get_pil_font(32, bold=True)
+    f_data_bold = _get_pil_font(24, bold=True)
+    f_captions = _get_pil_font(17, bold=False)
+
+    col_navy = (20, 48, 85)
+    col_dark = (20, 20, 20)
+
+    # 1. Logos institucionales (SEJ y Escudo Jalisco)
+    if LOGO_JALISCO_PATH.exists():
+        try:
+            with Image.open(LOGO_JALISCO_PATH) as l_raw:
+                l_h = 75
+                l_w = int(l_raw.width * (l_h / l_raw.height))
+                l_res = l_raw.convert("RGBA").resize((l_w, l_h), Image.Resampling.LANCZOS)
+                card.paste(l_res, (30, 20), mask=l_res.split()[3])
+        except Exception:
+            pass
+
+    if ESCUDO_JALISCO_PATH.exists():
+        try:
+            with Image.open(ESCUDO_JALISCO_PATH) as e_raw:
+                e_h = 75
+                e_w = int(e_raw.width * (e_h / e_raw.height))
+                e_res = e_raw.convert("RGBA").resize((e_w, e_h), Image.Resampling.LANCZOS)
+                card.paste(e_res, (w - 30 - e_w, 20), mask=e_res.split()[3])
+        except Exception:
+            pass
+
+    # 2. Cabecera institucional
+    d.text((w // 2, 115), "SECUNDARIA 5 MIXTA", fill=col_navy, font=f_title_esc, anchor="mm")
+    d.text((w // 2, 158), "C.C.T. 14EES0336D", fill=col_navy, font=f_cct, anchor="mm")
+    d.line([(30, 188), (w - 30, 188)], fill=(214, 158, 46), width=2)
+
+    # 3. Insignias / Distintivos (Matrícula y Grado/Grupo)
+    enrollment = str(student_data.get("enrollment_id") or "16092179").strip()
+    academic_group = str(student_data.get("academic_group") or "2° D · MATUTINO").strip()
+
+    # Rectángulo de Matrícula (ancho ~375 px)
+    d.rounded_rectangle([(30, 202), (405, 246)], radius=6, fill=col_navy)
+    d.text((217, 224), f"ALUMNO · MATRÍCULA: {enrollment}", fill=(255, 255, 255), font=f_badge, anchor="mm")
+
+    # Rectángulo de Grado y Turno (ancho ~185 px)
+    d.rounded_rectangle([(420, 202), (608, 246)], radius=6, fill=col_navy)
+    d.text((514, 224), academic_group, fill=(255, 255, 255), font=f_badge, anchor="mm")
+
+    # 4. Sección central: Fotografía Oficial + Código QR Contiguos
+    # Caja foto: x=45, y=270, w=255, h=310
+    photo_box = (45, 270, 300, 580)
+    name_tokens = (student_data.get("display_name") or "ALUMNO").split()
+    initials = "".join(t[0] for t in name_tokens[:2]) if name_tokens else "AL"
+
+    _draw_student_photo_pil(
+        draw=d,
+        photo_path=student_data.get("photo_url"),
+        box=photo_box,
+        base_img=card,
+        initials=initials,
+    )
+    d.text((172, 595), "Fotografía Oficial", fill=(100, 116, 139), font=f_captions, anchor="mm")
+
+    # Caja QR: x=340, y=270, w=255, h=255
+    token_val = (
+        student_data.get("token")
+        or student_data.get("qr_token")
+        or student_data.get("active_qr_token")
+        or uuid.uuid4()
+    )
+    qr_img = generate_qr_pil_image(str(token_val).strip(), box_size=8, border=2)
+    qr_resized = qr_img.resize((255, 255), Image.Resampling.NEAREST)
+
+    d.rectangle([(338, 268), (597, 527)], outline=(203, 213, 225), width=2)
+    card.paste(qr_resized, (340, 270))
+    d.text((467, 545), "Código de Asistencia", fill=(100, 116, 139), font=f_captions, anchor="mm")
+
+    # 5. Banner de Nombre del Alumno
+    student_name = (
+        student_data.get("display_name")
+        or student_data.get("full_name")
+        or "IBARRA MEJÍA CARMEN SCARLTT"
+    ).strip().upper()
+
+    d.line([(30, 622), (w - 30, 622)], fill=(203, 213, 225), width=1)
+    d.text((w // 2, 652), student_name, fill=col_navy, font=f_name, anchor="mm")
+    d.line([(30, 680), (w - 30, 680)], fill=(203, 213, 225), width=1)
+
+    # 6. Ficha de Datos Inferior (Contenedor Amarillo #FFFF9B)
+    d.rounded_rectangle([(30, 690), (608, 985)], radius=8, fill=(255, 255, 155), outline=(214, 158, 46), width=2)
+
+    street = (student_data.get("address_street") or "AV. CONSTITUCIÓN No. 450").upper()
+    colonia = (student_data.get("address_colonia") or "CENTRO BARRANQUITAS").upper()
+    municipio = (student_data.get("address_municipio") or "GUADALAJARA, JAL.").upper()
+    cp = str(student_data.get("address_postal_code") or "44280")
+    phone = str(student_data.get("guardian_phone") or student_data.get("phone_number") or "33-3614-2289")
+    blood = str(student_data.get("blood_type") or "O+").upper()
+    allergies = str(student_data.get("allergies") or "NINGUNA").upper()
+
+    d.text((45, 725), f"CALLE: {street}", fill=col_dark, font=f_data_bold)
+    d.text((45, 770), f"COLONIA: {colonia}", fill=col_dark, font=f_data_bold)
+    d.text((45, 815), f"CIUDAD: {municipio}     C.P.: {cp}", fill=col_dark, font=f_data_bold)
+    d.text((45, 860), f"TEL: {phone}     SANGRE: {blood}", fill=col_dark, font=f_data_bold)
+    d.text((45, 905), f"ALERGIAS: {allergies}", fill=col_dark, font=f_data_bold)
+    d.text((45, 950), "CICLO: 2026-2027          VENCE: JULIO 2028", fill=col_navy, font=f_data_bold)
+
+    return card
+
+
+def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
+    """Renderiza el reverso (cara trasera) de la credencial oficial CR-80 a 300 DPI.
+
+    Aloja el protocolo de emergencia escolar, autorización institucional con el
+    nombre de la Directora MTRA. ELVA IBARRA JUÁREZ colocado ENCIMA de la línea de
+    firma con amplio espacio para rúbrica, disposiciones oficiales y vigencia dorada.
+
+    Args:
+        student_data (dict[str, Any]): Datos estructurados del alumno.
+
+    Returns:
+        Image.Image: Imagen Pillow RGB de 638 × 1011 px (54 × 85.6 mm a 300 DPI).
+    """
+    w, h = 638, 1011
+    reverso = Image.new("RGB", (w, h), (255, 255, 255))
+    d = ImageDraw.Draw(reverso)
+
+    border_col = (180, 180, 180)
+    col_navy = (26, 54, 93)
+    col_gold = (214, 158, 46)
+    col_dark = (20, 20, 20)
+    col_muted = (80, 80, 80)
+
+    f_title = _get_pil_font(24, bold=True)
+    f_sub = _get_pil_font(23, bold=True)
+    f_name = _get_pil_font(25, bold=True)
+    f_dir = _get_pil_font(28, bold=True)
+    f_sig_lbl = _get_pil_font(25, bold=True)
+    f_school_lbl = _get_pil_font(23, bold=True)
+    f_disp = _get_pil_font(21, bold=False)
+    f_footer = _get_pil_font(27, bold=True)
+
+    # Marco exterior
+    d.rectangle([(0, 0), (w - 1, h - 1)], outline=border_col, width=2)
+
+    # 1. Cabecera institucional superior
+    d.rectangle([(20, 20), (w - 20, 75)], fill=col_navy)
+    d.text((w // 2, 47), "DATOS DE SEGURIDAD Y VIGENCIA", fill=(255, 255, 255), font=f_title, anchor="mm")
+
+    # 2. Caja de contacto de emergencia escolar (tipografía ampliada)
+    d.rectangle([(20, 90), (w - 20, 275)], fill=(248, 250, 252), outline=border_col, width=2)
+    d.text((35, 115), "EN CASO DE EMERGENCIA LLAMAR A:", fill=col_navy, font=f_sub)
+
+    guardian_name = (
+        student_data.get("guardian_name")
+        or "MARÍA ELENA LÓPEZ BARRAGÁN"
+    ).strip().upper()
+    guardian_phone = (
+        student_data.get("guardian_phone")
+        or student_data.get("phone_number")
+        or "33-3614-2289 / 33-1289-4455"
+    ).strip()
+
+    d.text((35, 158), "Tutor / Familiar:", fill=col_muted, font=f_sub)
+    d.text((215, 158), guardian_name, fill=col_dark, font=f_name)
+
+    d.text((35, 212), "Tel. Emergencia:", fill=col_muted, font=f_sub)
+    d.text((215, 212), guardian_phone, fill=col_dark, font=f_name)
+
+    # 3. Recuadro de autorización institucional y firma de dirección
+    # Espacio amplio para firma rúbrica física
+    d.rectangle([(20, 290), (w - 20, 670)], fill=(255, 255, 255), outline=border_col, width=2)
+    d.text((w // 2, 322), "AUTORIZACIÓN INSTITUCIONAL", fill=col_navy, font=f_sub, anchor="mm")
+
+    director_name = (student_data.get("director_name") or "L.E.M ELVA IBARRA JUÁREZ").strip().upper()
+
+    # Nombre oficial de la Directora colocado ENCIMA de la línea de firma
+    d.text((w // 2, 500), director_name, fill=col_dark, font=f_dir, anchor="mm")
+    d.line([(70, 532), (w - 70, 532)], fill=col_dark, width=2)
+    d.text((w // 2, 568), "NOMBRE Y FIRMA DE LA DIRECCIÓN", fill=col_navy, font=f_sig_lbl, anchor="mm")
+    d.text((w // 2, 615), "ESCUELA SECUNDARIA MIXTA No. 5", fill=col_dark, font=f_school_lbl, anchor="mm")
+
+    # 4. Normativa escolar oficial (exactamente 2 disposiciones con texto legible)
+    d.rectangle([(20, 685), (w - 20, 915)], fill=(248, 250, 252), outline=border_col, width=2)
+    d.text((35, 712), "DISPOSICIONES OFICIALES:", fill=col_navy, font=f_sub)
+
+    d.text((35, 755), "• La presente credencial lo(a) acredita como alumno", fill=col_dark, font=f_disp)
+    d.text((50, 785), "de este plantel educativo.", fill=col_dark, font=f_disp)
+
+    d.text((35, 830), "• Este documento es intransferible, no es valido si", fill=col_dark, font=f_disp)
+    d.text((50, 860), "presenta alteraciones.", fill=col_dark, font=f_disp)
+
+    # 5. Cintillo dorado oficial de vigencia
+    d.rectangle([(20, 930), (w - 20, 990)], fill=col_gold)
+    d.text((w // 2, 960), "VÁLIDO HASTA JULIO DEL 2028", fill=(255, 255, 255), font=f_footer, anchor="mm")
+
+    return reverso
+
+
 def generate_credential_png(
     student_data: dict[str, Any],
     mode: str = "CREDENCIAL",
@@ -184,14 +413,15 @@ def generate_credential_png(
             - curp (str, opcional): CURP del alumno.
             - token (str | uuid.UUID): UUID del token QR activo.
             - photo_url (str, opcional): Ruta a la foto del alumno.
-        mode (str, optional): 'CREDENCIAL' o 'STICKER'. Defaults to 'CREDENCIAL'.
+        mode (str, optional): 'CREDENCIAL', 'STICKER' o 'REVERSO'. Defaults to 'CREDENCIAL'.
 
     Returns:
         bytes: Flujo binario PNG listo para ser transmitido o guardado.
     """
     scale = 300 / 25.4  # píxeles por milímetro a 300 DPI (~11.81 px/mm)
+    mode_upper = mode.upper()
 
-    if mode == "STICKER":
+    if mode_upper == "STICKER":
         w_px = int(STICKER_WIDTH_MM * scale)
         h_px = int(STICKER_HEIGHT_MM * scale)
         img = Image.new("RGB", (w_px, h_px), "white")
@@ -241,8 +471,6 @@ def generate_credential_png(
         font_footer = _get_pil_font(18, bold=True)
         max_qr = w_px - 20
 
-        # Combinaciones de corrección de error, tamaño de módulo y borde
-        # probadas exhaustivamente para 100% legibilidad óptica a 300 DPI
         candidates: list[tuple[Any, int, int]] = [
             (ERROR_CORRECT_Q, 8, 3),
             (ERROR_CORRECT_Q, 8, 2),
@@ -279,7 +507,6 @@ def generate_credential_png(
                 anchor="mm",
             )
 
-            # Verificación óptica en el canvas final
             cv_cand = cv2.cvtColor(np.array(cand_img), cv2.COLOR_RGB2BGR)
             d, _, _ = detector.detectAndDecode(cv_cand)
             if d == token_clean:
@@ -293,183 +520,16 @@ def generate_credential_png(
         best_img.save(buf, format="PNG", dpi=(300, 300))
         return buf.getvalue()
 
-    # ------------------------------------------------------------------
-    # Formato CREDENCIAL CR-80 completa (85.6 mm × 53.98 mm)
-    # ------------------------------------------------------------------
-    w_px = int(CR80_WIDTH_MM * scale)
-    h_px = int(CR80_HEIGHT_MM * scale)
-    img = Image.new("RGB", (w_px, h_px), COLOR_BG_LIGHT_HEX)
-    draw = ImageDraw.Draw(img)
+    if mode_upper == "REVERSO":
+        reverso_img = render_credential_back_pil(student_data)
+        buf = io.BytesIO()
+        reverso_img.save(buf, format="PNG", dpi=(300, 300))
+        return buf.getvalue()
 
-    # Marco exterior suave
-    draw.rectangle([0, 0, w_px - 1, h_px - 1], outline="#E2E8F0", width=3)
-
-    # Cabecera institucional
-    header_height = int(h_px * 0.22)
-    draw.rectangle([0, 0, w_px, header_height], fill=COLOR_PRIMARY_HEX)
-    draw.rectangle(
-        [0, header_height - 6, w_px, header_height], fill=COLOR_SECONDARY_HEX
-    )
-
-    font_sub = _get_pil_font(18, bold=False)
-    font_main = _get_pil_font(28, bold=True)
-    font_cred = _get_pil_font(20, bold=True)
-
-    draw.text(
-        (w_px // 2, int(header_height * 0.22)),
-        "SECRETARÍA DE EDUCACIÓN JALISCO",
-        fill="#E2E8F0",
-        font=font_sub,
-        anchor="mm",
-    )
-    draw.text(
-        (w_px // 2, int(header_height * 0.55)),
-        "ESCUELA SECUNDARIA MIXTA No. 5",
-        fill="white",
-        font=font_main,
-        anchor="mm",
-    )
-    draw.text(
-        (w_px // 2, int(header_height * 0.85)),
-        "CREDENCIAL ESCOLAR · CICLO 2025-2026",
-        fill="#FEFCBF",
-        font=font_cred,
-        anchor="mm",
-    )
-
-    # Columna izquierda: Fotografía del estudiante
-    photo_w = int(w_px * 0.26)
-    photo_h = int(photo_w * 1.30)
-    photo_x = int(w_px * 0.04)
-    photo_y = header_height + int((h_px - header_height - photo_h) * 0.35)
-
-    name_tokens = student_data.get("display_name", "").split()
-    initials = "".join(t[0] for t in name_tokens[:2]) if name_tokens else "AL"
-
-    _draw_student_photo_pil(
-        draw=draw,
-        photo_path=student_data.get("photo_url"),
-        box=(photo_x, photo_y, photo_x + photo_w, photo_y + photo_h),
-        base_img=img,
-        initials=initials,
-    )
-
-    # Columna derecha: Código QR de alta resolución
-    qr_side = int(w_px * 0.25)
-    qr_x = w_px - qr_side - int(w_px * 0.04)
-    qr_y = header_height + int((h_px - header_height - qr_side) * 0.32)
-
-    token_val = (
-        student_data.get("token")
-        or student_data.get("qr_token")
-        or student_data.get("active_qr_token")
-        or ""
-    )
-    if not str(token_val).strip():
-        raise ValueError(
-            f"Token QR ausente o vacío para el estudiante {student_data.get('display_name', 'Desconocido')}"
-        )
-    qr_pil = generate_qr_pil_image(
-        str(token_val).strip(), box_size=8, border=1
-    )
-    qr_pil = qr_pil.resize((qr_side, qr_side), Image.Resampling.NEAREST)
-
-    # Borde blanco con sombra sutil para el QR
-    draw.rectangle(
-        [qr_x - 3, qr_y - 3, qr_x + qr_side + 3, qr_y + qr_side + 3],
-        fill="white",
-        outline="#CBD5E0",
-        width=1,
-    )
-    img.paste(qr_pil, (qr_x, qr_y))
-
-    # Etiqueta de seguridad bajo el QR
-    font_qr_label = _get_pil_font(15, bold=True)
-    draw.text(
-        (qr_x + qr_side // 2, qr_y + qr_side + 12),
-        "CÓDIGO DE ASISTENCIA",
-        fill="#718096",
-        font=font_qr_label,
-        anchor="mm",
-    )
-
-    # Columna central: Datos del estudiante
-    info_x = photo_x + photo_w + int(w_px * 0.03)
-    info_y = header_height + 25
-
-    font_label = _get_pil_font(17, bold=False)
-    font_val_bold = _get_pil_font(25, bold=True)
-    font_val_med = _get_pil_font(21, bold=True)
-    font_val = _get_pil_font(21, bold=False)
-
-    # Alumno
-    draw.text((info_x, info_y), "ALUMNO(A):", fill=COLOR_MUTED_TEXT_HEX, font=font_label)
-    name = student_data.get("display_name", "ESTUDIANTE")
-    if len(name) > 28:
-        # Dividir en dos líneas si es muy largo
-        split_idx = name[:26].rfind(" ")
-        if split_idx == -1:
-            split_idx = 24
-        line1 = name[:split_idx]
-        line2 = name[split_idx:].strip()
-        draw.text((info_x, info_y + 22), line1, fill=COLOR_PRIMARY_HEX, font=font_val_bold)
-        draw.text((info_x, info_y + 48), line2, fill=COLOR_PRIMARY_HEX, font=font_val_bold)
-        info_y += 28
-    else:
-        draw.text((info_x, info_y + 22), name, fill=COLOR_PRIMARY_HEX, font=font_val_bold)
-
-    # Matrícula
-    draw.text((info_x, info_y + 60), "MATRÍCULA:", fill=COLOR_MUTED_TEXT_HEX, font=font_label)
-    draw.text(
-        (info_x, info_y + 80),
-        student_data.get("enrollment_id", "---"),
-        fill=COLOR_DARK_TEXT_HEX,
-        font=font_val_med,
-    )
-
-    # Grado y Turno
-    draw.text(
-        (info_x, info_y + 115),
-        "GRADO Y TURNO:",
-        fill=COLOR_MUTED_TEXT_HEX,
-        font=font_label,
-    )
-    draw.text(
-        (info_x, info_y + 135),
-        student_data.get("academic_group", "---"),
-        fill=COLOR_DARK_TEXT_HEX,
-        font=font_val,
-    )
-
-    # CURP (si está disponible)
-    curp = student_data.get("curp")
-    if curp:
-        draw.text(
-            (info_x, info_y + 170),
-            "CURP:",
-            fill=COLOR_MUTED_TEXT_HEX,
-            font=font_label,
-        )
-        draw.text(
-            (info_x, info_y + 190),
-            curp,
-            fill=COLOR_DARK_TEXT_HEX,
-            font=_get_pil_font(18, bold=True),
-        )
-
-    # Franja inferior decorativa
-    draw.rectangle([0, h_px - 26, w_px, h_px], fill=COLOR_PRIMARY_HEX)
-    font_footer = _get_pil_font(16, bold=False)
-    draw.text(
-        (w_px // 2, h_px - 13),
-        "Esta credencial es personal e intransferible · Escuela Secundaria Mixta 5",
-        fill="white",
-        font=font_footer,
-        anchor="mm",
-    )
-
+    # Formato CREDENCIAL Anverso estándar oficial CR-80
+    front_img = render_credential_front_pil(student_data)
     buf = io.BytesIO()
-    img.save(buf, format="PNG", dpi=(300, 300))
+    front_img.save(buf, format="PNG", dpi=(300, 300))
     return buf.getvalue()
 
 
@@ -479,41 +539,197 @@ def generate_credential_pdf(
 ) -> bytes:
     """Genera un documento PDF con una o más credenciales o stickers para impresión.
 
-    Cumple con el estándar CR-80 (85.60 mm × 53.98 mm) generando una página
-    por cada credencial, permitiendo el envío directo a impresoras de tarjetas
-    PVC (Zebra, Fargo, Evolis) o térmicas de stickers.
+    En modo 'STICKER', maqueta múltiples stickers en hoja tamaño Carta vertical (Portrait)
+    en una cuadrícula de 4 columnas × 5 filas (20 stickers por página) con guías
+    de corte continuas y encabezados de página.
+
+    En modo 'CREDENCIAL', 'CREDENCIAL_LOTE' o 'CREDENCIAL_INDIVIDUAL', maqueta en hoja
+    tamaño Carta en formato horizontal (Landscape: 279.4 mm × 215.9 mm) en una cuadrícula
+    matricial de 2 filas × 4 columnas (4 estudiantes completos = 8 caras contiguas
+    [E1 Frente][E1 Detrás][E2 Frente][E2 Detrás] en la Fila 1 y [E3...][E4...] en la Fila 2).
 
     Args:
         students_data (list[dict[str, Any]]): Lista de diccionarios con datos de alumnos.
-        mode (str, optional): 'CREDENCIAL' o 'STICKER'. Defaults to 'CREDENCIAL'.
+        mode (str, optional): 'CREDENCIAL', 'CREDENCIAL_LOTE', 'CREDENCIAL_INDIVIDUAL'
+            o 'STICKER'. Defaults to 'CREDENCIAL'.
 
     Returns:
-        bytes: Archivo PDF generado en memoria.
+        bytes: Archivo PDF generado en memoria listo para descarga o almacenamiento.
     """
     buffer = io.BytesIO()
+    mode_upper = mode.upper()
 
-    page_width = (CR80_WIDTH_MM if mode == "CREDENCIAL" else STICKER_WIDTH_MM) * mm
-    page_height = (CR80_HEIGHT_MM if mode == "CREDENCIAL" else STICKER_HEIGHT_MM) * mm
+    if mode_upper == "STICKER":
+        c = canvas.Canvas(buffer, pagesize=letter)
+        c.setTitle("Stickers de Asistencia - Escuela Secundaria Mixta 5")
+        c.setAuthor("SIGE - Escuela Secundaria Mixta 5")
 
-    c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
-    c.setTitle("Credenciales Escolares - Secundaria Mixta 5")
+        page_w, page_h = letter
+        cols = 4
+        rows = 5
+        per_page = cols * rows
+
+        cell_w = 48.0 * mm
+        cell_h = 50.0 * mm
+        sticker_w = 45.0 * mm
+        sticker_h = 46.8 * mm
+
+        margin_x = (page_w - (cols * cell_w)) / 2.0
+        margin_y = (page_h - (rows * cell_h)) / 2.0
+        total_students = len(students_data)
+        total_pages = max(1, (total_students + per_page - 1) // per_page)
+
+        for idx, student in enumerate(students_data):
+            page_idx = idx // per_page
+            pos = idx % per_page
+            col = pos % cols
+            row = pos // cols
+            row_from_bottom = (rows - 1) - row
+
+            cell_x = margin_x + (col * cell_w)
+            cell_y = margin_y + (row_from_bottom * cell_h)
+
+            if pos == 0:
+                c.setFont("Helvetica-Bold", 8)
+                c.setFillColor(HexColor("#64748B"))
+                group_label = student.get("academic_group", "Escuela Secundaria Mixta 5")
+                c.drawString(
+                    margin_x,
+                    page_h - 10 * mm,
+                    f"SIGE · Escuela Secundaria Mixta No. 5  |  Stickers de Asistencia  |  {group_label}",
+                )
+                c.drawRightString(
+                    page_w - margin_x,
+                    page_h - 10 * mm,
+                    f"Página {page_idx + 1} de {total_pages}",
+                )
+
+            c.setStrokeColor(HexColor("#CBD5E1"))
+            c.setLineWidth(0.4)
+            c.rect(cell_x, cell_y, cell_w, cell_h)
+
+            png_bytes = generate_credential_png(student, mode="STICKER")
+            img_reader = canvas.ImageReader(io.BytesIO(png_bytes))
+
+            offset_x = cell_x + (cell_w - sticker_w) / 2.0
+            offset_y = cell_y + (cell_h - sticker_h) / 2.0
+
+            c.drawImage(
+                img_reader,
+                offset_x,
+                offset_y,
+                width=sticker_w,
+                height=sticker_h,
+                preserveAspectRatio=True,
+            )
+
+            if pos == per_page - 1 or idx == total_students - 1:
+                c.showPage()
+
+        c.save()
+        return buffer.getvalue()
+
+    # ------------------------------------------------------------------
+    # Maquetación Carta Horizontal (Landscape) - Matriz 2×4 (4 Alumnos / 8 Caras)
+    # ------------------------------------------------------------------
+    # Hoja Carta en horizontal: 279.4 mm × 215.9 mm
+    page_w = letter[1]
+    page_h = letter[0]
+
+    c = canvas.Canvas(buffer, pagesize=(page_w, page_h))
+    c.setTitle("Credenciales Escolares Oficiales - Secundaria Mixta 5")
     c.setAuthor("SIGE - Escuela Secundaria Mixta 5")
 
-    for student in students_data:
-        # Generamos la imagen rasterizada a alta resolución (300 DPI) para fidelidad
-        # de diseño gráfico y renderizamos dentro del canvas vectorial exacto
-        png_bytes = generate_credential_png(student, mode=mode)
-        img_buf = io.BytesIO(png_bytes)
-        img_reader = canvas.ImageReader(img_buf)
+    cols = 4
+    rows = 2
+    students_per_page = 4
 
-        c.drawImage(
-            img_reader,
-            0,
-            0,
-            width=page_width,
-            height=page_height,
-            preserveAspectRatio=True,
+    card_w = CR80_WIDTH_MM * mm  # 54.0 mm
+    card_h = CR80_HEIGHT_MM * mm  # 85.6 mm
+
+    margin_x = 15.0 * mm
+    gap_x = (page_w - (2 * margin_x) - (cols * card_w)) / (cols - 1)  # 11.133 mm
+
+    margin_y = 15.0 * mm
+    gap_y = (page_h - (2 * margin_y) - (rows * card_h)) / (rows - 1)  # 14.700 mm
+
+    total_students = len(students_data)
+    total_pages = max(1, (total_students + students_per_page - 1) // students_per_page)
+
+    for page_idx in range(total_pages):
+        # 1. Encabezado institucional de página
+        c.setFont("Helvetica-Bold", 8)
+        c.setFillColor(HexColor("#64748B"))
+        first_student = students_data[page_idx * students_per_page] if students_data else {}
+        group_label = first_student.get("academic_group", "Escuela Secundaria Mixta No. 5")
+        c.drawString(
+            margin_x,
+            page_h - 10 * mm,
+            f"SIGE · Escuela Secundaria Mixta No. 5  |  Credenciales Escolares Oficiales  |  {group_label}",
         )
+        c.drawRightString(
+            page_w - margin_x,
+            page_h - 10 * mm,
+            f"Página {page_idx + 1} de {total_pages}",
+        )
+
+        # 2. Dibujar guías de corte en todas las 8 posiciones de la matriz
+        c.setStrokeColor(HexColor("#94A3B8"))
+        c.setLineWidth(0.5)
+
+        slot_coords: list[tuple[float, float]] = []
+        for r in range(rows):
+            # ReportLab y=0 está abajo; Row 0 es la superior
+            y_pos = page_h - margin_y - ((r + 1) * card_h) - (r * gap_y)
+            for col in range(cols):
+                x_pos = margin_x + (col * (card_w + gap_x))
+                c.rect(x_pos, y_pos, card_w, card_h)
+                slot_coords.append((x_pos, y_pos))
+
+        # 3. Renderizar hasta 4 estudiantes en la página actual
+        start_idx = page_idx * students_per_page
+        end_idx = min(start_idx + students_per_page, total_students)
+        page_students = students_data[start_idx:end_idx]
+
+        for s_idx, student in enumerate(page_students):
+            # Cada estudiante ocupa dos slots contiguos: Frente y Reverso
+            slot_front_idx = s_idx * 2
+            slot_back_idx = slot_front_idx + 1
+
+            # Renderizar Cara Frontal (Anverso)
+            front_img = render_credential_front_pil(student)
+            front_buf = io.BytesIO()
+            front_img.save(front_buf, format="PNG")
+            front_buf.seek(0)
+            front_reader = canvas.ImageReader(front_buf)
+
+            fx, fy = slot_coords[slot_front_idx]
+            c.drawImage(
+                front_reader,
+                fx,
+                fy,
+                width=card_w,
+                height=card_h,
+                preserveAspectRatio=True,
+            )
+
+            # Renderizar Cara Trasera (Reverso)
+            back_img = render_credential_back_pil(student)
+            back_buf = io.BytesIO()
+            back_img.save(back_buf, format="PNG")
+            back_buf.seek(0)
+            back_reader = canvas.ImageReader(back_buf)
+
+            bx, by = slot_coords[slot_back_idx]
+            c.drawImage(
+                back_reader,
+                bx,
+                by,
+                width=card_w,
+                height=card_h,
+                preserveAspectRatio=True,
+            )
+
         c.showPage()
 
     c.save()

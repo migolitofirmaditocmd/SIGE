@@ -51,7 +51,7 @@ La fuente única de verdad es **RN-AUT-06**. Esta tabla la refleja con mayor gra
 | **IMP:** Importación masiva (incluye plantilla y reporte) | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **QR:** Emitir QR (alta inicial, estudiante o docente) | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **QR:** Revocar y regenerar QR | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **CRE:** Exportar credenciales / stickers | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **CRE:** Exportar credenciales completas (lotes y reposiciones) | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **AST:** Escanear asistencia estudiantil | ❌ | ✅ | ❌ | ✅ | ❌ |
 | **AST:** Consultar asistencia detallada (grupo / estudiante) | ✅ | ✅ | ❌ | ✅ | ❌ |
 | **AST:** Justificar / modificar asistencia (estudiantil y docente) | ✅ | ❌ | ❌ | ✅ | ❌ |
@@ -93,7 +93,12 @@ La fuente única de verdad es **RN-AUT-06**. Esta tabla la refleja con mayor gra
 - [ ] **Filtrado por rol en un serializador central único** (RN-EST-12): `blood_type` y `allergies` visibles para ADM, PRE y PAD; `has_payment_debt` y `pending_subjects` solo para ADM y PAD (se **omiten** del JSON para PRE). No existe campo de monto de adeudo (RN-EST-12, RN-TRX-01).
 - [ ] **El mismo filtrado aplica a todo lugar donde viajen esos datos:** objetos de estudiante anidados en reportes, asistencia y comunicaciones; archivos exportados (credenciales, consolidados, reportes de importación); y visualización de `AUDIT_LOG`, cuyo contenido `previous_value`/`new_value` solo ve el Administrador.
 - [ ] **Tutores (RN-TRX-06):** los datos del tutor (`GUARDIAN`, `STUDENT_GUARDIAN`) heredan las mismas restricciones de acceso del expediente.
-- [ ] **Fotografías:** no se sirven como URL pública; se entregan por un endpoint autenticado que valida rol (RN-TRX-02).
+- [ ] **Fotografías de estudiantes (Datos Biométricos de Menores — LFPDPPP, RN-EST-15, RN-EST-16):**
+  - Almacenamiento desacoplado en volumen privado (`sige_media_volume`) con permisos del sistema de archivos `0640` (solo el usuario del servicio de Django puede leer/escribir).
+  - Se prohíbe terminantemente la exposición pública en el servidor web sin autenticación (`MEDIA_URL` no enlazada en la raíz estática pública).
+  - Todo archivo cargado (individual o en paquete ZIP masivo) pasa por una rutina obligatoria e irreversible de **sanitización de metadatos EXIF** (eliminando coordenadas GPS de geolocalización, identificadores de cámara/celular y fechas originales) antes de persistirse en disco (RN-EST-16).
+  - La descarga/streaming de imágenes (`GET /api/v1/students/{id}/photo/`) exige cabecera `Authorization: Bearer <token>` y valida roles autorizados (ADM, PRE, PAD, y DOC únicamente para estudiantes de sus grupos asignados).
+  - Se almacena el hash criptográfico SHA-256 (`photo_sha256`) en la BD para verificar integridad y generar ETags seguros para control de caché HTTP (`Cache-Control: private, max-age=86400`) sin comprometer los datos.
 - [ ] **Trazas y errores:** los registros de aplicación y los mensajes de error no incluyen datos de salud, adeudos ni datos de contacto.
 
 ### 4.5 Endpoints de credenciales QR (`/credentials/*`) — ASVS V6

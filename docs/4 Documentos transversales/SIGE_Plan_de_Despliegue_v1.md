@@ -96,7 +96,7 @@ SEG §5 exige que PostgreSQL y el servidor de aplicación escuchen solo en la pr
 | Volumen | Contiene | Ubicación | Permisos | Notas |
 |---|---|---|---|---|
 | Datos de PostgreSQL | Base de datos | Disco de datos | Propietario del contenedor de la base | |
-| Almacén privado | Fotografías de estudiantes y archivos de importación | Disco de datos | `0700`, propietario el usuario de servicio | Datos de menores (RN-TRX-01, RN-TRX-02) |
+| Almacén privado (`sige_media_volume`) | Fotografías de estudiantes (`media/students/photos/...`) y archivos de importación temporales | Disco de datos | `0750` directorios / `0640` archivos, propietario el usuario del servicio API | Datos personales y biométricos de menores (RN-EST-15, RN-EST-16, RN-TRX-01, RN-TRX-02). Acceso desacoplado mediado por Django |
 | **Respaldos** | Volcados verificados | **Disco o partición distinta del de datos** (R-14) | `0600` para cada archivo | Obligatorio, no depende de Internet (PP §2.3) |
 | Secretos y TLS | Archivo de entorno, certificado del servidor y llave | Directorio de configuración | `0600`, propiedad del usuario de servicio | SEG §8. Nunca en el repositorio Git |
 

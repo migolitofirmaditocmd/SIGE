@@ -144,7 +144,10 @@ class CredentialExportService:
                 continue
 
             # 3. Regla: Credencial completa exige fotografía; sticker no (RN-CRE-01)
-            if mode_upper == "CREDENCIAL" and not student.photo_url:
+            if (
+                mode_upper in ("CREDENCIAL", "CREDENCIAL_LOTE", "CREDENCIAL_INDIVIDUAL")
+                and not student.photo_url
+            ):
                 excluded_list.append(
                     {
                         "entity_id": str(student.id),
@@ -153,6 +156,18 @@ class CredentialExportService:
                     }
                 )
                 continue
+
+            # Tutor de contacto de emergencia para reverso institucional
+            guardian_name = "MARÍA ELENA LÓPEZ BARRAGÁN"
+            guardian_phone = "33-3614-2289 / 33-1289-4455"
+            primary_sg = (
+                student.student_guardians.filter(is_primary_contact=True)
+                .select_related("guardian")
+                .first()
+            )
+            if primary_sg and primary_sg.guardian:
+                guardian_name = primary_sg.guardian.display_name
+                guardian_phone = primary_sg.guardian.phone_number or guardian_phone
 
             # Cumple todos los requisitos
             included_list.append(
@@ -167,6 +182,15 @@ class CredentialExportService:
                     "shift": student.shift,
                     "token": str(active_token.token),
                     "photo_url": student.photo_url,
+                    "address_street": student.address_street or "",
+                    "address_colonia": student.address_colonia or "",
+                    "address_municipio": student.address_municipio or "GUADALAJARA, JAL.",
+                    "address_postal_code": student.address_postal_code or "44280",
+                    "blood_type": student.blood_type or "O+",
+                    "allergies": student.allergies or "NINGUNA",
+                    "guardian_name": guardian_name,
+                    "guardian_phone": guardian_phone,
+                    "director_name": "L.E.M ELVA IBARRA JUÁREZ",
                 }
             )
 

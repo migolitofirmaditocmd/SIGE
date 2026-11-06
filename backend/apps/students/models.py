@@ -114,6 +114,8 @@ class Student(PersonNameMixin, TimeStampedUUIDModel):
         address_estado (CharField): Estado (opcional).
         address_postal_code (CharField): Código postal 5 dígitos (opcional).
         photo_url (CharField): Ruta interna de la fotografía (opcional).
+        photo_sha256 (CharField): Hash criptográfico SHA-256 de la fotografía (opcional).
+        photo_updated_at (DateTimeField): Fecha y hora de actualización de fotografía (opcional).
         blood_type (CharField): Tipo de sangre; acceso restringido (RN-EST-12).
         allergies (TextField): Alergias; acceso restringido (RN-EST-12).
         has_payment_debt (BooleanField): Indicador adeudo pago (RN-EST-12).
@@ -224,6 +226,20 @@ class Student(PersonNameMixin, TimeStampedUUIDModel):
         verbose_name="Ruta interna de fotografía",
         help_text="Ruta privada; nunca una URL pública (RN-TRX-02).",
     )
+    photo_sha256 = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+        verbose_name="Hash SHA-256 de la fotografía",
+        help_text="Verificación de integridad criptográfica y deduplicación (RN-EST-15).",
+    )
+    photo_updated_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        default=None,
+        verbose_name="Fecha y hora de actualización de fotografía",
+    )
 
     # Domicilio desglosado (opcional, RF-EST-01)
     address_street = models.CharField(
@@ -322,6 +338,11 @@ class Student(PersonNameMixin, TimeStampedUUIDModel):
     def medical_notes(self) -> str:
         """Alias de compatibilidad para alergias y notas médicas."""
         return self.allergies or ""
+
+    @property
+    def photo_path(self) -> str | None:
+        """Alias canónico de la ruta de la fotografía del alumno."""
+        return self.photo_url
 
     def _recalculate_completeness(self) -> None:
         """Recalcula el campo completeness (RN-EST-10).

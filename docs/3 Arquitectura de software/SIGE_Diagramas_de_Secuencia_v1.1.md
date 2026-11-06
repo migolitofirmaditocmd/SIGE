@@ -309,7 +309,7 @@ sequenceDiagram
                 A->>DB: Transacción: STUDENT ACTIVO, GUARDIAN nuevo o vínculo con el existente, STUDENT_GUARDIAN (consentimiento PENDIENTE), AUDIT_LOG
                 A-->>W: 201 expediente {completeness, missing_fields, guardians[], consent_warning}
                 opt completeness = INCOMPLETO
-                    W-->>O: Muestra los campos faltantes. Puede recibir asistencia y reportes y obtener su QR y sticker. La credencial completa exige la fotografía, no la fecha de nacimiento (RN-EST-10, RN-CRE-01)
+                    W-->>O: Muestra los campos faltantes. Puede recibir asistencia y reportes y generar su QR en BD. La emisión de su credencial completa física exige la fotografía (RN-EST-10, RN-CRE-01)
                 end
             end
         end
@@ -335,12 +335,15 @@ sequenceDiagram
     rect rgba(120,160,220,0.12)
     Note over O,DB: Carga de la fotografía
     O->>W: Selecciona la fotografía
-    W->>A: POST /students/{id}/photo/ (multipart)
-    A->>A: Valida rol ADM o PAD, tipo real image/jpeg o image/png y tamaño máximo
-    A->>A: Elimina metadatos EXIF
-    A->>F: Guarda la imagen (acceso solo por la API autorizada, RN-TRX-02)
-    A->>DB: Actualiza la referencia de la fotografía
-    A-->>W: 200
+    W->>A: POST /students/{id}/photo/ (multipart/form-data)
+    A->>A: Valida rol ADM o PAD, tipo real (JPEG/PNG/WEBP) y tamaño ≤ 2 MB (RN-EST-15)
+    A->>A: Elimina de forma irreversible metadatos EXIF (GPS, cámara) (RN-EST-16)
+    A->>A: Normaliza proporción 4:5 y calcula photo_sha256
+    A->>F: Guarda el binario en volumen privado desacoplado con permisos 0640 (RN-TRX-02)
+    A->>DB: UPDATE STUDENT SET photo_path=..., photo_sha256=..., photo_updated_at=now()
+    A->>A: Recalcula completeness (COMPLETO si birth_date existe)
+    A->>DB: INSERT AUDIT_LOG (carga de fotografía)
+    A-->>W: 200 {photo_path, photo_sha256, completeness}
     end
     rect rgba(160,200,140,0.14)
     Note over O,DB: Captura de la fecha de nacimiento
@@ -358,7 +361,45 @@ sequenceDiagram
     W-->>O: El expediente queda sin campos faltantes y la credencial completa ya puede exportarse (RN-CRE-01)
 ```
 
-**Reglas y contratos:** RN-EST-02, RN-EST-10, RN-CRE-01, RN-TRX-02. La foto no es pública: se sirve por `GET /students/{id}/photo/` con validación de rol.
+**Reglas y contratos:** RN-EST-02, RN-EST-10, RN-EST-15, RN-EST-16, RN-CRE-01, RN-CRE-04, RN-TRX-02. La foto no es pública: se sirve por `GET /students/{id}/photo/` con validación de rol.
+
+### 4.3.4 Carga masiva de fotografías por archivo ZIP (RF-EST-08)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor O as ADM / PAD
+    participant W as PWA / Web
+    participant A as API · EST
+    participant F as Almacén privado
+    participant DB as PostgreSQL
+
+    O->>W: Selecciona archivo ZIP con fotos nombradas por matrícula ({matricula}.jpg)
+    W->>A: POST /students/photos/bulk-upload/ (multipart/form-data) {file: .zip, group_id?}
+    A->>A: Valida JWT, sesión y rol ADM o PAD (otros roles 403)
+    A->>A: Inspecciona estructura del archivo ZIP y número de entradas
+    loop Para cada archivo dentro del ZIP
+        alt Extensión o cabecera no permitida (distinta de JPEG/PNG/WEBP) o > 2 MB
+            A->>A: Agrega a lista de incidencias: ERROR_FORMATO_O_TAMANO
+        else Archivo de imagen válido
+            A->>A: Extrae matrícula del nombre del archivo
+            A->>DB: Busca estudiante ACTIVO por enrollment_id (en group_id si se especificó)
+            alt Matrícula no encontrada
+                A->>A: Agrega a lista de incidencias: MATRICULA_NO_ENCONTRADA
+            else Estudiante localizado
+                A->>A: Sanitiza metadatos EXIF y estandariza proporción 4:5
+                A->>A: Calcula photo_sha256
+                A->>F: Guarda imagen en almacenamiento privado: media/students/photos/...
+                A->>DB: UPDATE STUDENT SET photo_path=..., photo_sha256=..., photo_updated_at=now()
+                A->>A: Recalcula completeness del estudiante
+                A->>DB: INSERT AUDIT_LOG (carga masiva de foto)
+                A->>A: Incrementa contador de fotos asociadas con éxito
+            end
+        end
+    end
+    A-->>W: 200 {total, exitosos, no_encontrados[], errores_formato[], reporte_descargable_url}
+    W-->>O: Muestra resumen de carga masiva y habilita descarga del reporte detallado
+```
 
 ### 4.3.3 Edición de un tutor compartido entre hermanos
 
@@ -433,7 +474,7 @@ sequenceDiagram
             Q->>G: Genera la imagen del código QR a partir del token
             G-->>Q: Imagen QR
             Q-->>W: Token emitido con su imagen QR
-            W-->>O: Muestra el QR listo para credencial o sticker
+            W-->>O: Muestra el QR listo para incorporación en credencial física
         end
     end
 ```
@@ -472,11 +513,11 @@ sequenceDiagram
     end
 ```
 
-**Reglas y contratos:** RN-QR-01 a RN-QR-06, RN-CRE-01, RF-QR-01, RF-QR-03, RF-QR-04, RNF-SEG-02. Una **baja** de estudiante o la **desactivación** de un docente **no revocan** el QR: los escaneos se rechazan por estatus (RN-EST-04, RN-AST-29) y el QR sigue vigente si la persona se reactiva. La exportación de credenciales completas exige fotografía; el sticker no (RN-CRE-01).
+**Reglas y contratos:** RN-QR-01 a RN-QR-06, RN-CRE-01, RN-CRE-03, RF-QR-01, RF-QR-03, RF-QR-04, RNF-SEG-02. Una **baja** de estudiante o la **desactivación** de un docente **no revocan** el QR: los escaneos se rechazan por estatus (RN-EST-04, RN-AST-29) y el QR sigue vigente si la persona se reactiva. Toda emisión o reposición física requiere credencial completa con fotografía oficial cargada (RN-CRE-01, RN-CRE-03).
 
-### 4.4.3 Exportación de credenciales y stickers (vista previa y descarga)
+### 4.4.3 Exportación de credenciales completas (lotes masivos en Carta horizontal y reposiciones individuales)
 
-**Idea central:** la exportación va en **dos pasos sin estado**. La vista previa lista quién entra y quién queda fuera con su motivo (RN-CRE-01), y la descarga devuelve el archivo directamente. El servidor no guarda copia, porque las credenciales llevan fotografías de menores (RN-TRX-01, RN-TRX-02).
+**Idea central:** la exportación se procesa en **dos pasos sin estado**. La vista previa lista a las personas incluidas y a las excluidas con su motivo específico (RN-CRE-01). La descarga genera el documento final incorporando automáticamente el anverso (datos, fotografía) y reverso (código QR firmado, datos médicos y de emergencia) bajo el estándar visual institucional. En lotes masivos (`CREDENCIAL_LOTE`), la maquetación ensambla 4 credenciales completas por página (8 caras en matriz 2×4) sobre hoja tamaño Carta horizontal (RN-CRE-02). En reposición individual (`CREDENCIAL_INDIVIDUAL`), emite la credencial completa actualizada tras una revocación (RN-CRE-03). El servidor no guarda copia de los archivos resultantes por privacidad de menores (RN-TRX-01, RN-TRX-02).
 
 ```mermaid
 sequenceDiagram
@@ -487,41 +528,45 @@ sequenceDiagram
     participant G as Generador QR y PDF
     participant DB as PostgreSQL
 
-    O->>W: Elige el modo (CREDENCIAL o STICKER) y la selección (personas individuales o un grupo)
+    O->>W: Elige el modo (CREDENCIAL_LOTE o CREDENCIAL_INDIVIDUAL) y selección (grupo o persona)
     W->>Q: POST /credentials/exports/preview/ {mode, entity_type, entity_ids o group_id}
     Q->>Q: Valida JWT, sesión y rol ADM o PAD (otros roles 403)
-    alt Se envían ambos o ninguno de entity_ids y group_id, o group_id con TEACHER
+    alt Parámetros inválidos (ambos o ninguno de entity_ids/group_id, o group_id con TEACHER)
         Q-->>W: 422 VALIDATION_ERROR
     else Selección válida
-        Q->>DB: Carga a las personas y su QR vigente
+        Q->>DB: Carga a las personas, estatus, foto y token QR vigente
         loop Cada persona de la selección
             alt La persona no está ACTIVO
                 Q->>Q: Se excluye con motivo NO_ACTIVO
             else No tiene QR VIGENTE
                 Q->>Q: Se excluye con motivo SIN_QR_VIGENTE
-            else Modo CREDENCIAL y sin fotografía
+            else Sin fotografía oficial cargada
                 Q->>Q: Se excluye con motivo SIN_FOTOGRAFIA
-            else Cumple las condiciones
-                Q->>Q: Se incluye
+            else Cumple todas las condiciones
+                Q->>Q: Se incluye en el lote
             end
         end
-        Q-->>W: 200 {included, excluded[] con entity_id, display_name y reason}
-        W-->>O: Muestra a los incluidos y lista aparte a los excluidos con su motivo (RN-CRE-01)
-        O->>W: Confirma y elige el formato (PDF o PNG)
+        Q-->>W: 200 {mode, page_format, cards_per_page: 4, included, excluded[] con entity_id, display_name y reason}
+        W-->>O: Muestra resumen de incluidos, estimación de hojas y lista de pendientes con motivo (RN-CRE-01)
+        O->>W: Confirma y elige formato (PDF o PNG)
         W->>Q: POST /credentials/exports/ (mismo cuerpo más format)
         alt Ninguna persona cumple las condiciones
             Q-->>W: 422 BUSINESS_RULE_VIOLATION
-        else PNG para más de una persona
-            Q-->>W: 422 VALIDATION_ERROR
+        else PNG solicitado en modo CREDENCIAL_LOTE
+            Q-->>W: 422 VALIDATION_ERROR (PNG solo para credencial individual)
         else Hay al menos una persona exportable
-            Q->>G: Genera las imágenes QR y el PDF o PNG de las personas incluidas
-            G-->>Q: Archivo generado
-            Q-->>W: 200 archivo (application/pdf o image/png), sin copia en el servidor
+            alt mode == CREDENCIAL_LOTE (PDF)
+                Q->>G: Genera PDF Carta horizontal (279.4×215.9 mm) ensamblando 4 credenciales (matriz 2×4) por página
+            else mode == CREDENCIAL_INDIVIDUAL
+                Q->>G: Genera PDF individual centrado o pack PNG (frente.png y reverso.png a 300 DPI)
+            end
+            G-->>Q: Archivo binario generado
+            Q-->>W: 200 archivo (application/pdf o application/zip), sin persistir copia en servidor
         end
     end
 ```
 
-**Reglas y contratos:** RN-CRE-01, RF-CRE-01, RF-CRE-02, RN-AUT-06 (ADM y PAD), RN-TRX-01, RN-TRX-02. Solo se incluyen personas `ACTIVO` con QR `VIGENTE`. Un estudiante `INCOMPLETO` puede exportar sticker; la credencial completa exige fotografía (RN-EST-10, RN-CRE-01). Para reponer un sticker tras una revocación (RF-QR-03) se usa `mode = STICKER` con el `entity_id` de la persona. Hay un máximo configurable de personas por exportación.
+**Reglas y contratos:** RN-CRE-01, RN-CRE-02 (Carta horizontal 279.4 × 215.9 mm, 4 credenciales completas por página, 8 caras en matriz 2×4 con frente y reverso contiguos por alumno), RN-CRE-03 (reposición integral individual completa tras revocación de QR), RF-CRE-01, RF-CRE-02, RN-AUT-06 (ADM y PAD), RN-TRX-01, RN-TRX-02. Solo se incluyen personas `ACTIVO` con QR `VIGENTE` y fotografía cargada. No se generan stickers provisionales. Hay un límite configurable de personas por lote para salvaguardar la memoria del servidor.
 
 ---
 

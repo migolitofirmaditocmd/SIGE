@@ -122,6 +122,7 @@ Los criterios `[Límite]` (20) se concentran aquí. Cada regla se prueba con **v
 | Bloqueo por intentos | 4 intentos frente a 5 | CA-002-01 |
 | Buffer offline | 999 y 1,000 eventos | CA-032-03, CA-032-04 |
 | Colisión de QR | Máximo de 5 reintentos | CA-022-05 |
+| Fotografía de estudiante | Archivo de 2.0 MB vs 2.1 MB; dimensiones 360×450 px vs inferiores; formatos JPEG/PNG/WEBP vs inválidos | CA-064-01, CA-064-02 |
 
 ### 3.5 Pruebas de integración de procesos programados
 
@@ -158,7 +159,7 @@ No se pueden automatizar de forma fiable y se ejecutan con guías y registro:
 
 | Prueba | Qué se comprueba | Cuándo |
 |---|---|---|
-| **Lectura de QR en dispositivos representativos** | Meta del Acta Hito 04: **≥ 99 % de lecturas correctas**. Muestra: **300 lecturas por combinación** de tipo de dispositivo y formato de impresión (credencial y sticker), 200 en condiciones normales y 100 en exterior con luz solar; se aprueba con una tasa observada de al menos 99 % en cada combinación | Hito 04 |
+| **Lectura de QR en dispositivos representativos** | Meta del Acta Hito 04: **≥ 99 % de lecturas correctas**. Muestra: **300 lecturas por combinación** de tipo de dispositivo y formato de impresión (credencial completa con anverso/reverso en hoja Carta y reposición individual), 200 en condiciones normales y 100 en exterior con luz solar; se aprueba con una tasa observada de al menos 99 % en cada combinación | Hito 04 |
 | **Legibilidad a pleno sol** | Contraste y retroalimentación visual y sonora en exteriores (CT-11) | Hito 04 y piloto |
 | **Instalación de la CA interna y de la PWA** | En cada modelo y versión de la matriz de RNF-COM-02 | Antes del Hito 04 |
 | **Credenciales impresas** | QR legible tras impresión y desgaste razonable (CA-025-03) | Hito 04 |
@@ -190,7 +191,7 @@ Una base de datos reiniciada con semillas por cada recorrido (o por cada grupo d
 | **E2E-04** | Alta de estudiante con tutor, tutor compartido y registro incompleto que se completa | PAD | 008, 009, 010, 012 | 8 | — |
 | **E2E-05** | Expediente: consulta y filtros, cambio de grupo, baja, reingreso y consentimiento | PAD, ADM | 011, 013, 014, 015, 016 | 10 | — |
 | **E2E-06** | Importación: plantilla, carga, vista previa, confirmación y reporte | PAD, ADM | 017 a 021 | 14 | Archivos de prueba (§8.1) |
-| **E2E-07** | QR: generar, validar lote, revocar y reemplazar, exportar y reexportar | PAD, ADM | 022 a 026 | 11 | Descarga de archivos |
+| **E2E-07** | QR y Credenciales: generar, validar lote, revocar y reemplazar, carga de fotos (individual y ZIP) y exportar credenciales completas con foto en PDF Carta horizontal y reposición | PAD, ADM | 022 a 026, 064 | 15 | Descarga de archivos; integración gráfica de fotos |
 | **E2E-08** | Escaneo en línea: válido, tardío, rebote, QR inválido o revocado, estudiante dado de baja | PRE, PAD | 027, 028, 029 | 9 | Cámara simulada; vista móvil |
 | **E2E-09** | Ausencia automática y reclasificación: `FALTÓ` a la hora de verificación y un escaneo posterior lo corrige | PRE, PAD | 030, 031 | 5 | Job ejecutado a mano con reloj controlado |
 | **E2E-10** | Modo sin conexión: capturar, buffer, recargar sin red, reconectar, sincronizar y ver el resumen | PRE, PAD | 032, 033 | 15 | Navegador sin red; Service Worker; vista móvil |

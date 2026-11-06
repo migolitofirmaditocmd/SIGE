@@ -173,7 +173,9 @@ erDiagram
         enum status
         enum completeness
         date birth_date
-        string photo_url
+        string photo_path
+        string photo_sha256
+        datetime photo_updated_at
         string curp
         string sex
         string address_street
@@ -523,8 +525,14 @@ Catálogo administrado exclusivamente por `Administrador` (RN-ADM-01).
 | `address_*`, `sex` | STRING | Opcionales (RF-EST-01); mapean 1:1 a `DOMICILIO/COLONIA/MUNICIPIO/ESTADO/C.P.` del Excel |
 | `blood_type`, `allergies` | STRING / TEXT | RN-EST-12: salud, opcional y de acceso restringido |
 | `has_payment_debt` | BOOLEAN | RN-EST-12: indicador de adeudo de pago (sí/no), mapea a `DEBE PGO`; alcance aprobado (Acta v10, §7.1, CC-01). No se almacena monto (RN-TRX-01) |
-| `completeness` | `ENUM('COMPLETO', 'INCOMPLETO')`, calculado al guardar | RN-EST-10: `INCOMPLETO` si falta `birth_date` o `photo_url`. Un estudiante `INCOMPLETO` conserva el estatus `ACTIVO` y puede tener QR y exportar sticker; la credencial completa exige `photo_url`, no `birth_date` (RN-CRE-01) |
+| `completeness` | `ENUM('COMPLETO', 'INCOMPLETO')`, calculado al guardar | RN-EST-10: `INCOMPLETO` si falta `birth_date` o `photo_path`. Un estudiante `INCOMPLETO` conserva el estatus `ACTIVO` y puede tener QR generado en BD; la emisión de su credencial física completa (anverso y reverso) exige `photo_path`, no `birth_date` (RN-CRE-01) |
+| `photo_path` | `VARCHAR(500) NULL` | RN-EST-15, RN-EST-16, RN-TRX-02: Ruta relativa privada en el volumen de almacenamiento desacoplado (`media/students/photos/...`). Nunca es una URL pública sin autenticación ni un BLOB binario pesado en PostgreSQL |
+| `photo_sha256` | `CHAR(64) NULL` | Hash criptográfico SHA-256 para validación de integridad del archivo, prevención de manipulación no autorizada y soporte de ETags / caché HTTP condicional |
+| `photo_updated_at` | `TIMESTAMP WITH TIME ZONE NULL` | Marca de tiempo de la última carga o modificación de la fotografía para trazabilidad y cache-busting |
 | `group_id` | FK | Mínimo obligatorio (RN-EST-10); incluye grado, grupo, ciclo y turno por relación |
+
+> **Arquitectura de almacenamiento de fotografías:**  
+> Por principios de rendimiento en bases de datos relacionales y optimización de copias de seguridad (RN-API-03), los binarios de imágenes (JPEG/PNG/WEBP) no se almacenan como `BYTEA`/`BLOB` dentro de PostgreSQL. Se utiliza un volumen persistente desacoplado (`sige_media_volume`), y la base de datos almacena exclusivamente la ruta relativa normalizada (`photo_path`), el hash de integridad (`photo_sha256`) y la estampa temporal (`photo_updated_at`). Al procesarse la carga (individual o masiva en ZIP), el backend elimina automáticamente metadatos EXIF (coordenadas GPS, modelo de cámara) para garantizar el cumplimiento de la LFPDPPP y protección de datos personales de menores.
 
 **Serializador de API:** los campos `blood_type`, `allergies`, `has_payment_debt` y la relación `STUDENT_PENDING_SUBJECT` se excluyen…
 
