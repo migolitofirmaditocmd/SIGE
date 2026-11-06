@@ -27,11 +27,15 @@ from reportlab.pdfgen import canvas
 # ----------------------------------------------------------------------
 # Constantes de diseño institucional (Escuela Secundaria Mixta 5)
 # ----------------------------------------------------------------------
-# Tarjeta estándar CR-80 vertical oficial
+# Tarjeta estándar CR-80 vertical oficial (base de diseño a 300 DPI)
 CR80_WIDTH_MM: float = 54.00
 CR80_HEIGHT_MM: float = 85.60
 CR80_HORIZ_WIDTH_MM: float = 85.60
 CR80_HORIZ_HEIGHT_MM: float = 53.98
+
+# Dimensiones ampliadas optimizadas para impresión en sustrato Carta horizontal (+30% área)
+PRINT_CARD_WIDTH_MM: float = 61.50
+PRINT_CARD_HEIGHT_MM: float = 97.40
 
 # Sticker térmico de asistencia
 STICKER_WIDTH_MM: float = 50.00
@@ -644,32 +648,33 @@ def generate_credential_pdf(
     rows = 2
     students_per_page = 4
 
-    card_w = CR80_WIDTH_MM * mm  # 54.0 mm
-    card_h = CR80_HEIGHT_MM * mm  # 85.6 mm
+    # Dimensiones ampliadas para maximizar el área impresa en hoja Carta
+    card_w = PRINT_CARD_WIDTH_MM * mm  # 61.50 mm
+    card_h = PRINT_CARD_HEIGHT_MM * mm  # 97.40 mm
 
-    margin_x = 15.0 * mm
-    gap_x = (page_w - (2 * margin_x) - (cols * card_w)) / (cols - 1)  # 11.133 mm
+    margin_x = 8.0 * mm
+    gap_x = (page_w - (2 * margin_x) - (cols * card_w)) / (cols - 1)  # 5.80 mm
 
-    margin_y = 15.0 * mm
-    gap_y = (page_h - (2 * margin_y) - (rows * card_h)) / (rows - 1)  # 14.700 mm
+    top_margin = 9.0 * mm
+    gap_y = 4.3 * mm
 
     total_students = len(students_data)
     total_pages = max(1, (total_students + students_per_page - 1) // students_per_page)
 
     for page_idx in range(total_pages):
         # 1. Encabezado institucional de página
-        c.setFont("Helvetica-Bold", 8)
+        c.setFont("Helvetica-Bold", 7.5)
         c.setFillColor(HexColor("#64748B"))
         first_student = students_data[page_idx * students_per_page] if students_data else {}
         group_label = first_student.get("academic_group", "Escuela Secundaria Mixta No. 5")
         c.drawString(
             margin_x,
-            page_h - 10 * mm,
+            page_h - 6.5 * mm,
             f"SIGE · Escuela Secundaria Mixta No. 5  |  Credenciales Escolares Oficiales  |  {group_label}",
         )
         c.drawRightString(
             page_w - margin_x,
-            page_h - 10 * mm,
+            page_h - 6.5 * mm,
             f"Página {page_idx + 1} de {total_pages}",
         )
 
@@ -680,7 +685,7 @@ def generate_credential_pdf(
         slot_coords: list[tuple[float, float]] = []
         for r in range(rows):
             # ReportLab y=0 está abajo; Row 0 es la superior
-            y_pos = page_h - margin_y - ((r + 1) * card_h) - (r * gap_y)
+            y_pos = page_h - top_margin - ((r + 1) * card_h) - (r * gap_y)
             for col in range(cols):
                 x_pos = margin_x + (col * (card_w + gap_x))
                 c.rect(x_pos, y_pos, card_w, card_h)

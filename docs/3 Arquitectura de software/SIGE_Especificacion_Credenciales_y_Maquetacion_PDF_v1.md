@@ -32,41 +32,43 @@ A partir de esta versión:
 ### 2.2 Distribución en Matriz 2×4 (4 Credenciales Completas por Página)
 Cada página Carta horizontal alberga exactamente **4 credenciales escolares completas**, lo que equivale a **8 caras individuales** (4 anversos y 4 reversos). 
 
+Para garantizar un tamaño físico contundente y óptimo para portarse en micas estándar de credencial escolar (65 × 95 mm o 70 × 100 mm), las dimensiones impresas se ampliaron a **61.5 mm de ancho × 97.4 mm de alto** (+30 % de superficie útil respecto al estándar base CR-80 de PVC).
+
 Para facilitar el corte con guillotina y permitir el doblado tipo folleto (*fold-over*) o laminación directa por pares, **el anverso (frente) y el reverso (detrás) de cada estudiante se colocan de forma horizontalmente contigua**:
 
 ```
 +-----------------------------------------------------------------------------------------------+
-|  Margen Superior: 15.0 mm                                                                     |
+|  Margen Superior: 9.0 mm (Encabezado institucional en y = 209.4 mm)                           |
 |                                                                                               |
 |  +----------------+  +----------------+    +----------------+  +----------------+             |
 |  |                |  |                |    |                |  |                |             |
 |  |  ESTUDIANTE 1  |  |  ESTUDIANTE 1  |    |  ESTUDIANTE 2  |  |  ESTUDIANTE 2  |             |
 |  |     FRENTE     |  |     DETRÁS     |    |     FRENTE     |  |     DETRÁS     |             |
 |  |   (Anverso)    |  |   (Reverso)    |    |   (Anverso)    |  |   (Reverso)    |             |
-|  |  54 × 85.6 mm  |  |  54 × 85.6 mm  |    |  54 × 85.6 mm  |  |  54 × 85.6 mm  |             |
+|  | 61.5 × 97.4 mm |  | 61.5 × 97.4 mm |    | 61.5 × 97.4 mm |  | 61.5 × 97.4 mm |             |
 |  +----------------+  +----------------+    +----------------+  +----------------+             |
 |                                                                                               |
-|  Espaciado Vertical entre Filas: 14.7 mm                                                      |
+|  Espaciado Vertical entre Filas: 4.3 mm                                                       |
 |                                                                                               |
 |  +----------------+  +----------------+    +----------------+  +----------------+             |
 |  |                |  |                |    |                |  |                |             |
 |  |  ESTUDIANTE 3  |  |  ESTUDIANTE 3  |    |  ESTUDIANTE 4  |  |  ESTUDIANTE 4  |             |
 |  |     FRENTE     |  |     DETRÁS     |    |     FRENTE     |  |     DETRÁS     |             |
 |  |   (Anverso)    |  |   (Reverso)    |    |   (Anverso)    |  |   (Reverso)    |             |
-|  |  54 × 85.6 mm  |  |  54 × 85.6 mm  |    |  54 × 85.6 mm  |  |  54 × 85.6 mm  |             |
+|  | 61.5 × 97.4 mm |  | 61.5 × 97.4 mm |    | 61.5 × 97.4 mm |  | 61.5 × 97.4 mm |             |
 |  +----------------+  +----------------+    +----------------+  +----------------+             |
 |                                                                                               |
-|  Margen Inferior: 15.0 mm                                                                     |
+|  Margen Inferior: 7.8 mm                                                                      |
 +-----------------------------------------------------------------------------------------------+
-   |<- 15.0 mm ->|      |<- 11.1 mm ->|      |<- 11.1 mm ->|      |<- 11.1 mm ->| |<- 15.0 mm ->|
+   |<- 8.0 mm ->|        |<- 5.8 mm ->|        |<- 5.8 mm ->|        |<- 5.8 mm ->|   |<- 8.0 mm ->|
 ```
 
 ### 2.3 Cálculo Milimétrico de Posicionamiento
 
 | Eje | Dimensión Total Hoja | Espacio Ocupado por Tarjetas | Margen Disponible | Distribución de Espaciado |
 | :--- | :--- | :--- | :--- | :--- |
-| **Horizontal (X)** | 279.4 mm | 4 tarjetas × 54.0 mm = **216.0 mm** | **63.4 mm** | Márgenes laterales: **15.0 mm** c/u.<br>Separaciones entre columnas (3): **11.13 mm** c/u. |
-| **Vertical (Y)** | 215.9 mm | 2 filas × 85.6 mm = **171.2 mm** | **44.7 mm** | Márgenes superior e inferior: **15.0 mm** c/u.<br>Separación central entre filas (1): **14.70 mm**. |
+| **Horizontal (X)** | 279.4 mm | 4 tarjetas × 61.5 mm = **246.0 mm** | **33.4 mm** | Márgenes laterales: **8.0 mm** c/u.<br>Separaciones entre columnas (3): **5.80 mm** c/u. |
+| **Vertical (Y)** | 215.9 mm | 2 filas × 97.4 mm = **194.8 mm** | **21.1 mm** | Margen superior: **9.0 mm**.<br>Margen inferior: **7.8 mm**.<br>Separación central entre filas (1): **4.30 mm**. |
 
 - **Guías de corte:** Líneas continuas tenues de color gris neutro (`#94A3B8`, grosor 0.5 pt) impresas alrededor de cada cara y en los vértices exteriores de la hoja para guiar la guillotina sin invadir el arte.
 - **Manejo de remanentes (Páginas incompletas):** Si el número total de alumnos a imprimir en un grupo no es múltiplo de 4 (ej. 38 alumnos en un grupo de 2° o 3°), las primeras 9 páginas contienen 4 alumnos completos (36 alumnos = 72 caras). La décima página contendrá a los 2 alumnos restantes ocupando la Fila 1 (4 caras), dejando los 4 cuadrantes de la Fila 2 completamente en blanco pero preservando las líneas guía de corte.
