@@ -51,6 +51,7 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isCropModalOpen, setIsCropModalOpen] = useState<boolean>(false);
   const [cropImageSrc, setCropImageSrc] = useState<string>("");
+  const [selectedRawFile, setSelectedRawFile] = useState<File | undefined>(undefined);
   const [uploadMessage, setUploadMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -138,6 +139,9 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
       return;
     }
 
+    // Guardar referencia al archivo original para persistirlo en el backend
+    setSelectedRawFile(file);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const src = event.target?.result as string;
@@ -153,9 +157,11 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
     }
   };
 
-  /** Abre el modal de recorte manual usando la fotografía actual del alumno. */
+  /** Abre el modal de recorte manual usando la fotografía original (sin recortar) del alumno. */
   const handleOpenCropCurrentPhoto = () => {
-    const src = getStudentPhotoUrl(student.id, photoTimestamp || Date.now());
+    // Pedir la foto original con original=true para que el encuadre se realice sobre la toma completa
+    const src = getStudentPhotoUrl(student.id, photoTimestamp || Date.now(), true);
+    setSelectedRawFile(undefined);
     setCropImageSrc(src);
     setIsCropModalOpen(true);
   };
@@ -399,13 +405,14 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
         }}
       />
 
-      {/* Modal para ajuste manual de encuadre, zoom y recorte de fotografía */}
+      {/* Modal para ajuste manual de encuadre, zoom y recorte de fotografía sobre toma original */}
       <PhotoCropModal
         isOpen={isCropModalOpen}
         onClose={() => setIsCropModalOpen(false)}
         imageSrc={cropImageSrc}
         studentId={student.id}
         studentName={student.display_name}
+        rawFile={selectedRawFile}
         onSuccess={handleCropSuccess}
       />
 

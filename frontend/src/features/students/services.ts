@@ -105,7 +105,9 @@ export function getQrImageUrl(token: string): string {
  */
 export async function uploadStudentPhoto(
   studentId: string,
-  file: File
+  file: File,
+  isManualCrop: boolean = false,
+  originalFile?: File
 ): Promise<{
   photo_url: string;
   photo_sha256?: string;
@@ -114,6 +116,12 @@ export async function uploadStudentPhoto(
 }> {
   const formData = new FormData();
   formData.append("photo", file);
+  if (isManualCrop) {
+    formData.append("is_manual_crop", "true");
+  }
+  if (originalFile) {
+    formData.append("original_photo", originalFile);
+  }
 
   const res = await fetch(`${API_BASE}/api/v1/students/${studentId}/photo/`, {
     method: "POST",
@@ -132,13 +140,18 @@ export async function uploadStudentPhoto(
 
 /**
  * Retorna la URL directa para renderizar la fotografía del estudiante desde el backend.
+ * Permite solicitar la toma original completa (sin recorte) para el editor manual de encuadre.
  */
 export function getStudentPhotoUrl(
   studentId: string,
-  timestamp?: string | number
+  timestamp?: string | number,
+  original: boolean = false
 ): string {
-  const t = timestamp ? `?t=${timestamp}` : "";
-  return `${API_BASE}/api/v1/students/${studentId}/photo/${t}`;
+  const params = new URLSearchParams();
+  if (timestamp) params.append("t", String(timestamp));
+  if (original) params.append("original", "true");
+  const queryStr = params.toString() ? `?${params.toString()}` : "";
+  return `${API_BASE}/api/v1/students/${studentId}/photo/${queryStr}`;
 }
 
 /**

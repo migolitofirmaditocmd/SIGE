@@ -22,6 +22,7 @@ interface PhotoCropModalProps {
   imageSrc: string;
   studentId: string;
   studentName: string;
+  rawFile?: File;
   onSuccess: (newPhotoUrl: string, timestamp: number) => void;
 }
 
@@ -34,6 +35,7 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
   imageSrc,
   studentId,
   studentName,
+  rawFile,
   onSuccess,
 }) => {
   const [zoom, setZoom] = useState<number>(1.0);
@@ -123,7 +125,7 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const zoomDelta = e.deltaY < 0 ? 0.08 : -0.08;
-    setZoom((prev) => Math.min(3.0, Math.max(1.0, prev + zoomDelta)));
+    setZoom((prev) => Math.min(4.0, Math.max(0.5, prev + zoomDelta)));
   };
 
   // Rotar 90 grados a la derecha
@@ -163,30 +165,20 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
       // Factor de conversión entre el visor en pantalla y la resolución final
       const screenToCanvasFactor = OUTPUT_SIZE / VIEW_BOX_SIZE;
 
-      // Trasladar al centro del lienzo
-      ctx.translate(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2);
+      // Trasladar al centro del lienzo + offset del usuario (en orden idéntico al CSS)
+      const renderOffsetX = offset.x * screenToCanvasFactor;
+      const renderOffsetY = offset.y * screenToCanvasFactor;
+      ctx.translate(OUTPUT_SIZE / 2 + renderOffsetX, OUTPUT_SIZE / 2 + renderOffsetY);
 
       // Aplicar rotación
       ctx.rotate((rotation * Math.PI) / 180);
 
-      // Aplicar escala y traslación de usuario
-      // Notar que la traslación de usuario en pantalla está en coordenadas del visor sin rotar
+      // Dibujar la imagen centrada con su escala
       const renderScale = currentScale * screenToCanvasFactor;
-      const renderOffsetX = offset.x * screenToCanvasFactor;
-      const renderOffsetY = offset.y * screenToCanvasFactor;
-
-      // Compensar la rotación para aplicar el offset en la orientación visible
-      const rad = (-rotation * Math.PI) / 180;
-      const rotOffsetX = renderOffsetX * Math.cos(rad) - renderOffsetY * Math.sin(rad);
-      const rotOffsetY = renderOffsetX * Math.sin(rad) + renderOffsetY * Math.cos(rad);
-
-      // Dibujar la imagen centrada con su offset
       const drawW = naturalSize.w * renderScale;
       const drawH = naturalSize.h * renderScale;
-      const drawX = -drawW / 2 + rotOffsetX;
-      const drawY = -drawH / 2 + rotOffsetY;
 
-      ctx.drawImage(imgRef.current, drawX, drawY, drawW, drawH);
+      ctx.drawImage(imgRef.current, -drawW / 2, -drawH / 2, drawW, drawH);
 
       // Convertir a Blob JPEG de alta calidad
       const blob = await new Promise<Blob | null>((resolve) => {
@@ -197,9 +189,9 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
         throw new Error("Error al generar la imagen recortada.");
       }
 
-      // Crear archivo para upload
+      // Crear archivo para upload preservando también el original si se subió uno nuevo
       const file = new File([blob], `${studentId}.jpg`, { type: "image/jpeg" });
-      const result = await uploadStudentPhoto(studentId, file);
+      const result = await uploadStudentPhoto(studentId, file, true, rawFile);
 
       // Notificar éxito al componente padre
       onSuccess(result.photo_url, Date.now());
@@ -230,7 +222,7 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
                 Ajustar Encuadre de Fotografía
               </h3>
               <p className="text-[11px] text-blue-200">
-                {studentName} · Proporción 1:1 Oficial
+                {studentName} · Encuadre sobre toma original
               </p>
             </div>
           </div>
@@ -306,11 +298,11 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
 
           {/* Controles de Zoom y Rotación */}
           <div className="w-full max-w-xs space-y-3">
-            {/* Barra de Zoom */}
+            {/* Barra de Zoom (rango extendido 0.5x - 4.0x para máximo control) */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.max(1.0, z - 0.1))}
+                onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
                 className="p-1 rounded-md text-slate-600 hover:bg-slate-100 transition-colors"
                 title="Reducir zoom"
               >
@@ -319,8 +311,8 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
 
               <input
                 type="range"
-                min="1.0"
-                max="3.0"
+                min="0.5"
+                max="4.0"
                 step="0.05"
                 value={zoom}
                 onChange={(e) => setZoom(parseFloat(e.target.value))}
@@ -329,7 +321,7 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.min(3.0, z + 0.1))}
+                onClick={() => setZoom((z) => Math.min(4.0, z + 0.1))}
                 className="p-1 rounded-md text-slate-600 hover:bg-slate-100 transition-colors"
                 title="Aumentar zoom"
               >

@@ -254,48 +254,123 @@ def process_and_save_photo(
     student: Student,
     file_bytes_or_obj: Any,
     filename: str,
+    is_manual_crop: bool = False,
+    original_photo_file: Any | None = None,
 ) -> tuple[bool, str, str]:
     """Sanitiza, encuadra y almacena la fotografía institucional de un estudiante.
 
-    Elimina metadatos EXIF por privacidad de menores (RN-TRX-02, RN-EST-16),
-    aplica recorte cuadrado con zoom a cabeza y hombros (alineado al QR de la
-    credencial), convierte a JPEG RGB, genera el hash SHA-256 (RN-EST-15), guarda
-    en el sistema de archivos seguro y recalcula la completitud del expediente (RN-EST-10).
+    Preserva la fotografía original sin recortar en el directorio de respaldo
+    (MEDIA_ROOT/students/originals/) para permitir ajustes manuales posteriores sobre
+    la toma fotográfica completa. Almacena la versión encuadrada cuadrada (1:1 a 800x800)
+    en MEDIA_ROOT/students/<student_id>.jpg para credencialización y expediente.
 
     Args:
         student (Student): Instancia del estudiante a actualizar.
-        file_bytes_or_obj (Any): Bytes o descriptor de archivo de la fotografía.
+        file_bytes_or_obj (Any): Bytes o descriptor de archivo de la fotografía a guardar.
         filename (str): Nombre original del archivo para traza y extensión.
+        is_manual_crop (bool, optional): Si True, indica que el usuario ya realizó un
+            recorte manual en el cliente, por lo que no se aplica el recorte automático.
+            Defaults to False.
+        original_photo_file (Any | None, optional): Archivo original sin recortar cuando
+            se sube una nueva imagen con recorte manual simultáneo. Defaults to None.
 
     Returns:
         tuple[bool, str, str]: Tupla con el éxito (True/False), mensaje de resultado
             y el hash SHA-256 calculado.
     """
     try:
-        # Abrir imagen con Pillow para sanitización y formateo
+        dest_dir = Path(settings.MEDIA_ROOT) / "students"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        orig_dir = dest_dir / "originals"
+        orig_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Obtener bytes del archivo principal
         if hasattr(file_bytes_or_obj, "read"):
-            image_raw = Image.open(file_bytes_or_obj)
+            if hasattr(file_bytes_or_obj, "seek"):
+                file_bytes_or_obj.seek(0)
+            main_bytes = file_bytes_or_obj.read()
         else:
-            image_raw = Image.open(io.BytesIO(file_bytes_or_obj))
+            main_bytes = file_bytes_or_obj
 
-        # Formatear: orientación EXIF, zoom cabeza/hombros, corte de torso inferior y cuadrado 1:1
-        image_clean = format_student_portrait(image_raw, output_size=800)
+        image_raw = Image.open(io.BytesIO(main_bytes))
 
-        # Guardar en buffer JPEG sanitizado
+        # 2. Guardar la fotografía original sin recorte
+        # Si se envió un original explícito (ej. nueva foto cargada con recorte manual en UI):
+        if original_photo_file is not None:
+            if hasattr(original_photo_file, "read"):
+                if hasattr(original_photo_file, "seek"):
+                    original_photo_file.seek(0)
+                raw_orig_bytes = original_photo_file.read()
+            else:
+                raw_orig_bytes = original_photo_file
+
+            img_orig_raw = Image.open(io.BytesIO(raw_orig_bytes))
+            img_orig = ImageOps.exif_transpose(img_orig_raw) or img_orig_raw
+            if img_orig.mode in ("RGBA", "LA") or (
+                img_orig.mode == "P" and "transparency" in img_orig.info
+            ):
+                img_orig_rgba = img_orig.convert("RGBA")
+                clean_orig = Image.new("RGB", img_orig_rgba.size, (255, 255, 255))
+                clean_orig.paste(img_orig_rgba, mask=img_orig_rgba.split()[3])
+                img_orig = clean_orig
+            elif img_orig.mode != "RGB":
+                img_orig = img_orig.convert("RGB")
+
+            orig_buffer = io.BytesIO()
+            img_orig.save(orig_buffer, format="JPEG", quality=95, optimize=True)
+            (orig_dir / f"{student.id}.jpg").write_bytes(orig_buffer.getvalue())
+
+        elif not is_manual_crop:
+            # En carga automática o por lote, la imagen recibida es la original
+            img_orig = ImageOps.exif_transpose(image_raw) or image_raw
+            if img_orig.mode in ("RGBA", "LA") or (
+                img_orig.mode == "P" and "transparency" in img_orig.info
+            ):
+                img_orig_rgba = img_orig.convert("RGBA")
+                clean_orig = Image.new("RGB", img_orig_rgba.size, (255, 255, 255))
+                clean_orig.paste(img_orig_rgba, mask=img_orig_rgba.split()[3])
+                img_orig = clean_orig
+            elif img_orig.mode != "RGB":
+                img_orig = img_orig.convert("RGB")
+
+            orig_buffer = io.BytesIO()
+            img_orig.save(orig_buffer, format="JPEG", quality=95, optimize=True)
+            (orig_dir / f"{student.id}.jpg").write_bytes(orig_buffer.getvalue())
+
+        # 3. Preparar la versión cuadrada oficial (800x800) para credenciales
+        if is_manual_crop:
+            # Ya fue encuadrada por el usuario en el cliente; sanitizar y asegurar 800x800
+            img_crop = ImageOps.exif_transpose(image_raw) or image_raw
+            if img_crop.mode in ("RGBA", "LA") or (
+                img_crop.mode == "P" and "transparency" in img_crop.info
+            ):
+                img_crop_rgba = img_crop.convert("RGBA")
+                clean_crop = Image.new("RGB", img_crop_rgba.size, (255, 255, 255))
+                clean_crop.paste(img_crop_rgba, mask=img_crop_rgba.split()[3])
+                img_crop = clean_crop
+            elif img_crop.mode != "RGB":
+                img_crop = img_crop.convert("RGB")
+
+            if img_crop.size != (800, 800):
+                img_crop = img_crop.resize((800, 800), Image.Resampling.LANCZOS)
+            image_clean = img_crop
+        else:
+            # Recorte automático inteligente enfocado a cabeza y hombros
+            image_clean = format_student_portrait(image_raw, output_size=800)
+
+        # 4. Guardar versión activa para credenciales
         buffer = io.BytesIO()
-        image_clean.save(buffer, format="JPEG", quality=92, optimize=True)
+        image_clean.save(buffer, format="JPEG", quality=93, optimize=True)
         photo_bytes = buffer.getvalue()
 
         # Calcular firma SHA-256 (RN-EST-15)
         sha256_hash = hashlib.sha256(photo_bytes).hexdigest()
 
         # Almacenar en disco en MEDIA_ROOT/students/<student_id>.jpg
-        dest_dir = Path(settings.MEDIA_ROOT) / "students"
-        dest_dir.mkdir(parents=True, exist_ok=True)
         dest_path = dest_dir / f"{student.id}.jpg"
         dest_path.write_bytes(photo_bytes)
 
-        # Actualizar campos en el modelo Student
+        # 5. Actualizar campos en el modelo Student
         rel_path = f"students/{student.id}.jpg"
         student.photo_url = rel_path
         student.photo_sha256 = sha256_hash

@@ -852,10 +852,15 @@ class StudentPhotoView(APIView):
             )
 
         # Procesar, sanitizar, recortar con zoom a cabeza/hombros y guardar
+        is_manual_crop = request.data.get("is_manual_crop") in (True, "true", "True", "1", 1)
+        original_photo = request.FILES.get("original_photo")
+
         success, msg, sha256_hash = process_and_save_photo(
             student=student,
             file_bytes_or_obj=photo,
             filename=photo.name or f"{student.id}.jpg",
+            is_manual_crop=is_manual_crop,
+            original_photo_file=original_photo,
         )
         if not success:
             raise SIGEAPIException(
@@ -910,6 +915,20 @@ class StudentPhotoView(APIView):
                 status.HTTP_200_OK,
             )
 
+        # Si se solicita la toma original sin recorte (para edición manual de encuadre)
+        is_original = request.query_params.get("original") in (
+            "true",
+            "1",
+            True,
+        ) or request.query_params.get("raw") in ("true", "1", True)
+
+        if is_original and hasattr(settings, "MEDIA_ROOT"):
+            orig_path = Path(settings.MEDIA_ROOT) / "students" / "originals" / f"{student.id}.jpg"
+            if orig_path.exists() and orig_path.is_file():
+                resp = FileResponse(open(orig_path, "rb"), content_type="image/jpeg")
+                resp["Cache-Control"] = "no-store"
+                return resp
+
         # Servir el archivo físico binario directamente
         full_path = Path(student.photo_url)
         if not full_path.is_absolute() and hasattr(settings, "MEDIA_ROOT"):
@@ -962,6 +981,15 @@ class StudentPhotoView(APIView):
                     full_path.unlink()
                 except OSError:
                     pass
+
+            # Eliminar también la copia original sin recortar si existe
+            if hasattr(settings, "MEDIA_ROOT"):
+                orig_path = Path(settings.MEDIA_ROOT) / "students" / "originals" / f"{student.id}.jpg"
+                if orig_path.exists() and orig_path.is_file():
+                    try:
+                        orig_path.unlink()
+                    except OSError:
+                        pass
 
         student.photo_url = None
         student.photo_sha256 = None
