@@ -18,7 +18,7 @@ from typing import Any
 from django.conf import settings
 from django.db.models import QuerySet
 from django.utils import timezone
-from PIL import Image
+from PIL import Image, ImageOps
 
 from apps.students.models import Student
 
@@ -178,16 +178,83 @@ def find_matching_student(
     return None, 0.0, "No se encontró ningún estudiante con coincidencia suficiente."
 
 
+def format_student_portrait(
+    image_raw: Image.Image, output_size: int = 800
+) -> Image.Image:
+    """Recorta y encuadra la fotografía escolar con zoom a cabeza y hombros.
+
+    Aplica la orientación física real indicada en los metadatos EXIF, compone sobre
+    fondo blanco eliminando canales alfa y realiza un encuadre cuadrado (1:1) enfocado
+    en la cabeza y hombros del alumno, recortando el exceso inferior del torso (pecho
+    y abdomen) y los laterales vacíos. Esto asegura que la fotografía quede a la par
+    exacta del código QR en las credenciales escolares oficiales.
+
+    Args:
+        image_raw (Image.Image): Imagen original cargada por el usuario.
+        output_size (int, optional): Dimensión cuadrada final en píxeles. Defaults to 800.
+
+    Returns:
+        Image.Image: Imagen optimizada en formato cuadrado RGB de output_size x output_size.
+    """
+    # 1. Aplicar orientación física según metadatos EXIF reales
+    img = ImageOps.exif_transpose(image_raw) or image_raw
+
+    # 2. Componer sobre fondo blanco puro si tiene canal alfa o transparencia
+    if img.mode in ("RGBA", "LA") or (
+        img.mode == "P" and "transparency" in img.info
+    ):
+        img_rgba = img.convert("RGBA")
+        clean_img = Image.new("RGB", img_rgba.size, (255, 255, 255))
+        clean_img.paste(img_rgba, mask=img_rgba.split()[3])
+        img = clean_img
+    elif img.mode != "RGB":
+        img = img.convert("RGB")
+
+    w, h = img.size
+
+    # 3. Recorte cuadrado centrado enfocado en cabeza y hombros
+    if w > h:
+        # Foto horizontal (cámara/celular apaisado con el alumno centrado):
+        # Tomamos un cuadrado de ~78% de la altura, centrado horizontalmente
+        # y dejando ~4% de margen superior para el cabello.
+        crop_size = max(50, int(h * 0.78))
+        left = max(0, (w - crop_size) // 2)
+        top = max(0, int(h * 0.04))
+        if top + crop_size > h:
+            top = max(0, h - crop_size)
+    elif h > w:
+        # Foto vertical (retrato escolar donde el torso ocupa la parte baja):
+        # Tomamos un cuadrado de ~86% del ancho para hacer zoom al rostro
+        # y cortar el exceso inferior de torso/pecho.
+        crop_size = max(50, int(w * 0.86))
+        left = max(0, (w - crop_size) // 2)
+        top = max(0, int(h * 0.05))
+        if top + crop_size > h:
+            top = max(0, h - crop_size)
+    else:
+        # Ya es cuadrada: zoom moderado enfocado en la cabeza
+        crop_size = max(50, int(w * 0.88))
+        left = max(0, (w - crop_size) // 2)
+        top = max(0, int((h - crop_size) * 0.25))
+
+    right = min(w, left + crop_size)
+    bottom = min(h, top + crop_size)
+
+    cropped = img.crop((left, top, right, bottom))
+    return cropped.resize((output_size, output_size), Image.Resampling.LANCZOS)
+
+
 def process_and_save_photo(
     student: Student,
     file_bytes_or_obj: Any,
     filename: str,
 ) -> tuple[bool, str, str]:
-    """Sanitiza, normaliza y almacena la fotografía institucional de un estudiante.
+    """Sanitiza, encuadra y almacena la fotografía institucional de un estudiante.
 
     Elimina metadatos EXIF por privacidad de menores (RN-TRX-02, RN-EST-16),
-    convierte a JPEG RGB, genera el hash SHA-256 (RN-EST-15), guarda en el
-    sistema de archivos seguro y recalcula la completitud del expediente (RN-EST-10).
+    aplica recorte cuadrado con zoom a cabeza y hombros (alineado al QR de la
+    credencial), convierte a JPEG RGB, genera el hash SHA-256 (RN-EST-15), guarda
+    en el sistema de archivos seguro y recalcula la completitud del expediente (RN-EST-10).
 
     Args:
         student (Student): Instancia del estudiante a actualizar.
@@ -199,31 +266,18 @@ def process_and_save_photo(
             y el hash SHA-256 calculado.
     """
     try:
-        # Abrir imagen con Pillow para sanitización
+        # Abrir imagen con Pillow para sanitización y formateo
         if hasattr(file_bytes_or_obj, "read"):
             image_raw = Image.open(file_bytes_or_obj)
         else:
             image_raw = Image.open(io.BytesIO(file_bytes_or_obj))
 
-        # Crear una imagen limpia en RGB descartando metadatos EXIF (RN-TRX-02)
-        image_clean = Image.new("RGB", image_raw.size, (255, 255, 255))
-        if image_raw.mode in ("RGBA", "LA") or (
-            image_raw.mode == "P" and "transparency" in image_raw.info
-        ):
-            # Componer sobre fondo blanco
-            image_raw_rgba = image_raw.convert("RGBA")
-            image_clean.paste(image_raw_rgba, mask=image_raw_rgba.split()[3])
-        else:
-            image_clean.paste(image_raw.convert("RGB"))
-
-        # Redimensionar proporcionalmente si la imagen de cámara es excesivamente grande
-        max_dim = 1200
-        if max(image_clean.size) > max_dim:
-            image_clean.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+        # Formatear: orientación EXIF, zoom cabeza/hombros, corte de torso inferior y cuadrado 1:1
+        image_clean = format_student_portrait(image_raw, output_size=800)
 
         # Guardar en buffer JPEG sanitizado
         buffer = io.BytesIO()
-        image_clean.save(buffer, format="JPEG", quality=90, optimize=True)
+        image_clean.save(buffer, format="JPEG", quality=92, optimize=True)
         photo_bytes = buffer.getvalue()
 
         # Calcular firma SHA-256 (RN-EST-15)
@@ -252,7 +306,6 @@ def process_and_save_photo(
         )
 
         # Si el estudiante NO cuenta con un token QR activo, generarlo automáticamente (US-064)
-        # Nota: los estudiantes que ya cuentan con un token activo se conservan intactos.
         if not student.active_qr_token:
             from apps.qr_codes.crypto import issue_qr_token_for_student
             issue_qr_token_for_student(

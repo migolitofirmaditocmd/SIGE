@@ -158,7 +158,24 @@ def _draw_student_photo_pil(
         if full_path.exists() and full_path.is_file():
             try:
                 with Image.open(full_path) as photo_raw:
-                    photo_resized = photo_raw.convert("RGB").resize(
+                    from PIL import ImageOps
+                    photo_tr = ImageOps.exif_transpose(photo_raw) or photo_raw
+                    photo_rgb = photo_tr.convert("RGB")
+
+                    # Recorte proporcional centrado si la imagen no es cuadrada
+                    target_ratio = w / h
+                    pw, ph = photo_rgb.size
+                    curr_ratio = pw / ph
+                    if curr_ratio > target_ratio:
+                        crop_w = int(ph * target_ratio)
+                        c_left = (pw - crop_w) // 2
+                        photo_cropped = photo_rgb.crop((c_left, 0, c_left + crop_w, ph))
+                    else:
+                        crop_h = int(pw / target_ratio)
+                        c_top = max(0, int((ph - crop_h) * 0.15))
+                        photo_cropped = photo_rgb.crop((0, c_top, pw, c_top + crop_h))
+
+                    photo_resized = photo_cropped.resize(
                         (w, h), Image.Resampling.LANCZOS
                     )
                     base_img.paste(photo_resized, (x0, y0))
@@ -178,8 +195,8 @@ def _draw_student_photo_pil(
             anchor="mm",
         )
     else:
-        # Borde decorativo alrededor de la foto cargada
-        draw.rectangle([x0, y0, x1, y1], outline="#A0AEC0", width=2)
+        # Borde decorativo simétrico idéntico al del código QR
+        draw.rectangle([(x0 - 2, y0 - 2), (x1 + 2, y1 + 2)], outline=(203, 213, 225), width=2)
 
 
 def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
@@ -251,9 +268,9 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     d.rounded_rectangle([(420, 202), (608, 246)], radius=6, fill=col_navy)
     d.text((514, 224), academic_group, fill=(255, 255, 255), font=f_badge, anchor="mm")
 
-    # 4. Sección central: Fotografía Oficial + Código QR Contiguos
-    # Caja foto: x=45, y=270, w=255, h=310
-    photo_box = (45, 270, 300, 580)
+    # 4. Sección central: Fotografía Oficial + Código QR Contiguos (a la par)
+    # Caja foto: x=45, y=270, w=255, h=255 (dimensiones exactas a la par que el QR)
+    photo_box = (45, 270, 300, 525)
     name_tokens = (student_data.get("display_name") or "ALUMNO").split()
     initials = "".join(t[0] for t in name_tokens[:2]) if name_tokens else "AL"
 
@@ -264,7 +281,7 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
         base_img=card,
         initials=initials,
     )
-    d.text((172, 595), "Fotografía Oficial", fill=(100, 116, 139), font=f_captions, anchor="mm")
+    d.text((172, 545), "Fotografía Oficial", fill=(100, 116, 139), font=f_captions, anchor="mm")
 
     # Caja QR: x=340, y=270, w=255, h=255
     token_val = (

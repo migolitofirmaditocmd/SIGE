@@ -851,60 +851,20 @@ class StudentPhotoView(APIView):
                 http_status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Procesar la imagen con Pillow: eliminar metadatos EXIF y convertir a RGB
-        try:
-            image_raw = Image.open(photo)
-            image_clean = Image.new("RGB", image_raw.size, (255, 255, 255))
-            if image_raw.mode in ("RGBA", "LA", "P"):
-                image_clean.paste(image_raw, mask=image_raw.split()[-1] if image_raw.mode == "RGBA" else None)
-            else:
-                image_clean.paste(image_raw.convert("RGB"))
-
-            # Guardar en el directorio de medios institucional
-            media_dir = Path(settings.MEDIA_ROOT) / "students"
-            media_dir.mkdir(parents=True, exist_ok=True)
-            photo_filename = f"{student.id}.jpg"
-            photo_dest = media_dir / photo_filename
-
-            buf = io.BytesIO()
-            image_clean.save(buf, format="JPEG", quality=92, optimize=True)
-            photo_bytes = buf.getvalue()
-
-            with open(photo_dest, "wb") as f_out:
-                f_out.write(photo_bytes)
-
-            sha256_hash = hashlib.sha256(photo_bytes).hexdigest()
-        except Exception as err:
+        # Procesar, sanitizar, recortar con zoom a cabeza/hombros y guardar
+        success, msg, sha256_hash = process_and_save_photo(
+            student=student,
+            file_bytes_or_obj=photo,
+            filename=photo.name or f"{student.id}.jpg",
+        )
+        if not success:
             raise SIGEAPIException(
                 error_code="VALIDATION_ERROR",
-                message=f"No se pudo procesar la imagen enviada: {err}",
+                message=msg,
                 http_status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Actualizar campos en el expediente del estudiante (RN-EST-10, RN-EST-15)
-        rel_path = f"students/{photo_filename}"
-        student.photo_url = rel_path
-        student.photo_sha256 = sha256_hash
-        student.photo_updated_at = timezone.now()
-        student._recalculate_completeness()
-        student.save(
-            update_fields=[
-                "photo_url",
-                "photo_sha256",
-                "photo_updated_at",
-                "completeness",
-                "updated_at",
-            ]
-        )
-
-        # Emitir código QR automáticamente si el estudiante no tiene uno activo (US-064)
         active_qr = student.active_qr_token
-        if not active_qr:
-            from apps.qr_codes.crypto import issue_qr_token_for_student
-            active_qr = issue_qr_token_for_student(
-                student, reason="Emisión automática al cargar fotografía oficial"
-            )
-
         active_qr_token_id = str(active_qr.token) if active_qr else None
 
         return _no_store_response(
