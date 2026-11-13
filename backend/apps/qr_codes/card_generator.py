@@ -439,7 +439,7 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
     f_dir = _get_pil_font(28, bold=True)
     f_sig_lbl = _get_pil_font(25, bold=True)
     f_school_lbl = _get_pil_font(23, bold=True)
-    f_disp = _get_pil_font(21, bold=False)
+    f_disp = _get_pil_font(25, bold=False)
     f_footer = _get_pil_font(27, bold=True)
 
     # Marco exterior
@@ -492,15 +492,15 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
     d.text((w // 2, 568), "NOMBRE Y FIRMA DE LA DIRECCIÓN", fill=col_navy, font=f_sig_lbl, anchor="mm")
     d.text((w // 2, 615), "ESCUELA SECUNDARIA MIXTA No. 5", fill=col_dark, font=f_school_lbl, anchor="mm")
 
-    # 4. Normativa escolar oficial (exactamente 2 disposiciones con texto legible)
+    # 4. Normativa escolar oficial (disposiciones ampliadas para óptima legibilidad en impresión)
     d.rectangle([(20, 685), (w - 20, 915)], fill=(248, 250, 252), outline=border_col, width=2)
-    d.text((35, 712), "DISPOSICIONES OFICIALES:", fill=col_navy, font=f_sub)
+    d.text((35, 712), "DISPOSICIONES OFICIALES:", fill=col_navy, font=_get_pil_font(24, bold=True))
 
-    d.text((35, 755), "• La presente credencial lo(a) acredita como alumno", fill=col_dark, font=f_disp)
-    d.text((50, 785), "de este plantel educativo.", fill=col_dark, font=f_disp)
+    d.text((35, 752), "• La presente credencial lo(a) acredita como alumno", fill=col_dark, font=f_disp)
+    d.text((52, 786), "de este plantel educativo.", fill=col_dark, font=f_disp)
 
-    d.text((35, 830), "• Este documento es intransferible, no es valido si", fill=col_dark, font=f_disp)
-    d.text((50, 860), "presenta alteraciones.", fill=col_dark, font=f_disp)
+    d.text((35, 832), "• Este documento es intransferible, no es válido si", fill=col_dark, font=f_disp)
+    d.text((52, 866), "presenta alteraciones.", fill=col_dark, font=f_disp)
 
     # 5. Cintillo dorado oficial de vigencia
     d.rectangle([(20, 930), (w - 20, 990)], fill=col_gold)
