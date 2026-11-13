@@ -152,11 +152,11 @@ export const BatchPhotoUploadModal: React.FC<BatchPhotoUploadModalProps> = ({
               <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
                 <Sparkles className="w-4 h-4 text-[#0A3D91] shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold">Vinculación Automática por Nombre de Archivo</p>
+                  <p className="font-semibold">Vinculación Automática y Generación de Código QR</p>
                   <p className="text-blue-800/90 mt-0.5">
                     Puedes seleccionar todas las fotos juntas o un archivo ZIP. El sistema identificará 
                     automáticamente a qué alumno corresponde cada fotografía según el nombre del archivo, 
-                    eliminará metadatos EXIF por privacidad de menores y guardará la imagen en la base de datos.
+                    eliminará metadatos EXIF por privacidad y generará automáticamente su código QR oficial a los alumnos que aún no lo tengan.
                   </p>
                 </div>
               </div>
@@ -465,3 +465,4 @@ export const BatchPhotoUploadModal: React.FC<BatchPhotoUploadModalProps> = ({
     </div>
   );
 };
+

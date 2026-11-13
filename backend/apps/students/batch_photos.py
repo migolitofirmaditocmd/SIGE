@@ -251,6 +251,14 @@ def process_and_save_photo(
             ]
         )
 
+        # Si el estudiante NO cuenta con un token QR activo, generarlo automáticamente (US-064)
+        # Nota: los estudiantes que ya cuentan con un token activo se conservan intactos.
+        if not student.active_qr_token:
+            from apps.qr_codes.crypto import issue_qr_token_for_student
+            issue_qr_token_for_student(
+                student, reason="Emisión automática al cargar fotografía oficial"
+            )
+
         return True, "Fotografía procesada y guardada exitosamente.", sha256_hash
 
     except Exception as exc:

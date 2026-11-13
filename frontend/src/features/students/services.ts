@@ -103,7 +103,12 @@ export function getQrImageUrl(token: string): string {
 export async function uploadStudentPhoto(
   studentId: string,
   file: File
-): Promise<{ photo_url: string; photo_sha256?: string; completeness: string }> {
+): Promise<{
+  photo_url: string;
+  photo_sha256?: string;
+  completeness: string;
+  active_qr_token_id?: string | null;
+}> {
   const formData = new FormData();
   formData.append("photo", file);
 

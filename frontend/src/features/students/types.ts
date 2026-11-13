@@ -86,6 +86,7 @@ export interface BatchPhotoResultItem {
   student_name?: string | null;
   enrollment_id?: string | null;
   group?: string | null;
+  active_qr_token_id?: string | null;
 }
 
 export interface BatchPhotoUploadResponse {

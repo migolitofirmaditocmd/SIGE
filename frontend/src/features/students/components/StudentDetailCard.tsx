@@ -81,6 +81,7 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
           ...student,
           photo_url: result.photo_url,
           completeness: result.completeness as "COMPLETO" | "INCOMPLETO",
+          active_qr_token_id: result.active_qr_token_id ?? student.active_qr_token_id,
           updated_at: new Date(now).toISOString(),
         });
       }
@@ -354,14 +355,28 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
                 </span>
               </div>
             ) : (
-              <div className="w-44 h-44 rounded-xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-center p-3 text-center">
-                <QrCode className="w-10 h-10 text-slate-400 mb-2" />
-                <span className="text-xs font-bold text-slate-700">
-                  QR Pendiente
-                </span>
-                <span className="text-[10px] text-slate-500 mt-1">
-                  Aún no se ha emitido el código QR para este estudiante.
-                </span>
+              <div className="w-48 p-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 flex flex-col items-center justify-center text-center space-y-2.5">
+                <div className="p-2.5 bg-amber-100 rounded-full text-amber-700">
+                  <QrCode className="w-8 h-8" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-amber-900 block">
+                    QR Pendiente
+                  </span>
+                  <p className="text-[11px] text-amber-800 leading-snug mt-1 font-medium">
+                    Si quieres tener el código QR, debes subir la fotografía del alumno.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUploadClick}
+                  disabled={isUploading}
+                  className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A3D91] hover:bg-[#072B68] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+                  title="Cargar fotografía para generar el código QR"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Subir fotografía</span>
+                </button>
               </div>
             )}
           </div>

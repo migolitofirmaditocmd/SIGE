@@ -836,11 +836,46 @@ class TestStudentPhotoAPI:
         assert student.photo_url is not None
         assert student.photo_sha256 is not None
         assert len(student.photo_sha256) == 64
+        # Comprobar emisión automática de QR si no tenía uno
+        assert "active_qr_token_id" in resp.data
+        assert resp.data["active_qr_token_id"] is not None
+        assert student.active_qr_token is not None
+        assert str(student.active_qr_token.token) == str(resp.data["active_qr_token_id"])
 
         # Comprobar descarga de imagen
         get_resp = client.get(f"/api/v1/students/{student.id}/photo/")
         assert get_resp.status_code == status.HTTP_200_OK
         assert "image/jpeg" in get_resp.headers["Content-Type"]
+
+    def test_subir_foto_conserva_qr_existente(
+        self, client: APIClient, student: Student
+    ) -> None:
+        """Al subir foto a un alumno que ya tiene QR activo, dicho QR se conserva sin cambios."""
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from apps.qr_codes.crypto import issue_qr_token_for_student
+
+        # Emitir QR inicial
+        initial_qr = issue_qr_token_for_student(student, reason="QR inicial existente")
+        initial_token_str = str(initial_qr.token)
+
+        img = Image.new("RGB", (100, 100), color="green")
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+        uploaded = SimpleUploadedFile("foto_nueva.jpg", buf.read(), content_type="image/jpeg")
+
+        resp = client.post(
+            f"/api/v1/students/{student.id}/photo/",
+            {"photo": uploaded},
+            format="multipart",
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["active_qr_token_id"] == initial_token_str
+
+        student.refresh_from_db()
+        assert str(student.active_qr_token.token) == initial_token_str
 
     def test_subir_foto_tipo_invalido_devuelve_400(
         self, client: APIClient, student: Student

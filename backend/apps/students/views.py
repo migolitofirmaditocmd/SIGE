@@ -807,7 +807,16 @@ class StudentPhotoView(APIView):
         summary="Cargar fotografía del estudiante",
         description="Carga de fotografía (JPEG/PNG) para credencialización y expediente institucional.",
         request=inline_serializer("PhotoUploadRequest", fields={"photo": serializers.FileField()}),
-        responses={200: inline_serializer("PhotoUploadResponse", fields={"photo_url": serializers.CharField(), "completeness": serializers.CharField()})},
+        responses={
+            200: inline_serializer(
+                "PhotoUploadResponse",
+                fields={
+                    "photo_url": serializers.CharField(),
+                    "completeness": serializers.CharField(),
+                    "active_qr_token_id": serializers.UUIDField(allow_null=True),
+                },
+            )
+        },
         tags=["Estudiantes"],
     )
     def post(self, request: Request, pk: str) -> Response:
@@ -888,12 +897,23 @@ class StudentPhotoView(APIView):
             ]
         )
 
+        # Emitir código QR automáticamente si el estudiante no tiene uno activo (US-064)
+        active_qr = student.active_qr_token
+        if not active_qr:
+            from apps.qr_codes.crypto import issue_qr_token_for_student
+            active_qr = issue_qr_token_for_student(
+                student, reason="Emisión automática al cargar fotografía oficial"
+            )
+
+        active_qr_token_id = str(active_qr.token) if active_qr else None
+
         return _no_store_response(
             {
                 "photo_url": f"/api/v1/students/{pk}/photo/",
                 "photo_sha256": student.photo_sha256,
                 "completeness": student.completeness,
                 "completeness_display": student.get_completeness_display(),
+                "active_qr_token_id": active_qr_token_id,
             },
             status.HTTP_200_OK,
         )
@@ -1200,6 +1220,11 @@ class StudentBatchPhotoUploadView(APIView):
                         "student_name": matched_student.display_name,
                         "enrollment_id": matched_student.enrollment_id,
                         "group": f"{matched_student.grade}°{matched_student.group_letter} {matched_student.get_shift_display()}",
+                        "active_qr_token_id": (
+                            str(matched_student.active_qr_token.token)
+                            if matched_student.active_qr_token
+                            else None
+                        ),
                     }
                 )
             else:
