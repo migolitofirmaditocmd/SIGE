@@ -200,6 +200,41 @@ def _draw_student_photo_pil(
         draw.rectangle([(x0 - 2, y0 - 2), (x1 + 2, y1 + 2)], outline=(203, 213, 225), width=2)
 
 
+def _get_expiration_year_by_grade(student_data: dict[str, Any]) -> int:
+    """Calcula el año de vencimiento de la credencial según el grado escolar del alumno.
+
+    Reglas institucionales de vigencia escolar (ciclo de secundaria de 3 años):
+        - 1° Grado (ingreso ciclo 2026-2027): Vence en Julio del 2029 (3 años).
+        - 2° Grado (intermedio ciclo 2026-2027): Vence en Julio del 2028 (2 años).
+        - 3° Grado (egreso ciclo 2026-2027): Vence en Julio del 2027 (1 año).
+
+    Args:
+        student_data (dict[str, Any]): Diccionario con datos estructurados del alumno.
+
+    Returns:
+        int: Año de vencimiento (2029, 2028 o 2027). Defaults to 2028.
+    """
+    grade = student_data.get("grade")
+    if grade is None:
+        # Extraer dígito de grado de academic_group si no se proporcionó directamente
+        academic_group = str(student_data.get("academic_group", ""))
+        for char in academic_group:
+            if char in ("1", "2", "3"):
+                grade = char
+                break
+
+    try:
+        grade_int = int(grade)
+    except (ValueError, TypeError):
+        grade_int = 2
+
+    if grade_int == 1:
+        return 2029
+    elif grade_int == 3:
+        return 2027
+    return 2028
+
+
 def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     """Renderiza el anverso (cara frontal) de la credencial oficial CR-80 a 300 DPI.
 
@@ -331,7 +366,8 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     d.text((45, 815), f"CIUDAD: {municipio}     C.P.: {cp}", fill=col_dark, font=f_data_bold)
     d.text((45, 860), f"TEL: {phone}     SANGRE: {blood}", fill=col_dark, font=f_data_bold)
     d.text((45, 905), f"ALERGIAS: {allergies}", fill=col_dark, font=f_data_bold)
-    d.text((45, 950), "CICLO: 2026-2027          VENCE: JULIO 2028", fill=col_navy, font=f_data_bold)
+    exp_year = _get_expiration_year_by_grade(student_data)
+    d.text((45, 950), f"CICLO: 2026-2027          VENCE: JULIO {exp_year}", fill=col_navy, font=f_data_bold)
 
     return card
 
@@ -504,8 +540,9 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
     d.text((52, 866), "presenta alteraciones.", fill=col_dark, font=f_disp)
 
     # 5. Cintillo dorado oficial de vigencia
+    exp_year = _get_expiration_year_by_grade(student_data)
     d.rectangle([(20, 930), (w - 20, 990)], fill=col_gold)
-    d.text((w // 2, 960), "VÁLIDO HASTA JULIO DEL 2028", fill=(255, 255, 255), font=f_footer, anchor="mm")
+    d.text((w // 2, 960), f"VÁLIDO HASTA JULIO DEL {exp_year}", fill=(255, 255, 255), font=f_footer, anchor="mm")
 
     return reverso
 
