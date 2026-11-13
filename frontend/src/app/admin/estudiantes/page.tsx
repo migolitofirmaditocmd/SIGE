@@ -122,6 +122,10 @@ export default function EstudiantesAdminPage() {
                 setSelectedStudent(updated);
                 setRefreshKey((prev) => prev + 1);
               }}
+              onStudentDeleted={() => {
+                setSelectedStudent(null);
+                setRefreshKey((prev) => prev + 1);
+              }}
             />
           </section>
         )}

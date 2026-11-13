@@ -420,6 +420,87 @@ class StudentStatusView(APIView):
 
 
 # ------------------------------------------------------------------
+# DELETE /api/v1/students/{id}/delete/   – Eliminación permanente
+# ------------------------------------------------------------------
+
+class StudentDeleteView(APIView):
+    """Eliminación permanente (hard delete) de un estudiante del sistema.
+
+    Elimina de forma irreversible el registro del estudiante junto con
+    sus archivos de fotografía (procesada y original) del disco. Los
+    registros asociados (QRCodeToken, StudentGuardian, GuardianConsentLog)
+    se eliminan en cascada por las restricciones FK del modelo.
+
+    Roles permitidos: ADM.
+
+    Raises:
+        SIGEAPIException: HTTP 404 si el estudiante no existe.
+    """
+
+    @extend_schema(
+        operation_id="students_delete",
+        summary="Eliminar estudiante permanentemente",
+        description=(
+            "Elimina de forma irreversible el expediente del estudiante, "
+            "sus fotografías en disco y todos los registros asociados en cascada. "
+            "Esta operación NO puede deshacerse."
+        ),
+        responses={
+            200: inline_serializer(
+                "StudentDeleteResponse",
+                fields={
+                    "message": serializers.CharField(),
+                    "deleted_id": serializers.UUIDField(),
+                },
+            )
+        },
+        tags=["Estudiantes"],
+    )
+    @transaction.atomic
+    def delete(self, request: Request, pk: str) -> Response:
+        """Elimina permanentemente al estudiante y sus archivos.
+
+        Args:
+            request: Objeto de solicitud HTTP.
+            pk: UUID del estudiante a eliminar.
+
+        Returns:
+            Response: Mensaje de confirmación con el ID eliminado (HTTP 200).
+
+        Raises:
+            SIGEAPIException: HTTP 404 si el estudiante no existe.
+        """
+        student = _get_student_or_404(pk)
+
+        student_id_str = str(student.id)
+        display_name = student.display_name
+
+        # Eliminar fotografías del disco (procesada y original)
+        media_root = Path(settings.MEDIA_ROOT)
+        for photo_path in [
+            media_root / "students" / f"{student.id}.jpg",
+            media_root / "students" / "originals" / f"{student.id}.jpg",
+        ]:
+            if photo_path.exists():
+                try:
+                    photo_path.unlink()
+                except OSError:
+                    pass  # Si no se puede eliminar el archivo, continuar
+
+        # Eliminar el registro — las FK con on_delete=CASCADE
+        # eliminan QRCodeToken, StudentGuardian y GuardianConsentLog.
+        student.delete()
+
+        return _no_store_response(
+            {
+                "message": f"Estudiante '{display_name}' eliminado exitosamente.",
+                "deleted_id": student_id_str,
+            },
+            status.HTTP_200_OK,
+        )
+
+
+# ------------------------------------------------------------------
 # POST /api/v1/students/{id}/reinstate/   (BAJA → ACTIVO)
 # ------------------------------------------------------------------
 

@@ -9,6 +9,8 @@ import {
   GuardianUpdatePayload,
   PaginatedResponse,
   Student,
+  StudentCreatePayload,
+  StudentDeleteResponse,
   StudentUpdatePayload,
 } from "./types";
 
@@ -355,6 +357,62 @@ export async function updateGuardian(
   return await res.json();
 }
 
+/**
+ * Elimina permanentemente a un estudiante del sistema (hard delete).
+ * Elimina el registro y sus fotografías. Esta operación es irreversible.
+ */
+export async function deleteStudent(
+  studentId: string
+): Promise<StudentDeleteResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/students/${studentId}/delete/`,
+    { method: "DELETE" }
+  );
 
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(
+      errorData?.message || `Error ${res.status} al eliminar estudiante`
+    );
+  }
 
+  return await res.json();
+}
 
+/**
+ * Registra un nuevo estudiante individualmente (POST /api/v1/students/).
+ * Incluye los datos académicos obligatorios y al menos un tutor.
+ */
+export async function createStudent(
+  payload: StudentCreatePayload
+): Promise<Student> {
+  const res = await fetch(`${API_BASE}/api/v1/students/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    let errorMsg = `Error ${res.status} al registrar estudiante`;
+    if (errorData?.details) {
+      const details = errorData.details;
+      if (typeof details === "object") {
+        const fieldErrors = Object.entries(details)
+          .map(
+            ([key, val]) =>
+              `${key}: ${Array.isArray(val) ? val.join(", ") : val}`
+          )
+          .join(" | ");
+        errorMsg = `${errorData.message || "Error de validación"}: ${fieldErrors}`;
+      } else {
+        errorMsg = String(details);
+      }
+    } else if (errorData?.message) {
+      errorMsg = errorData.message;
+    }
+    throw new Error(errorMsg);
+  }
+
+  return await res.json();
+}

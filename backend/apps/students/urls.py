@@ -15,6 +15,7 @@ from .views import (
     GuardianDetailView,
     InvalidateContactView,
     StudentBatchPhotoUploadView,
+    StudentDeleteView,
     StudentDetailView,
     StudentGuardianAddView,
     StudentListCreateView,
@@ -54,6 +55,12 @@ urlpatterns = [
         "<uuid:pk>/",
         StudentDetailView.as_view(),
         name="student-detail",
+    ),
+    # DELETE /api/v1/students/{id}/delete/ — eliminación permanente
+    path(
+        "<uuid:pk>/delete/",
+        StudentDeleteView.as_view(),
+        name="student-delete",
     ),
     # POST /api/v1/students/{id}/photo/  — carga de fotografía
     # GET  /api/v1/students/{id}/photo/  — descarga autenticada

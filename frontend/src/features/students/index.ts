@@ -11,3 +11,4 @@ export * from "./components/GroupStudentTable";
 export * from "./components/BatchPhotoUploadModal";
 export * from "./components/EditStudentModal";
 export * from "./components/PhotoCropModal";
+export * from "./components/AddStudentModal";

@@ -21,7 +21,9 @@ import {
   ChevronUp,
   Camera,
   CheckCircle2,
+  UserPlus,
 } from "lucide-react";
+import { AddStudentModal } from "./AddStudentModal";
 
 interface GroupStudentTableProps {
   group: AcademicGroup;
@@ -46,6 +48,8 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
   } | null>(null);
   /** Controla si el tablón de pendientes está expandido o colapsado. */
   const [pendingExpanded, setPendingExpanded] = useState<boolean>(true);
+  /** Controla si el modal para agregar alumno está abierto. */
+  const [isAddStudentOpen, setIsAddStudentOpen] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadStudents() {
@@ -149,7 +153,8 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
   const allHavePhoto = studentsWithoutPhoto.length === 0;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col gap-0">
+    <>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col gap-0">
 
       {/* ── TABLÓN DE PENDIENTES (arriba de todo, siempre visible si hay faltantes) ── */}
       {studentsWithoutPhoto.length > 0 && (
@@ -303,6 +308,18 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
 
         {/* Botones de acción */}
         <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Botón agregar alumno individual */}
+          <Button
+            onClick={() => setIsAddStudentOpen(true)}
+            variant="outline"
+            size="sm"
+            className="bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+            title="Registrar un nuevo alumno manualmente"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Agregar alumno</span>
+          </Button>
+
           {onUploadPhotosClick && (
             <Button
               onClick={onUploadPhotosClick}
@@ -519,5 +536,16 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
         </table>
       </div>
     </div>
+
+    {/* Modal para registrar un nuevo alumno individualmente */}
+    <AddStudentModal
+      isOpen={isAddStudentOpen}
+      onClose={() => setIsAddStudentOpen(false)}
+      onStudentCreated={(newStudent) => {
+        setStudents((prev) => [...prev, newStudent]);
+        setIsAddStudentOpen(false);
+      }}
+    />
+    </>
   );
 };

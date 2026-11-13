@@ -9,6 +9,7 @@ import {
   getQrImageUrl,
   getStudentPhotoUrl,
   uploadStudentPhoto,
+  deleteStudent,
 } from "../services";
 import { Badge, Card, Button } from "@/shared/ui";
 import {
@@ -28,6 +29,7 @@ import {
   IdCard,
   Pencil,
   Crop,
+  UserX,
 } from "lucide-react";
 import { EditStudentModal } from "./EditStudentModal";
 import { PhotoCropModal } from "./PhotoCropModal";
@@ -36,17 +38,21 @@ interface StudentDetailCardProps {
   student: Student;
   onClose?: () => void;
   onStudentUpdated?: (updated: Student) => void;
+  onStudentDeleted?: (deletedId: string) => void;
 }
 
 export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
   student,
   onClose,
   onStudentUpdated,
+  onStudentDeleted,
 }) => {
   const [photoTimestamp, setPhotoTimestamp] = useState<number>(0);
   const [hasPhoto, setHasPhoto] = useState<boolean>(Boolean(student.photo_url));
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isDeletingStudent, setIsDeletingStudent] = useState<boolean>(false);
+  const [isDeleteStudentConfirmOpen, setIsDeleteStudentConfirmOpen] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isCropModalOpen, setIsCropModalOpen] = useState<boolean>(false);
@@ -98,6 +104,31 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  /** Elimina permanentemente al estudiante del sistema previa confirmación. */
+  const handleDeleteStudent = async () => {
+    try {
+      setIsDeletingStudent(true);
+      await deleteStudent(student.id);
+      setIsDeleteStudentConfirmOpen(false);
+      if (onStudentDeleted) {
+        onStudentDeleted(student.id);
+      } else if (onClose) {
+        onClose();
+      }
+    } catch (err: unknown) {
+      setUploadMessage({
+        type: "error",
+        text:
+          err instanceof Error
+            ? err.message
+            : "Error al eliminar el estudiante. Inténtalo de nuevo.",
+      });
+      setIsDeleteStudentConfirmOpen(false);
+    } finally {
+      setIsDeletingStudent(false);
     }
   };
 
@@ -382,6 +413,18 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
             <span>Editar información</span>
           </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDeleteStudentConfirmOpen(true)}
+            disabled={isDeletingStudent}
+            className="h-8 px-3 text-xs font-semibold text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5 shadow-2xs"
+            title="Eliminar permanentemente al alumno del sistema"
+          >
+            <UserX className="w-3.5 h-3.5" />
+            <span>Eliminar alumno</span>
+          </Button>
+
           {onClose && (
             <button
               onClick={onClose}
@@ -392,6 +435,67 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Diálogo de confirmación de eliminación de alumno */}
+      {isDeleteStudentConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-red-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <UserX className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Eliminar alumno
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Esta acción es permanente e irreversible.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5">
+              <p className="text-sm text-red-900 font-medium leading-snug">
+                ¿Estás seguro de que deseas eliminar a{" "}
+                <span className="font-bold">{student.display_name}</span> del
+                sistema?
+              </p>
+              <p className="text-xs text-red-700 mt-1.5 leading-snug">
+                Se eliminarán permanentemente el expediente, las fotografías,
+                los códigos QR y todos los registros asociados al alumno.
+                Esta operación <strong>no puede deshacerse</strong>.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setIsDeleteStudentConfirmOpen(false)}
+                disabled={isDeletingStudent}
+                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteStudent}
+                disabled={isDeletingStudent}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeletingStudent ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Sí, eliminar alumno</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal para editar información del estudiante */}
       <EditStudentModal
