@@ -270,6 +270,7 @@ class StudentReadSerializer(serializers.ModelSerializer):
             "id",
             "enrollment_id",
             "curp",
+            "institutional_email",
             "first_name",
             "last_name_father",
             "last_name_mother",
@@ -404,6 +405,7 @@ class StudentWriteSerializer(serializers.ModelSerializer):
         fields = [
             "enrollment_id",
             "curp",
+            "institutional_email",
             "first_name",
             "last_name_father",
             "last_name_mother",

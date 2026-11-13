@@ -56,6 +56,7 @@ export interface Student {
   has_payment_debt?: boolean | null;
   guardians: StudentGuardianRelation[];
   consent_warning?: boolean;
+  institutional_email?: string | null;
   active_qr_token_id?: string | null;
   created_at?: string;
   updated_at?: string;

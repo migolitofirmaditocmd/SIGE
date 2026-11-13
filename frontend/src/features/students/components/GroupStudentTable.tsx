@@ -3,9 +3,13 @@
 
 import React, { useEffect, useState } from "react";
 import { AcademicGroup, Student } from "../types";
-import { fetchStudentsByGroup, getStudentPhotoUrl } from "../services";
+import {
+  downloadGroupCredentialPdf,
+  fetchStudentsByGroup,
+  getStudentPhotoUrl,
+} from "../services";
 import { Badge, Button } from "@/shared/ui";
-import { User, Loader2, Eye, Phone, Upload } from "lucide-react";
+import { User, Loader2, Eye, Phone, Upload, FileDown } from "lucide-react";
 
 interface GroupStudentTableProps {
   group: AcademicGroup;
@@ -23,6 +27,11 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [pdfMessage, setPdfMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     async function loadStudents() {
@@ -45,6 +54,34 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
 
     loadStudents();
   }, [group.id, group.grade, group.group_letter, group.shift, refreshTrigger]);
+
+  /** Genera y descarga el PDF con todas las credenciales elegibles del grupo. */
+  const handleDownloadGroupPdf = async () => {
+    try {
+      setIsDownloadingPdf(true);
+      setPdfMessage(null);
+      const blob = await downloadGroupCredentialPdf(group.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `credenciales_${group.display_name.replace(/\s+/g, "_")}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setPdfMessage({ type: "success", text: "PDF de credenciales descargado." });
+    } catch (err: unknown) {
+      setPdfMessage({
+        type: "error",
+        text:
+          err instanceof Error
+            ? err.message
+            : "Error al generar credenciales del grupo.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -89,6 +126,39 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
             <span>Subir Fotos de este Grupo</span>
           </Button>
         )}
+
+        {/* Botón credenciales PDF del grupo */}
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            onClick={handleDownloadGroupPdf}
+            disabled={isDownloadingPdf}
+            variant="outline"
+            size="sm"
+            className="bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+            title={`Descargar PDF con todas las credenciales del grupo ${group.display_name}`}
+          >
+            {isDownloadingPdf ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Generando...</span>
+              </>
+            ) : (
+              <>
+                <FileDown className="w-3.5 h-3.5" />
+                <span>Credenciales PDF</span>
+              </>
+            )}
+          </Button>
+          {pdfMessage && (
+            <span
+              className={`text-[10px] font-semibold ${
+                pdfMessage.type === "success" ? "text-emerald-700" : "text-red-600"
+              }`}
+            >
+              {pdfMessage.text}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Tabla responsiva */}

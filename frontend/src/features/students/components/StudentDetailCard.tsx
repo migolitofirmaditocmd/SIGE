@@ -3,7 +3,13 @@
 
 import React, { useState, useRef } from "react";
 import { Student } from "../types";
-import { getQrImageUrl, getStudentPhotoUrl, uploadStudentPhoto } from "../services";
+import {
+  deleteStudentPhoto,
+  downloadStudentCredentialPdf,
+  getQrImageUrl,
+  getStudentPhotoUrl,
+  uploadStudentPhoto,
+} from "../services";
 import { Badge, Card, Button } from "@/shared/ui";
 import {
   User,
@@ -16,6 +22,10 @@ import {
   Upload,
   Loader2,
   AlertTriangle,
+  Trash2,
+  FileDown,
+  Mail,
+  IdCard,
 } from "lucide-react";
 
 interface StudentDetailCardProps {
@@ -32,6 +42,8 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
   const [photoTimestamp, setPhotoTimestamp] = useState<number>(0);
   const [hasPhoto, setHasPhoto] = useState<boolean>(Boolean(student.photo_url));
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
   const [uploadMessage, setUploadMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -45,6 +57,64 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  /** Elimina la fotografía del estudiante previa confirmación del usuario. */
+  const handleDeletePhoto = async () => {
+    if (
+      !window.confirm(
+        `¿Eliminar la fotografía de ${student.display_name}?\n\nEsta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      setUploadMessage(null);
+      await deleteStudentPhoto(student.id);
+      setHasPhoto(false);
+      setPhotoTimestamp(0);
+      setUploadMessage({ type: "success", text: "Fotografía eliminada correctamente." });
+      if (onStudentUpdated) {
+        onStudentUpdated({
+          ...student,
+          photo_url: null,
+          completeness: "INCOMPLETO",
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (err: unknown) {
+      setUploadMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Error al eliminar la fotografía.",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  /** Descarga la credencial PDF individual del estudiante. */
+  const handleDownloadCredentialPdf = async () => {
+    try {
+      setIsDownloadingPdf(true);
+      setUploadMessage(null);
+      const blob = await downloadStudentCredentialPdf(student.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `credencial_${student.enrollment_id}_${student.last_name_father}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      setUploadMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Error al generar la credencial PDF.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,7 +211,7 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
               {/* Botón flotante rápido sobre la imagen */}
               <button
                 onClick={handleUploadClick}
-                disabled={isUploading}
+                disabled={isUploading || isDeleting}
                 title={hasPhoto ? "Cambiar fotografía" : "Cargar fotografía oficial"}
                 className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-[#0A3D91] hover:bg-[#072B68] text-white rounded-full flex items-center justify-center shadow-md border-2 border-white transition-all disabled:opacity-50"
               >
@@ -153,31 +223,51 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
               </button>
             </div>
 
-            {/* Botón explícito de Cargar / Cambiar Foto */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUploadClick}
-              disabled={isUploading}
-              className="h-7 px-2 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                  <span>Guardando...</span>
-                </>
-              ) : hasPhoto ? (
-                <>
-                  <Camera className="w-3 h-3 mr-1" />
-                  <span>Cambiar foto</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-3 h-3 mr-1" />
-                  <span>Cargar foto</span>
-                </>
+            {/* Botones de foto: Cargar/Cambiar y Eliminar */}
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUploadClick}
+                disabled={isUploading || isDeleting}
+                className="h-7 px-2 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                    <span>Guardando...</span>
+                  </>
+                ) : hasPhoto ? (
+                  <>
+                    <Camera className="w-3 h-3 mr-1" />
+                    <span>Cambiar foto</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3 h-3 mr-1" />
+                    <span>Cargar foto</span>
+                  </>
+                )}
+              </Button>
+
+              {/* Botón eliminar foto (solo visible si hay foto) */}
+              {hasPhoto && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeletePhoto}
+                  disabled={isDeleting || isUploading}
+                  title="Eliminar fotografía del estudiante"
+                  className="h-7 px-2 text-[11px] font-semibold text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3 h-3" />
+                  )}
+                </Button>
               )}
-            </Button>
+            </div>
           </div>
 
           {/* Nombre y Matrícula */}
@@ -200,13 +290,36 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
               {student.display_name}
             </h3>
 
+            {/* CURP prominente */}
             {student.curp && (
-              <p className="text-xs text-slate-500 font-mono">
-                CURP: <span className="font-semibold">{student.curp}</span>
-              </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <IdCard className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <p className="text-xs text-slate-500">
+                  CURP:{" "}
+                  <span className="font-mono font-semibold text-slate-700 tracking-wide">
+                    {student.curp}
+                  </span>
+                </p>
+              </div>
             )}
 
-            {/* Mensaje de estado de subida */}
+            {/* Correo institucional */}
+            {student.institutional_email && (
+              <div className="flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <p className="text-xs text-slate-500">
+                  Correo:{" "}
+                  <a
+                    href={`mailto:${student.institutional_email}`}
+                    className="font-medium text-[#0A3D91] hover:underline"
+                  >
+                    {student.institutional_email}
+                  </a>
+                </p>
+              </div>
+            )}
+
+            {/* Mensaje de estado de subida / eliminación */}
             {uploadMessage && (
               <div
                 className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 ${
@@ -381,9 +494,42 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
             )}
           </div>
 
-          <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-center gap-1 text-[11px] text-slate-500">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Escuela Secundaria Mixta 5</span>
+          <div className="w-full pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
+            {/* Botón credencial PDF individual */}
+            {student.active_qr_token_id && hasPhoto ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadCredentialPdf}
+                disabled={isDownloadingPdf}
+                className="w-full h-8 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50 flex items-center justify-center gap-1.5"
+                title="Generar y descargar la credencial escolar en PDF"
+              >
+                {isDownloadingPdf ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Generando PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="w-3.5 h-3.5" />
+                    <span>Descargar Credencial PDF</span>
+                  </>
+                )}
+              </Button>
+            ) : (
+              <div
+                className="w-full text-center text-[10px] text-slate-400 italic px-2"
+                title="Se requiere fotografía y código QR activo para generar la credencial"
+              >
+                Requiere foto y QR para generar credencial
+              </div>
+            )}
+
+            <div className="flex items-center gap-1 text-[11px] text-slate-500">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Escuela Secundaria Mixta 5</span>
+            </div>
           </div>
         </div>
       </div>

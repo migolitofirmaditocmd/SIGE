@@ -965,6 +965,67 @@ class StudentPhotoView(APIView):
             status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        operation_id="students_delete_photo",
+        summary="Eliminar fotografía del estudiante",
+        description="Elimina la fotografía del expediente institucional y recalcula completitud (US-064).",
+        responses={
+            200: inline_serializer(
+                "PhotoDeleteResponse",
+                fields={
+                    "message": serializers.CharField(),
+                    "completeness": serializers.CharField(),
+                    "completeness_display": serializers.CharField(),
+                },
+            )
+        },
+        tags=["Estudiantes"],
+    )
+    def delete(self, request: Request, pk: str) -> Response:
+        """Elimina la fotografía del estudiante y limpia los campos asociados.
+
+        Args:
+            request (Request): Request HTTP DELETE.
+            pk (str): UUID del estudiante.
+
+        Returns:
+            Response: Confirmación de eliminación y nuevo estado de completitud (HTTP 200).
+        """
+        student = _get_student_or_404(pk)
+
+        if student.photo_url:
+            full_path = Path(student.photo_url)
+            if not full_path.is_absolute() and hasattr(settings, "MEDIA_ROOT"):
+                full_path = Path(settings.MEDIA_ROOT) / student.photo_url
+            if full_path.exists() and full_path.is_file():
+                try:
+                    full_path.unlink()
+                except OSError:
+                    pass
+
+        student.photo_url = None
+        student.photo_sha256 = None
+        student.photo_updated_at = None
+        student._recalculate_completeness()
+        student.save(
+            update_fields=[
+                "photo_url",
+                "photo_sha256",
+                "photo_updated_at",
+                "completeness",
+                "updated_at",
+            ]
+        )
+
+        return _no_store_response(
+            {
+                "message": "Fotografía eliminada exitosamente.",
+                "completeness": student.completeness,
+                "completeness_display": student.get_completeness_display(),
+            },
+            status.HTTP_200_OK,
+        )
+
 
 # ------------------------------------------------------------------
 # GET /api/v1/students/groups/
