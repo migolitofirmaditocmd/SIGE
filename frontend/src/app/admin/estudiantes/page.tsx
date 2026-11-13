@@ -9,18 +9,22 @@ import {
   StudentDetailCard,
   GroupSelector,
   GroupStudentTable,
+  BatchPhotoUploadModal,
 } from "@/features/students";
-import { Badge } from "@/shared/ui";
+import { Badge, Button } from "@/shared/ui";
 import {
   Search,
   ArrowLeft,
   GraduationCap,
   Sparkles,
+  Upload,
 } from "lucide-react";
 
 export default function EstudiantesAdminPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<AcademicGroup | null>(null);
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSelectStudent = (student: Student) => {
     setSelectedStudent(student);
@@ -28,8 +32,20 @@ export default function EstudiantesAdminPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleBatchSuccess = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
   return (
     <main className="min-h-screen bg-[#F1F5F9] flex flex-col">
+      {/* Modal de Carga Masiva de Fotografías */}
+      <BatchPhotoUploadModal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        selectedGroup={selectedGroup}
+        onSuccess={handleBatchSuccess}
+      />
+
       {/* Barra Superior Institucional */}
       <header className="bg-[#0A3D91] text-white py-4 px-6 shadow-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -53,7 +69,16 @@ export default function EstudiantesAdminPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setIsBatchModalOpen(true)}
+              variant="primary"
+              size="sm"
+              className="bg-white text-[#0A3D91] hover:bg-blue-50 border border-white/20 font-bold flex items-center gap-1.5 shadow-sm text-xs py-1.5 px-3"
+            >
+              <Upload className="w-3.5 h-3.5 text-[#0A3D91]" />
+              <span>Subir Fotos por Lote</span>
+            </Button>
             <Badge
               status="ACTIVO"
               label="Fase 1 · En Línea"
@@ -93,7 +118,14 @@ export default function EstudiantesAdminPage() {
             <StudentDetailCard
               student={selectedStudent}
               onClose={() => setSelectedStudent(null)}
-              onStudentUpdated={setSelectedStudent}
+              onStudentUpdated={(updated) => {
+                setSelectedStudent(updated);
+                setRefreshKey((prev) => prev + 1);
+              }}
+              onStudentDeleted={() => {
+                setSelectedStudent(null);
+                setRefreshKey((prev) => prev + 1);
+              }}
             />
           </section>
         )}
@@ -121,6 +153,8 @@ export default function EstudiantesAdminPage() {
             <GroupStudentTable
               group={selectedGroup}
               onSelectStudent={handleSelectStudent}
+              refreshTrigger={refreshKey}
+              onUploadPhotosClick={() => setIsBatchModalOpen(true)}
             />
           )}
         </section>

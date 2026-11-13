@@ -836,11 +836,46 @@ class TestStudentPhotoAPI:
         assert student.photo_url is not None
         assert student.photo_sha256 is not None
         assert len(student.photo_sha256) == 64
+        # Comprobar emisión automática de QR si no tenía uno
+        assert "active_qr_token_id" in resp.data
+        assert resp.data["active_qr_token_id"] is not None
+        assert student.active_qr_token is not None
+        assert str(student.active_qr_token.token) == str(resp.data["active_qr_token_id"])
 
         # Comprobar descarga de imagen
         get_resp = client.get(f"/api/v1/students/{student.id}/photo/")
         assert get_resp.status_code == status.HTTP_200_OK
         assert "image/jpeg" in get_resp.headers["Content-Type"]
+
+    def test_subir_foto_conserva_qr_existente(
+        self, client: APIClient, student: Student
+    ) -> None:
+        """Al subir foto a un alumno que ya tiene QR activo, dicho QR se conserva sin cambios."""
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from apps.qr_codes.crypto import issue_qr_token_for_student
+
+        # Emitir QR inicial
+        initial_qr = issue_qr_token_for_student(student, reason="QR inicial existente")
+        initial_token_str = str(initial_qr.token)
+
+        img = Image.new("RGB", (100, 100), color="green")
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+        uploaded = SimpleUploadedFile("foto_nueva.jpg", buf.read(), content_type="image/jpeg")
+
+        resp = client.post(
+            f"/api/v1/students/{student.id}/photo/",
+            {"photo": uploaded},
+            format="multipart",
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["active_qr_token_id"] == initial_token_str
+
+        student.refresh_from_db()
+        assert str(student.active_qr_token.token) == initial_token_str
 
     def test_subir_foto_tipo_invalido_devuelve_400(
         self, client: APIClient, student: Student
@@ -856,3 +891,82 @@ class TestStudentPhotoAPI:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["error_code"] == "VALIDATION_ERROR"
+
+
+# ======================================================================
+# TestBatchPhotoUploadAPI (US-064)
+# ======================================================================
+
+@pytest.mark.django_db
+class TestBatchPhotoUploadAPI:
+    """Pruebas del endpoint de carga masiva de fotografías (US-064)."""
+
+    def test_batch_upload_photos_success(
+        self, client: APIClient, student: Student
+    ) -> None:
+        """Comprueba la asociación y carga automática de fotos por nombre de archivo."""
+        import io
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        img = Image.new("RGB", (200, 200), color=(100, 150, 200))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+
+        # Nombre con formato de apellidos y nombre del estudiante fixture: Saúl Ibrahim García Ochoa
+        file_name = "GARCIA OCHOA SAUL.JPG"
+        uploaded = SimpleUploadedFile(file_name, buf.read(), content_type="image/jpeg")
+
+        resp = client.post(
+            "/api/v1/students/batch-photos/",
+            {"photos": [uploaded], "overwrite": "true"},
+            format="multipart",
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        data = resp.data
+        assert data["total_received"] == 1
+        assert data["matched_count"] == 1
+        assert data["updated_count"] == 1
+        assert data["unmatched_count"] == 0
+
+        res_item = data["results"][0]
+        assert res_item["status"] == "SUCCESS"
+        assert res_item["student_id"] == str(student.id)
+
+        student.refresh_from_db()
+        assert student.photo_url is not None
+        assert student.photo_sha256 is not None
+        assert len(student.photo_sha256) == 64
+
+    def test_batch_upload_unmatched(self, client: APIClient) -> None:
+        """Archivos sin coincidencia se reportan con estado UNMATCHED sin romper el proceso."""
+        import io
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        img = Image.new("RGB", (100, 100), color=(255, 255, 255))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+
+        uploaded = SimpleUploadedFile("DESCONOCIDO PEREZ XZ.JPG", buf.read(), content_type="image/jpeg")
+
+        resp = client.post(
+            "/api/v1/students/batch-photos/",
+            {"photos": [uploaded]},
+            format="multipart",
+        )
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["matched_count"] == 0
+        assert resp.data["unmatched_count"] == 1
+        assert resp.data["results"][0]["status"] == "UNMATCHED"
+
+    def test_batch_upload_no_files_returns_400(self, client: APIClient) -> None:
+        """Si no se envían fotos ni zip_file se responde con 400."""
+        resp = client.post("/api/v1/students/batch-photos/", {}, format="multipart")
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.data["error_code"] == "VALIDATION_ERROR"
+

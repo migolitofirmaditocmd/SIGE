@@ -45,6 +45,7 @@ from apps.core.exceptions import (
     SIGEAPIException,
     StudentNotActiveError,
 )
+from .batch_photos import find_matching_student, process_and_save_photo
 from .models import GroupProxy, Guardian, GuardianConsentLog, Student, StudentGuardian
 from .serializers import (
     ConsentUpdateSerializer,
@@ -414,6 +415,87 @@ class StudentStatusView(APIView):
         student.save(update_fields=["status", "updated_at"])
         return _no_store_response(
             {"id": str(student.id), "status": student.status},
+            status.HTTP_200_OK,
+        )
+
+
+# ------------------------------------------------------------------
+# DELETE /api/v1/students/{id}/delete/   – Eliminación permanente
+# ------------------------------------------------------------------
+
+class StudentDeleteView(APIView):
+    """Eliminación permanente (hard delete) de un estudiante del sistema.
+
+    Elimina de forma irreversible el registro del estudiante junto con
+    sus archivos de fotografía (procesada y original) del disco. Los
+    registros asociados (QRCodeToken, StudentGuardian, GuardianConsentLog)
+    se eliminan en cascada por las restricciones FK del modelo.
+
+    Roles permitidos: ADM.
+
+    Raises:
+        SIGEAPIException: HTTP 404 si el estudiante no existe.
+    """
+
+    @extend_schema(
+        operation_id="students_delete",
+        summary="Eliminar estudiante permanentemente",
+        description=(
+            "Elimina de forma irreversible el expediente del estudiante, "
+            "sus fotografías en disco y todos los registros asociados en cascada. "
+            "Esta operación NO puede deshacerse."
+        ),
+        responses={
+            200: inline_serializer(
+                "StudentDeleteResponse",
+                fields={
+                    "message": serializers.CharField(),
+                    "deleted_id": serializers.UUIDField(),
+                },
+            )
+        },
+        tags=["Estudiantes"],
+    )
+    @transaction.atomic
+    def delete(self, request: Request, pk: str) -> Response:
+        """Elimina permanentemente al estudiante y sus archivos.
+
+        Args:
+            request: Objeto de solicitud HTTP.
+            pk: UUID del estudiante a eliminar.
+
+        Returns:
+            Response: Mensaje de confirmación con el ID eliminado (HTTP 200).
+
+        Raises:
+            SIGEAPIException: HTTP 404 si el estudiante no existe.
+        """
+        student = _get_student_or_404(pk)
+
+        student_id_str = str(student.id)
+        display_name = student.display_name
+
+        # Eliminar fotografías del disco (procesada y original)
+        media_root = Path(settings.MEDIA_ROOT)
+        for photo_path in [
+            media_root / "students" / f"{student.id}.jpg",
+            media_root / "students" / "originals" / f"{student.id}.jpg",
+        ]:
+            if photo_path.exists():
+                try:
+                    photo_path.unlink()
+                except OSError:
+                    pass  # Si no se puede eliminar el archivo, continuar
+
+        # Eliminar el registro — las FK con on_delete=CASCADE
+        # eliminan QRCodeToken, StudentGuardian y GuardianConsentLog.
+        student.delete()
+
+        return _no_store_response(
+            {
+                "message": f"Estudiante '{display_name}' eliminado exitosamente.",
+                "deleted_id": student_id_str,
+            },
             status.HTTP_200_OK,
         )
 
@@ -806,7 +888,16 @@ class StudentPhotoView(APIView):
         summary="Cargar fotografía del estudiante",
         description="Carga de fotografía (JPEG/PNG) para credencialización y expediente institucional.",
         request=inline_serializer("PhotoUploadRequest", fields={"photo": serializers.FileField()}),
-        responses={200: inline_serializer("PhotoUploadResponse", fields={"photo_url": serializers.CharField(), "completeness": serializers.CharField()})},
+        responses={
+            200: inline_serializer(
+                "PhotoUploadResponse",
+                fields={
+                    "photo_url": serializers.CharField(),
+                    "completeness": serializers.CharField(),
+                    "active_qr_token_id": serializers.UUIDField(allow_null=True),
+                },
+            )
+        },
         tags=["Estudiantes"],
     )
     def post(self, request: Request, pk: str) -> Response:
@@ -841,51 +932,26 @@ class StudentPhotoView(APIView):
                 http_status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Procesar la imagen con Pillow: eliminar metadatos EXIF y convertir a RGB
-        try:
-            image_raw = Image.open(photo)
-            image_clean = Image.new("RGB", image_raw.size, (255, 255, 255))
-            if image_raw.mode in ("RGBA", "LA", "P"):
-                image_clean.paste(image_raw, mask=image_raw.split()[-1] if image_raw.mode == "RGBA" else None)
-            else:
-                image_clean.paste(image_raw.convert("RGB"))
+        # Procesar, sanitizar, recortar con zoom a cabeza/hombros y guardar
+        is_manual_crop = request.data.get("is_manual_crop") in (True, "true", "True", "1", 1)
+        original_photo = request.FILES.get("original_photo")
 
-            # Guardar en el directorio de medios institucional
-            media_dir = Path(settings.MEDIA_ROOT) / "students"
-            media_dir.mkdir(parents=True, exist_ok=True)
-            photo_filename = f"{student.id}.jpg"
-            photo_dest = media_dir / photo_filename
-
-            buf = io.BytesIO()
-            image_clean.save(buf, format="JPEG", quality=92, optimize=True)
-            photo_bytes = buf.getvalue()
-
-            with open(photo_dest, "wb") as f_out:
-                f_out.write(photo_bytes)
-
-            sha256_hash = hashlib.sha256(photo_bytes).hexdigest()
-        except Exception as err:
+        success, msg, sha256_hash = process_and_save_photo(
+            student=student,
+            file_bytes_or_obj=photo,
+            filename=photo.name or f"{student.id}.jpg",
+            is_manual_crop=is_manual_crop,
+            original_photo_file=original_photo,
+        )
+        if not success:
             raise SIGEAPIException(
                 error_code="VALIDATION_ERROR",
-                message=f"No se pudo procesar la imagen enviada: {err}",
+                message=msg,
                 http_status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Actualizar campos en el expediente del estudiante (RN-EST-10, RN-EST-15)
-        rel_path = f"students/{photo_filename}"
-        student.photo_url = rel_path
-        student.photo_sha256 = sha256_hash
-        student.photo_updated_at = timezone.now()
-        student._recalculate_completeness()
-        student.save(
-            update_fields=[
-                "photo_url",
-                "photo_sha256",
-                "photo_updated_at",
-                "completeness",
-                "updated_at",
-            ]
-        )
+        active_qr = student.active_qr_token
+        active_qr_token_id = str(active_qr.token) if active_qr else None
 
         return _no_store_response(
             {
@@ -893,6 +959,7 @@ class StudentPhotoView(APIView):
                 "photo_sha256": student.photo_sha256,
                 "completeness": student.completeness,
                 "completeness_display": student.get_completeness_display(),
+                "active_qr_token_id": active_qr_token_id,
             },
             status.HTTP_200_OK,
         )
@@ -929,6 +996,20 @@ class StudentPhotoView(APIView):
                 status.HTTP_200_OK,
             )
 
+        # Si se solicita la toma original sin recorte (para edición manual de encuadre)
+        is_original = request.query_params.get("original") in (
+            "true",
+            "1",
+            True,
+        ) or request.query_params.get("raw") in ("true", "1", True)
+
+        if is_original and hasattr(settings, "MEDIA_ROOT"):
+            orig_path = Path(settings.MEDIA_ROOT) / "students" / "originals" / f"{student.id}.jpg"
+            if orig_path.exists() and orig_path.is_file():
+                resp = FileResponse(open(orig_path, "rb"), content_type="image/jpeg")
+                resp["Cache-Control"] = "no-store"
+                return resp
+
         # Servir el archivo físico binario directamente
         full_path = Path(student.photo_url)
         if not full_path.is_absolute() and hasattr(settings, "MEDIA_ROOT"):
@@ -941,6 +1022,76 @@ class StudentPhotoView(APIView):
 
         return _no_store_response(
             {"photo_url": student.photo_url},
+            status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        operation_id="students_delete_photo",
+        summary="Eliminar fotografía del estudiante",
+        description="Elimina la fotografía del expediente institucional y recalcula completitud (US-064).",
+        responses={
+            200: inline_serializer(
+                "PhotoDeleteResponse",
+                fields={
+                    "message": serializers.CharField(),
+                    "completeness": serializers.CharField(),
+                    "completeness_display": serializers.CharField(),
+                },
+            )
+        },
+        tags=["Estudiantes"],
+    )
+    def delete(self, request: Request, pk: str) -> Response:
+        """Elimina la fotografía del estudiante y limpia los campos asociados.
+
+        Args:
+            request (Request): Request HTTP DELETE.
+            pk (str): UUID del estudiante.
+
+        Returns:
+            Response: Confirmación de eliminación y nuevo estado de completitud (HTTP 200).
+        """
+        student = _get_student_or_404(pk)
+
+        if student.photo_url:
+            full_path = Path(student.photo_url)
+            if not full_path.is_absolute() and hasattr(settings, "MEDIA_ROOT"):
+                full_path = Path(settings.MEDIA_ROOT) / student.photo_url
+            if full_path.exists() and full_path.is_file():
+                try:
+                    full_path.unlink()
+                except OSError:
+                    pass
+
+            # Eliminar también la copia original sin recortar si existe
+            if hasattr(settings, "MEDIA_ROOT"):
+                orig_path = Path(settings.MEDIA_ROOT) / "students" / "originals" / f"{student.id}.jpg"
+                if orig_path.exists() and orig_path.is_file():
+                    try:
+                        orig_path.unlink()
+                    except OSError:
+                        pass
+
+        student.photo_url = None
+        student.photo_sha256 = None
+        student.photo_updated_at = None
+        student._recalculate_completeness()
+        student.save(
+            update_fields=[
+                "photo_url",
+                "photo_sha256",
+                "photo_updated_at",
+                "completeness",
+                "updated_at",
+            ]
+        )
+
+        return _no_store_response(
+            {
+                "message": "Fotografía eliminada exitosamente.",
+                "completeness": student.completeness,
+                "completeness_display": student.get_completeness_display(),
+            },
             status.HTTP_200_OK,
         )
 
@@ -982,3 +1133,251 @@ class GroupListView(APIView):
         )
         serializer = GroupListSerializer(groups, many=True)
         return _no_store_response(serializer.data, status.HTTP_200_OK)
+
+
+# ------------------------------------------------------------------
+# POST /api/v1/students/batch-photos/
+# ------------------------------------------------------------------
+
+class StudentBatchPhotoUploadView(APIView):
+    """Carga masiva y vinculación automática de fotografías por lote (SIGE-US-064).
+
+    Recibe múltiples archivos fotográficos (o un archivo ZIP), identifica
+    a qué estudiante pertenece cada imagen según su nombre de archivo o matrícula,
+    elimina metadatos EXIF por privacidad de menores (RN-TRX-02, RN-EST-16),
+    almacena la imagen y actualiza la firma SHA-256 (RN-EST-15).
+    """
+
+    parser_classes = [MultiPartParser, FormParser]
+
+    @extend_schema(
+        operation_id="students_batch_upload_photos",
+        summary="Carga masiva de fotografías de estudiantes",
+        description=(
+            "Asocia y actualiza automáticamente fotos de estudiantes a partir de "
+            "los nombres de archivo de las imágenes recibidas o paquete ZIP (US-064)."
+        ),
+        request=inline_serializer(
+            "BatchPhotoUploadRequest",
+            fields={
+                "photos": serializers.ListField(
+                    child=serializers.FileField(),
+                    required=False,
+                    help_text="Lista de archivos fotográficos a procesar.",
+                ),
+                "zip_file": serializers.FileField(
+                    required=False,
+                    help_text="Paquete ZIP opcional con fotografías.",
+                ),
+                "grade": serializers.IntegerField(
+                    required=False,
+                    help_text="Grado escolar para limitar la búsqueda (1, 2 o 3).",
+                ),
+                "group": serializers.CharField(
+                    required=False,
+                    help_text="Letra de grupo (A, B, C, etc.).",
+                ),
+                "shift": serializers.CharField(
+                    required=False,
+                    help_text="Turno escolar (MATUTINO o VESPERTINO).",
+                ),
+                "overwrite": serializers.BooleanField(
+                    required=False,
+                    default=True,
+                    help_text="Indica si se deben sobreescribir fotos existentes.",
+                ),
+            },
+        ),
+        responses={
+            200: inline_serializer(
+                "BatchPhotoUploadResponse",
+                fields={
+                    "total_received": serializers.IntegerField(),
+                    "matched_count": serializers.IntegerField(),
+                    "updated_count": serializers.IntegerField(),
+                    "skipped_count": serializers.IntegerField(),
+                    "unmatched_count": serializers.IntegerField(),
+                    "results": serializers.ListField(child=serializers.DictField()),
+                },
+            )
+        },
+        tags=["Estudiantes"],
+    )
+    def post(self, request: Request) -> Response:
+        """Procesa el lote de fotografías y las vincula a los estudiantes.
+
+        Args:
+            request (Request): Petición multipart con lista de archivos o zip_file.
+
+        Returns:
+            Response: Reporte detallado de asociación por alumno (HTTP 200).
+        """
+        import zipfile
+
+        photos = request.FILES.getlist("photos") or request.FILES.getlist("files")
+        zip_file = request.FILES.get("zip_file")
+
+        # Extraer elementos a procesar: lista de tuplas (nombre, descriptor/bytes)
+        file_items: list[tuple[str, Any]] = []
+
+        for p in photos:
+            file_items.append((p.name, p))
+
+        if zip_file:
+            try:
+                with zipfile.ZipFile(zip_file, "r") as zf:
+                    for zip_info in zf.infolist():
+                        if zip_info.is_dir():
+                            continue
+                        name = Path(zip_info.filename).name
+                        if name.startswith(".") or name.startswith("__MACOSX"):
+                            continue
+                        if name.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                            file_items.append((name, zf.read(zip_info)))
+            except Exception as exc:
+                raise SIGEAPIException(
+                    error_code="INVALID_ZIP",
+                    message=f"No se pudo descomprimir el archivo ZIP: {str(exc)}",
+                    http_status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if not file_items:
+            raise SIGEAPIException(
+                error_code="VALIDATION_ERROR",
+                message="No se proporcionaron fotografías ni archivo ZIP válido para procesar.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Parámetros opcionales de alcance
+        grade = request.data.get("grade")
+        group_letter = request.data.get("group")
+        shift = request.data.get("shift")
+
+        overwrite_raw = request.data.get("overwrite")
+        overwrite_flag = True
+        if overwrite_raw is not None:
+            overwrite_flag = str(overwrite_raw).strip().lower() in (
+                "true",
+                "1",
+                "yes",
+                "t",
+            )
+
+        # Determinar candidatos prioritarios y de respaldo
+        primary_candidates: list[Student]
+        fallback_candidates: list[Student] | None = None
+
+        if grade and group_letter and shift:
+            primary_candidates = list(
+                Student.objects.filter(
+                    grade=int(grade),
+                    group_letter=str(group_letter).strip().upper(),
+                    shift=str(shift).strip().upper(),
+                )
+            )
+            fallback_candidates = list(
+                Student.objects.exclude(
+                    grade=int(grade),
+                    group_letter=str(group_letter).strip().upper(),
+                    shift=str(shift).strip().upper(),
+                )
+            )
+        else:
+            primary_candidates = list(Student.objects.all())
+            fallback_candidates = None
+
+        total_received = len(file_items)
+        matched_count = 0
+        updated_count = 0
+        skipped_count = 0
+        unmatched_count = 0
+        results: list[dict[str, Any]] = []
+
+        for filename, file_data in file_items:
+            matched_student, score, reason = find_matching_student(
+                filename, primary_candidates, fallback_candidates
+            )
+
+            if not matched_student:
+                unmatched_count += 1
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "UNMATCHED",
+                        "message": reason,
+                        "student_id": None,
+                        "student_name": None,
+                        "enrollment_id": None,
+                        "group": None,
+                    }
+                )
+                continue
+
+            matched_count += 1
+            has_photo = bool(matched_student.photo_url)
+
+            # Si ya cuenta con foto y no se solicitó sobreescribir
+            if has_photo and not overwrite_flag:
+                skipped_count += 1
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "SKIPPED",
+                        "message": (
+                            "El estudiante ya cuenta con fotografía institucional "
+                            "y se especificó conservar la existente."
+                        ),
+                        "student_id": str(matched_student.id),
+                        "student_name": matched_student.display_name,
+                        "enrollment_id": matched_student.enrollment_id,
+                        "group": f"{matched_student.grade}°{matched_student.group_letter} {matched_student.get_shift_display()}",
+                    }
+                )
+                continue
+
+            success, msg, sha256_val = process_and_save_photo(
+                matched_student, file_data, filename
+            )
+
+            if success:
+                updated_count += 1
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "SUCCESS",
+                        "message": f"{msg} · {reason}",
+                        "student_id": str(matched_student.id),
+                        "student_name": matched_student.display_name,
+                        "enrollment_id": matched_student.enrollment_id,
+                        "group": f"{matched_student.grade}°{matched_student.group_letter} {matched_student.get_shift_display()}",
+                        "active_qr_token_id": (
+                            str(matched_student.active_qr_token.token)
+                            if matched_student.active_qr_token
+                            else None
+                        ),
+                    }
+                )
+            else:
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "ERROR",
+                        "message": msg,
+                        "student_id": str(matched_student.id),
+                        "student_name": matched_student.display_name,
+                        "enrollment_id": matched_student.enrollment_id,
+                        "group": f"{matched_student.grade}°{matched_student.group_letter} {matched_student.get_shift_display()}",
+                    }
+                )
+
+        response_payload = {
+            "total_received": total_received,
+            "matched_count": matched_count,
+            "updated_count": updated_count,
+            "skipped_count": skipped_count,
+            "unmatched_count": unmatched_count,
+            "results": results,
+        }
+
+        return _no_store_response(response_payload, status.HTTP_200_OK)
+

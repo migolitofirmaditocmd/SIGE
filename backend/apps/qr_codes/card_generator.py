@@ -33,9 +33,10 @@ CR80_HEIGHT_MM: float = 85.60
 CR80_HORIZ_WIDTH_MM: float = 85.60
 CR80_HORIZ_HEIGHT_MM: float = 53.98
 
-# Dimensiones ampliadas optimizadas para impresión en sustrato Carta horizontal (+30% área)
-PRINT_CARD_WIDTH_MM: float = 61.50
-PRINT_CARD_HEIGHT_MM: float = 97.40
+# Dimensiones optimizadas para mica térmica estándar de 65 mm × 95 mm
+# Permite un margen perimétrico de sellado plástico uniforme (~4.75 mm lateral, ~3.5 mm vertical)
+PRINT_CARD_WIDTH_MM: float = 55.50
+PRINT_CARD_HEIGHT_MM: float = 88.00
 
 # Sticker térmico de asistencia
 STICKER_WIDTH_MM: float = 50.00
@@ -158,7 +159,24 @@ def _draw_student_photo_pil(
         if full_path.exists() and full_path.is_file():
             try:
                 with Image.open(full_path) as photo_raw:
-                    photo_resized = photo_raw.convert("RGB").resize(
+                    from PIL import ImageOps
+                    photo_tr = ImageOps.exif_transpose(photo_raw) or photo_raw
+                    photo_rgb = photo_tr.convert("RGB")
+
+                    # Recorte proporcional centrado si la imagen no es cuadrada
+                    target_ratio = w / h
+                    pw, ph = photo_rgb.size
+                    curr_ratio = pw / ph
+                    if curr_ratio > target_ratio:
+                        crop_w = int(ph * target_ratio)
+                        c_left = (pw - crop_w) // 2
+                        photo_cropped = photo_rgb.crop((c_left, 0, c_left + crop_w, ph))
+                    else:
+                        crop_h = int(pw / target_ratio)
+                        c_top = max(0, int((ph - crop_h) * 0.15))
+                        photo_cropped = photo_rgb.crop((0, c_top, pw, c_top + crop_h))
+
+                    photo_resized = photo_cropped.resize(
                         (w, h), Image.Resampling.LANCZOS
                     )
                     base_img.paste(photo_resized, (x0, y0))
@@ -178,8 +196,8 @@ def _draw_student_photo_pil(
             anchor="mm",
         )
     else:
-        # Borde decorativo alrededor de la foto cargada
-        draw.rectangle([x0, y0, x1, y1], outline="#A0AEC0", width=2)
+        # Borde decorativo simétrico idéntico al del código QR
+        draw.rectangle([(x0 - 2, y0 - 2), (x1 + 2, y1 + 2)], outline=(203, 213, 225), width=2)
 
 
 def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
@@ -251,9 +269,9 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     d.rounded_rectangle([(420, 202), (608, 246)], radius=6, fill=col_navy)
     d.text((514, 224), academic_group, fill=(255, 255, 255), font=f_badge, anchor="mm")
 
-    # 4. Sección central: Fotografía Oficial + Código QR Contiguos
-    # Caja foto: x=45, y=270, w=255, h=310
-    photo_box = (45, 270, 300, 580)
+    # 4. Sección central: Fotografía Oficial + Código QR Contiguos (a la par)
+    # Caja foto: x=45, y=270, w=255, h=255 (dimensiones exactas a la par que el QR)
+    photo_box = (45, 270, 300, 525)
     name_tokens = (student_data.get("display_name") or "ALUMNO").split()
     initials = "".join(t[0] for t in name_tokens[:2]) if name_tokens else "AL"
 
@@ -264,7 +282,7 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
         base_img=card,
         initials=initials,
     )
-    d.text((172, 595), "Fotografía Oficial", fill=(100, 116, 139), font=f_captions, anchor="mm")
+    d.text((172, 545), "Fotografía Oficial", fill=(100, 116, 139), font=f_captions, anchor="mm")
 
     # Caja QR: x=340, y=270, w=255, h=255
     token_val = (
@@ -280,15 +298,21 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     card.paste(qr_resized, (340, 270))
     d.text((467, 545), "Código de Asistencia", fill=(100, 116, 139), font=f_captions, anchor="mm")
 
-    # 5. Banner de Nombre del Alumno
+    # 5. Banner de Nombre del Alumno con ajuste automático de escala si es muy largo
     student_name = (
         student_data.get("display_name")
         or student_data.get("full_name")
         or "IBARRA MEJÍA CARMEN SCARLTT"
     ).strip().upper()
 
+    f_name_size = 32
+    f_name_cur = _get_pil_font(f_name_size, bold=True)
+    while f_name_size > 20 and d.textbbox((0, 0), student_name, font=f_name_cur)[2] > (w - 64):
+        f_name_size -= 1
+        f_name_cur = _get_pil_font(f_name_size, bold=True)
+
     d.line([(30, 622), (w - 30, 622)], fill=(203, 213, 225), width=1)
-    d.text((w // 2, 652), student_name, fill=col_navy, font=f_name, anchor="mm")
+    d.text((w // 2, 652), student_name, fill=col_navy, font=f_name_cur, anchor="mm")
     d.line([(30, 680), (w - 30, 680)], fill=(203, 213, 225), width=1)
 
     # 6. Ficha de Datos Inferior (Contenedor Amarillo #FFFF9B)
@@ -310,6 +334,81 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     d.text((45, 950), "CICLO: 2026-2027          VENCE: JULIO 2028", fill=col_navy, font=f_data_bold)
 
     return card
+
+
+def _format_multiline_guardian_name(
+    name: str,
+    draw: ImageDraw.ImageDraw,
+    max_w: int = 380,
+    initial_font_size: int = 23,
+) -> tuple[list[str], ImageFont.ImageFont]:
+    """Divide y ajusta el nombre del tutor para que nunca desborde el marco del reverso.
+
+    Si el nombre cabe en una sola línea dentro del margen útil, se retorna sin dividir.
+    Si excede el ancho disponible, se busca el punto de corte óptimo entre nombres de pila
+    y apellidos para mostrar los nombres en la línea superior y los apellidos en la inferior.
+    En casos extremos de nombres muy extensos, reduce dinámicamente la escala tipográfica.
+
+    Args:
+        name (str): Nombre completo del tutor o familiar.
+        draw (ImageDraw.ImageDraw): Contexto de dibujo Pillow para medición precisa de texto.
+        max_w (int, optional): Ancho máximo disponible en píxeles. Defaults to 380.
+        initial_font_size (int, optional): Tamaño tipográfico inicial. Defaults to 23.
+
+    Returns:
+        tuple[list[str], ImageFont.ImageFont]: Tupla con la lista de líneas (1 o 2)
+            y el objeto de fuente calibrado.
+    """
+    clean_name = name.strip().upper()
+    cur_size = initial_font_size
+    font = _get_pil_font(cur_size, bold=True)
+
+    # 1. Si cabe perfectamente en una sola línea
+    if draw.textbbox((0, 0), clean_name, font=font)[2] <= max_w:
+        return [clean_name], font
+
+    words = clean_name.split()
+    if len(words) <= 1:
+        while (
+            cur_size > 14
+            and draw.textbbox((0, 0), clean_name, font=_get_pil_font(cur_size, bold=True))[2]
+            > max_w
+        ):
+            cur_size -= 1
+        return [clean_name], _get_pil_font(cur_size, bold=True)
+
+    # 2. Buscar partición balanceada entre nombres (arriba) y apellidos (abajo)
+    best_split: list[str] | None = None
+    best_diff = 9999
+
+    for i in range(1, len(words)):
+        l1 = " ".join(words[:i])
+        l2 = " ".join(words[i:])
+        w1 = draw.textbbox((0, 0), l1, font=font)[2]
+        w2 = draw.textbbox((0, 0), l2, font=font)[2]
+        if w1 <= max_w and w2 <= max_w:
+            diff = abs(w1 - w2)
+            if diff < best_diff:
+                best_diff = diff
+                best_split = [l1, l2]
+
+    if best_split:
+        return best_split, font
+
+    # 3. Si aún dividiendo excede max_w, reducir gradualmente el tamaño de fuente
+    while cur_size > 14:
+        cur_size -= 1
+        test_font = _get_pil_font(cur_size, bold=True)
+        for i in range(1, len(words)):
+            l1 = " ".join(words[:i])
+            l2 = " ".join(words[i:])
+            if (
+                draw.textbbox((0, 0), l1, font=test_font)[2] <= max_w
+                and draw.textbbox((0, 0), l2, font=test_font)[2] <= max_w
+            ):
+                return [l1, l2], test_font
+
+    return [clean_name], _get_pil_font(14, bold=True)
 
 
 def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
@@ -341,7 +440,7 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
     f_dir = _get_pil_font(28, bold=True)
     f_sig_lbl = _get_pil_font(25, bold=True)
     f_school_lbl = _get_pil_font(23, bold=True)
-    f_disp = _get_pil_font(21, bold=False)
+    f_disp = _get_pil_font(25, bold=False)
     f_footer = _get_pil_font(27, bold=True)
 
     # Marco exterior
@@ -351,9 +450,9 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
     d.rectangle([(20, 20), (w - 20, 75)], fill=col_navy)
     d.text((w // 2, 47), "DATOS DE SEGURIDAD Y VIGENCIA", fill=(255, 255, 255), font=f_title, anchor="mm")
 
-    # 2. Caja de contacto de emergencia escolar (tipografía ampliada)
+    # 2. Caja de contacto de emergencia escolar (tipografía calibrada sin desbordes)
     d.rectangle([(20, 90), (w - 20, 275)], fill=(248, 250, 252), outline=border_col, width=2)
-    d.text((35, 115), "EN CASO DE EMERGENCIA LLAMAR A:", fill=col_navy, font=f_sub)
+    d.text((35, 114), "EN CASO DE EMERGENCIA LLAMAR A:", fill=col_navy, font=f_sub)
 
     guardian_name = (
         student_data.get("guardian_name")
@@ -365,11 +464,21 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
         or "33-3614-2289 / 33-1289-4455"
     ).strip()
 
-    d.text((35, 158), "Tutor / Familiar:", fill=col_muted, font=f_sub)
-    d.text((215, 158), guardian_name, fill=col_dark, font=f_name)
+    name_lines, f_tutor = _format_multiline_guardian_name(
+        guardian_name, d, max_w=380, initial_font_size=23
+    )
 
-    d.text((35, 212), "Tel. Emergencia:", fill=col_muted, font=f_sub)
-    d.text((215, 212), guardian_phone, fill=col_dark, font=f_name)
+    if len(name_lines) == 1:
+        d.text((35, 155), "Tutor / Familiar:", fill=col_muted, font=f_sub)
+        d.text((215, 155), name_lines[0], fill=col_dark, font=f_tutor)
+        d.text((35, 212), "Tel. Emergencia:", fill=col_muted, font=f_sub)
+        d.text((215, 212), guardian_phone, fill=col_dark, font=f_name)
+    else:
+        d.text((35, 146), "Tutor / Familiar:", fill=col_muted, font=f_sub)
+        d.text((215, 146), name_lines[0], fill=col_dark, font=f_tutor)
+        d.text((215, 176), name_lines[1], fill=col_dark, font=f_tutor)
+        d.text((35, 218), "Tel. Emergencia:", fill=col_muted, font=f_sub)
+        d.text((215, 218), guardian_phone, fill=col_dark, font=f_name)
 
     # 3. Recuadro de autorización institucional y firma de dirección
     # Espacio amplio para firma rúbrica física
@@ -384,15 +493,15 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
     d.text((w // 2, 568), "NOMBRE Y FIRMA DE LA DIRECCIÓN", fill=col_navy, font=f_sig_lbl, anchor="mm")
     d.text((w // 2, 615), "ESCUELA SECUNDARIA MIXTA No. 5", fill=col_dark, font=f_school_lbl, anchor="mm")
 
-    # 4. Normativa escolar oficial (exactamente 2 disposiciones con texto legible)
+    # 4. Normativa escolar oficial (disposiciones ampliadas para óptima legibilidad en impresión)
     d.rectangle([(20, 685), (w - 20, 915)], fill=(248, 250, 252), outline=border_col, width=2)
-    d.text((35, 712), "DISPOSICIONES OFICIALES:", fill=col_navy, font=f_sub)
+    d.text((35, 712), "DISPOSICIONES OFICIALES:", fill=col_navy, font=_get_pil_font(24, bold=True))
 
-    d.text((35, 755), "• La presente credencial lo(a) acredita como alumno", fill=col_dark, font=f_disp)
-    d.text((50, 785), "de este plantel educativo.", fill=col_dark, font=f_disp)
+    d.text((35, 752), "• La presente credencial lo(a) acredita como alumno", fill=col_dark, font=f_disp)
+    d.text((52, 786), "de este plantel educativo.", fill=col_dark, font=f_disp)
 
-    d.text((35, 830), "• Este documento es intransferible, no es valido si", fill=col_dark, font=f_disp)
-    d.text((50, 860), "presenta alteraciones.", fill=col_dark, font=f_disp)
+    d.text((35, 832), "• Este documento es intransferible, no es válido si", fill=col_dark, font=f_disp)
+    d.text((52, 866), "presenta alteraciones.", fill=col_dark, font=f_disp)
 
     # 5. Cintillo dorado oficial de vigencia
     d.rectangle([(20, 930), (w - 20, 990)], fill=col_gold)
@@ -651,13 +760,13 @@ def generate_credential_pdf(
     rows = 2
     students_per_page = 4
 
-    # Dimensiones ampliadas para maximizar el área impresa en hoja Carta
-    card_w = PRINT_CARD_WIDTH_MM * mm  # 61.50 mm
-    card_h = PRINT_CARD_HEIGHT_MM * mm  # 97.40 mm
+    # Dimensiones optimizadas para mica térmica estándar 65 × 95 mm
+    card_w = PRINT_CARD_WIDTH_MM * mm  # 55.50 mm
+    card_h = PRINT_CARD_HEIGHT_MM * mm  # 88.00 mm
 
-    margin_x = 8.0 * mm
-    top_margin = 9.0 * mm
-    gap_y = 4.3 * mm
+    margin_x = 10.0 * mm
+    top_margin = 13.0 * mm
+    gap_y = 9.0 * mm
 
     # Pares [Frente|Reverso] contiguos sin espacio interno para facilitar el
     # doblez individual de cada credencial tras el recorte.

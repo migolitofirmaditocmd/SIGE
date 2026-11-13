@@ -3,7 +3,14 @@
 
 import React, { useState, useRef } from "react";
 import { Student } from "../types";
-import { getQrImageUrl, getStudentPhotoUrl, uploadStudentPhoto } from "../services";
+import {
+  deleteStudentPhoto,
+  downloadStudentCredentialPdf,
+  getQrImageUrl,
+  getStudentPhotoUrl,
+  uploadStudentPhoto,
+  deleteStudent,
+} from "../services";
 import { Badge, Card, Button } from "@/shared/ui";
 import {
   User,
@@ -16,22 +23,41 @@ import {
   Upload,
   Loader2,
   AlertTriangle,
+  Trash2,
+  FileDown,
+  Mail,
+  IdCard,
+  Pencil,
+  Crop,
+  UserX,
 } from "lucide-react";
+import { EditStudentModal } from "./EditStudentModal";
+import { PhotoCropModal } from "./PhotoCropModal";
 
 interface StudentDetailCardProps {
   student: Student;
   onClose?: () => void;
   onStudentUpdated?: (updated: Student) => void;
+  onStudentDeleted?: (deletedId: string) => void;
 }
 
 export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
   student,
   onClose,
   onStudentUpdated,
+  onStudentDeleted,
 }) => {
   const [photoTimestamp, setPhotoTimestamp] = useState<number>(0);
   const [hasPhoto, setHasPhoto] = useState<boolean>(Boolean(student.photo_url));
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isDeletingStudent, setIsDeletingStudent] = useState<boolean>(false);
+  const [isDeleteStudentConfirmOpen, setIsDeleteStudentConfirmOpen] = useState<boolean>(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isCropModalOpen, setIsCropModalOpen] = useState<boolean>(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string>("");
+  const [selectedRawFile, setSelectedRawFile] = useState<File | undefined>(undefined);
   const [uploadMessage, setUploadMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -47,7 +73,91 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /** Elimina la fotografía del estudiante previa confirmación del usuario. */
+  const handleDeletePhoto = async () => {
+    if (
+      !window.confirm(
+        `¿Eliminar la fotografía de ${student.display_name}?\n\nEsta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      setUploadMessage(null);
+      await deleteStudentPhoto(student.id);
+      setHasPhoto(false);
+      setPhotoTimestamp(0);
+      setUploadMessage({ type: "success", text: "Fotografía eliminada correctamente." });
+      if (onStudentUpdated) {
+        onStudentUpdated({
+          ...student,
+          photo_url: null,
+          completeness: "INCOMPLETO",
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (err: unknown) {
+      setUploadMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Error al eliminar la fotografía.",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  /** Elimina permanentemente al estudiante del sistema previa confirmación. */
+  const handleDeleteStudent = async () => {
+    try {
+      setIsDeletingStudent(true);
+      await deleteStudent(student.id);
+      setIsDeleteStudentConfirmOpen(false);
+      if (onStudentDeleted) {
+        onStudentDeleted(student.id);
+      } else if (onClose) {
+        onClose();
+      }
+    } catch (err: unknown) {
+      setUploadMessage({
+        type: "error",
+        text:
+          err instanceof Error
+            ? err.message
+            : "Error al eliminar el estudiante. Inténtalo de nuevo.",
+      });
+      setIsDeleteStudentConfirmOpen(false);
+    } finally {
+      setIsDeletingStudent(false);
+    }
+  };
+
+  /** Descarga la credencial PDF individual del estudiante. */
+  const handleDownloadCredentialPdf = async () => {
+    try {
+      setIsDownloadingPdf(true);
+      setUploadMessage(null);
+      const blob = await downloadStudentCredentialPdf(student.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `credencial_${student.enrollment_id}_${student.last_name_father}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      setUploadMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "Error al generar la credencial PDF.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  /** Abre el modal de recorte con un archivo nuevo seleccionado por el usuario. */
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -60,41 +170,49 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
       return;
     }
 
-    try {
-      setIsUploading(true);
-      setUploadMessage(null);
+    // Guardar referencia al archivo original para persistirlo en el backend
+    setSelectedRawFile(file);
 
-      const result = await uploadStudentPhoto(student.id, file);
-
-      // Actualizar estado local
-      const now = Date.now();
-      setPhotoTimestamp(now);
-      setHasPhoto(true);
-      setUploadMessage({
-        type: "success",
-        text: "Fotografía guardada exitosamente en la base de datos.",
-      });
-
-      // Notificar al componente padre
-      if (onStudentUpdated) {
-        onStudentUpdated({
-          ...student,
-          photo_url: result.photo_url,
-          completeness: result.completeness as "COMPLETO" | "INCOMPLETO",
-          updated_at: new Date(now).toISOString(),
-        });
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const src = event.target?.result as string;
+      if (src) {
+        setCropImageSrc(src);
+        setIsCropModalOpen(true);
       }
-    } catch (err: unknown) {
-      console.error(err);
-      setUploadMessage({
-        type: "error",
-        text: err instanceof Error ? err.message : "Error al subir la fotografía.",
+    };
+    reader.readAsDataURL(file);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  /** Abre el modal de recorte manual usando la fotografía original (sin recortar) del alumno. */
+  const handleOpenCropCurrentPhoto = () => {
+    // Pedir la foto original con original=true para que el encuadre se realice sobre la toma completa
+    const src = getStudentPhotoUrl(student.id, photoTimestamp || Date.now(), true);
+    setSelectedRawFile(undefined);
+    setCropImageSrc(src);
+    setIsCropModalOpen(true);
+  };
+
+  /** Callback ejecutado cuando el usuario guarda su recorte manual. */
+  const handleCropSuccess = (newPhotoUrl: string, newTimestamp: number) => {
+    setPhotoTimestamp(newTimestamp);
+    setHasPhoto(true);
+    setUploadMessage({
+      type: "success",
+      text: "Fotografía y encuadre guardados exitosamente.",
+    });
+
+    if (onStudentUpdated) {
+      onStudentUpdated({
+        ...student,
+        photo_url: newPhotoUrl,
+        completeness: "COMPLETO",
+        updated_at: new Date(newTimestamp).toISOString(),
       });
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     }
   };
 
@@ -140,7 +258,7 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
               {/* Botón flotante rápido sobre la imagen */}
               <button
                 onClick={handleUploadClick}
-                disabled={isUploading}
+                disabled={isUploading || isDeleting}
                 title={hasPhoto ? "Cambiar fotografía" : "Cargar fotografía oficial"}
                 className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-[#0A3D91] hover:bg-[#072B68] text-white rounded-full flex items-center justify-center shadow-md border-2 border-white transition-all disabled:opacity-50"
               >
@@ -152,31 +270,66 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
               </button>
             </div>
 
-            {/* Botón explícito de Cargar / Cambiar Foto */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUploadClick}
-              disabled={isUploading}
-              className="h-7 px-2 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                  <span>Guardando...</span>
-                </>
-              ) : hasPhoto ? (
-                <>
-                  <Camera className="w-3 h-3 mr-1" />
-                  <span>Cambiar foto</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-3 h-3 mr-1" />
-                  <span>Cargar foto</span>
-                </>
+            {/* Botones de foto: Cargar/Cambiar, Ajustar Encuadre y Eliminar */}
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUploadClick}
+                disabled={isUploading || isDeleting}
+                className="h-7 px-2 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                    <span>Guardando...</span>
+                  </>
+                ) : hasPhoto ? (
+                  <>
+                    <Camera className="w-3 h-3 mr-1" />
+                    <span>Cambiar</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3 h-3 mr-1" />
+                    <span>Cargar</span>
+                  </>
+                )}
+              </Button>
+
+              {/* Botón de ajuste manual de recorte y encuadre */}
+              {hasPhoto && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenCropCurrentPhoto}
+                  disabled={isUploading || isDeleting}
+                  title="Ajustar manualmente el encuadre, zoom y rotación de la fotografía"
+                  className="h-7 px-2 text-[11px] font-semibold text-slate-700 border-slate-300 hover:bg-slate-100 flex items-center gap-1"
+                >
+                  <Crop className="w-3 h-3 text-[#0A3D91]" />
+                  <span>Ajustar</span>
+                </Button>
               )}
-            </Button>
+
+              {/* Botón eliminar foto (solo visible si hay foto) */}
+              {hasPhoto && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeletePhoto}
+                  disabled={isDeleting || isUploading}
+                  title="Eliminar fotografía del estudiante"
+                  className="h-7 px-2 text-[11px] font-semibold text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3 h-3" />
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Nombre y Matrícula */}
@@ -199,13 +352,36 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
               {student.display_name}
             </h3>
 
+            {/* CURP prominente */}
             {student.curp && (
-              <p className="text-xs text-slate-500 font-mono">
-                CURP: <span className="font-semibold">{student.curp}</span>
-              </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <IdCard className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <p className="text-xs text-slate-500">
+                  CURP:{" "}
+                  <span className="font-mono font-semibold text-slate-700 tracking-wide">
+                    {student.curp}
+                  </span>
+                </p>
+              </div>
             )}
 
-            {/* Mensaje de estado de subida */}
+            {/* Correo institucional */}
+            {student.institutional_email && (
+              <div className="flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <p className="text-xs text-slate-500">
+                  Correo:{" "}
+                  <a
+                    href={`mailto:${student.institutional_email}`}
+                    className="font-medium text-[#0A3D91] hover:underline"
+                  >
+                    {student.institutional_email}
+                  </a>
+                </p>
+              </div>
+            )}
+
+            {/* Mensaje de estado de subida / eliminación */}
             {uploadMessage && (
               <div
                 className={`mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 ${
@@ -225,15 +401,124 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
           </div>
         </div>
 
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors self-start sm:self-auto"
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditModalOpen(true)}
+            className="h-8 px-3 text-xs font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50 flex items-center gap-1.5 shadow-2xs"
+            title="Editar datos personales, escolares, médicos o tutor del alumno"
           >
-            Cerrar ficha
-          </button>
-        )}
+            <Pencil className="w-3.5 h-3.5" />
+            <span>Editar información</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDeleteStudentConfirmOpen(true)}
+            disabled={isDeletingStudent}
+            className="h-8 px-3 text-xs font-semibold text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5 shadow-2xs"
+            title="Eliminar permanentemente al alumno del sistema"
+          >
+            <UserX className="w-3.5 h-3.5" />
+            <span>Eliminar alumno</span>
+          </Button>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Cerrar ficha
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Diálogo de confirmación de eliminación de alumno */}
+      {isDeleteStudentConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-red-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <UserX className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Eliminar alumno
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Esta acción es permanente e irreversible.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5">
+              <p className="text-sm text-red-900 font-medium leading-snug">
+                ¿Estás seguro de que deseas eliminar a{" "}
+                <span className="font-bold">{student.display_name}</span> del
+                sistema?
+              </p>
+              <p className="text-xs text-red-700 mt-1.5 leading-snug">
+                Se eliminarán permanentemente el expediente, las fotografías,
+                los códigos QR y todos los registros asociados al alumno.
+                Esta operación <strong>no puede deshacerse</strong>.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setIsDeleteStudentConfirmOpen(false)}
+                disabled={isDeletingStudent}
+                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteStudent}
+                disabled={isDeletingStudent}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeletingStudent ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Sí, eliminar alumno</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para editar información del estudiante */}
+      <EditStudentModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        student={student}
+        onStudentUpdated={(updated) => {
+          if (onStudentUpdated) {
+            onStudentUpdated(updated);
+          }
+        }}
+      />
+
+      {/* Modal para ajuste manual de encuadre, zoom y recorte de fotografía sobre toma original */}
+      <PhotoCropModal
+        isOpen={isCropModalOpen}
+        onClose={() => setIsCropModalOpen(false)}
+        imageSrc={cropImageSrc}
+        studentId={student.id}
+        studentName={student.display_name}
+        rawFile={selectedRawFile}
+        onSuccess={handleCropSuccess}
+      />
 
       {/* Contenido en dos columnas: Datos generales / QR institucional */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -354,21 +639,95 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
                 </span>
               </div>
             ) : (
-              <div className="w-44 h-44 rounded-xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-center p-3 text-center">
-                <QrCode className="w-10 h-10 text-slate-400 mb-2" />
-                <span className="text-xs font-bold text-slate-700">
-                  QR Pendiente
-                </span>
-                <span className="text-[10px] text-slate-500 mt-1">
-                  Aún no se ha emitido el código QR para este estudiante.
-                </span>
+              <div className="w-48 p-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 flex flex-col items-center justify-center text-center space-y-2.5">
+                <div className="p-2.5 bg-amber-100 rounded-full text-amber-700">
+                  <QrCode className="w-8 h-8" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-amber-900 block">
+                    QR Pendiente
+                  </span>
+                  <p className="text-[11px] text-amber-800 leading-snug mt-1 font-medium">
+                    Si quieres tener el código QR, debes subir la fotografía del alumno.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUploadClick}
+                  disabled={isUploading}
+                  className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A3D91] hover:bg-[#072B68] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+                  title="Cargar fotografía para generar el código QR"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Subir fotografía</span>
+                </button>
               </div>
             )}
           </div>
 
-          <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-center gap-1 text-[11px] text-slate-500">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Escuela Secundaria Mixta 5</span>
+          <div className="w-full pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
+            {/* Botón credencial PDF individual — solo si tiene foto */}
+            {hasPhoto ? (
+              student.active_qr_token_id ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadCredentialPdf}
+                  disabled={isDownloadingPdf}
+                  className="w-full h-8 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50 flex items-center justify-center gap-1.5"
+                  title="Generar y descargar la credencial escolar en PDF"
+                >
+                  {isDownloadingPdf ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Generando PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="w-3.5 h-3.5" />
+                      <span>Descargar Credencial PDF</span>
+                    </>
+                  )}
+                </Button>
+              ) : (
+                /* Tiene foto pero QR aún no se generó (caso edge) */
+                <div className="w-full flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-left">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-800 font-medium leading-snug">
+                    El código QR aún no se ha generado. Recarga la ficha e inténtalo de nuevo.
+                  </p>
+                </div>
+              )
+            ) : (
+              /* Sin foto — bloquear generación de credencial con aviso claro */
+              <div className="w-full flex flex-col items-center gap-2">
+                <div className="w-full flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-left">
+                  <AlertTriangle className="w-3.5 h-3.5 text-orange-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] text-orange-900 font-bold leading-snug">
+                      Falta la fotografía
+                    </p>
+                    <p className="text-[10px] text-orange-800 leading-snug mt-0.5">
+                      Para generar la credencial es obligatorio subir primero la fotografía del alumno.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUploadClick}
+                  disabled={isUploading}
+                  className="w-full inline-flex items-center justify-center gap-1.5 h-8 px-3 bg-[#0A3D91] hover:bg-[#072B68] text-white rounded-lg text-[11px] font-semibold shadow-xs transition-colors disabled:opacity-50"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Subir foto para generar credencial</span>
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center gap-1 text-[11px] text-slate-500">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Escuela Secundaria Mixta 5</span>
+            </div>
           </div>
         </div>
       </div>

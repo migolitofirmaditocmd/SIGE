@@ -55,6 +55,10 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
     );
   }
 
+  // Separar grupos por turno para renderizar con <optgroup>
+  const matutinos = groups.filter((g) => g.shift === "MATUTINO");
+  const vespertinos = groups.filter((g) => g.shift === "VESPERTINO");
+
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
@@ -69,18 +73,42 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
             const found = groups.find((g) => g.id === e.target.value);
             if (found) onSelectGroup(found);
           }}
-          className="h-10 px-3 bg-white text-sm font-semibold text-slate-900 rounded-lg border border-slate-300 focus:border-[#0A3D91] focus:ring-2 focus:ring-[#0A3D91]/20 focus:outline-none transition-all cursor-pointer w-full sm:w-64"
+          className="h-10 px-3 bg-white text-sm font-semibold text-slate-900 rounded-lg border border-slate-300 focus:border-[#0A3D91] focus:ring-2 focus:ring-[#0A3D91]/20 focus:outline-none transition-all cursor-pointer w-full sm:w-72"
         >
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.display_name} ({group.student_count} alumnos)
-            </option>
-          ))}
+          {matutinos.length > 0 && (
+            <optgroup label="☀️  Turno Matutino">
+              {matutinos.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.grade}°{group.group_letter} — {group.student_count} alumnos
+                </option>
+              ))}
+            </optgroup>
+          )}
+
+          {vespertinos.length > 0 && (
+            <optgroup label="🌙  Turno Vespertino">
+              {vespertinos.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.grade}°{group.group_letter} — {group.student_count} alumnos
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
 
         {selectedGroup && (
-          <span className="text-xs font-bold text-[#0A3D91] bg-blue-50 border border-blue-100 px-3 py-2 rounded-lg shrink-0 hidden md:inline-block">
-            {selectedGroup.student_count} Alumnos
+          <span
+            className={`text-xs font-bold px-3 py-2 rounded-lg shrink-0 hidden md:inline-flex items-center gap-1.5 border ${
+              selectedGroup.shift === "MATUTINO"
+                ? "text-amber-700 bg-amber-50 border-amber-200"
+                : "text-indigo-700 bg-indigo-50 border-indigo-200"
+            }`}
+          >
+            <span>{selectedGroup.shift === "MATUTINO" ? "☀️" : "🌙"}</span>
+            <span>
+              {selectedGroup.student_count} alumnos ·{" "}
+              {selectedGroup.shift === "MATUTINO" ? "Matutino" : "Vespertino"}
+            </span>
           </span>
         )}
       </div>

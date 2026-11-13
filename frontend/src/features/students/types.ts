@@ -56,6 +56,7 @@ export interface Student {
   has_payment_debt?: boolean | null;
   guardians: StudentGuardianRelation[];
   consent_warning?: boolean;
+  institutional_email?: string | null;
   active_qr_token_id?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -78,3 +79,90 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
+export interface BatchPhotoResultItem {
+  filename: string;
+  status: "SUCCESS" | "SKIPPED" | "UNMATCHED" | "ERROR";
+  message: string;
+  student_id?: string | null;
+  student_name?: string | null;
+  enrollment_id?: string | null;
+  group?: string | null;
+  active_qr_token_id?: string | null;
+}
+
+export interface BatchPhotoUploadResponse {
+  total_received: number;
+  matched_count: number;
+  updated_count: number;
+  skipped_count: number;
+  unmatched_count: number;
+  results: BatchPhotoResultItem[];
+}
+
+export interface StudentUpdatePayload {
+  first_name?: string;
+  last_name_father?: string;
+  last_name_mother?: string | null;
+  curp?: string | null;
+  institutional_email?: string | null;
+  grade?: number;
+  group_letter?: string;
+  shift?: string;
+  birth_date?: string | null;
+  sex?: string | null;
+  blood_type?: string | null;
+  allergies?: string | null;
+  address_street?: string | null;
+  address_colonia?: string | null;
+  address_municipio?: string | null;
+  address_estado?: string | null;
+  address_postal_code?: string | null;
+}
+
+export interface GuardianUpdatePayload {
+  first_name?: string;
+  last_name_father?: string;
+  last_name_mother?: string | null;
+  phone_number?: string | null;
+  email?: string | null;
+}
+
+/** Payload para crear un guardian inline al registrar un nuevo alumno. */
+export interface GuardianCreatePayload {
+  first_name: string;
+  last_name_father: string;
+  last_name_mother?: string | null;
+  phone_number?: string | null;
+  email?: string | null;
+  relationship: string;
+  is_primary_contact?: boolean;
+}
+
+/** Payload para POST /api/v1/students/ — registro individual de alumno. */
+export interface StudentCreatePayload {
+  enrollment_id: string;
+  first_name: string;
+  last_name_father: string;
+  last_name_mother?: string | null;
+  curp?: string | null;
+  grade: number;
+  group_letter: string;
+  shift: string;
+  birth_date?: string | null;
+  sex?: string | null;
+  blood_type?: string | null;
+  allergies?: string | null;
+  address_street?: string | null;
+  address_colonia?: string | null;
+  address_municipio?: string | null;
+  address_estado?: string | null;
+  address_postal_code?: string | null;
+  institutional_email?: string | null;
+  guardians: GuardianCreatePayload[];
+}
+
+/** Respuesta de DELETE /api/v1/students/{id}/delete/ */
+export interface StudentDeleteResponse {
+  message: string;
+  deleted_id: string;
+}

@@ -152,6 +152,12 @@ class Student(PersonNameMixin, TimeStampedUUIDModel):
         validators=[validate_curp],
         verbose_name="CURP Oficial (RENAPO)",
     )
+    institutional_email = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name="Correo institucional del estudiante",
+        help_text="Correo institucional escolar asignado (ej. usuario@jaliscoedu.mx)",
+    )
 
     # Grupo académico (FK → GROUP en app catalogs; usamos CharField simple
     # mientras el modelo Group no esté migrado para evitar dep. circular)

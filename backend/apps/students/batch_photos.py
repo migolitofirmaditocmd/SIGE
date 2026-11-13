@@ -1,0 +1,399 @@
+"""Servicio de procesamiento y vinculación por lote de fotografías de estudiantes.
+
+Este módulo implementa el motor de coincidencia fonética y por tokens entre
+los nombres de archivo de las fotografías y los registros de estudiantes en
+la base de datos, así como la sanitización de metadatos EXIF (RN-TRX-02, RN-EST-16),
+normalización a formato JPEG RGB y cálculo de firma SHA-256 (RN-EST-15).
+"""
+
+import difflib
+import hashlib
+import io
+import os
+import re
+import unicodedata
+from pathlib import Path
+from typing import Any
+
+from django.conf import settings
+from django.db.models import QuerySet
+from django.utils import timezone
+from PIL import Image, ImageOps
+
+from apps.students.models import Student
+
+
+def normalize_name(text: str) -> str:
+    """Normaliza una cadena de texto eliminando acentos, caracteres especiales y espacios.
+
+    Args:
+        text (str): Cadena de texto original (ej. nombre de archivo o alumno).
+
+    Returns:
+        str: Texto normalizado en mayúsculas sin acentos con espacios simples.
+    """
+    if not text:
+        return ""
+    norm = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^A-Z0-9]+", " ", norm.upper()).strip()
+
+
+def tokenize_name(text: str) -> list[str]:
+    """Divide una cadena en tokens ignorando palabras de ruido o conectores comunes.
+
+    Args:
+        text (str): Texto normalizado.
+
+    Returns:
+        list[str]: Lista de palabras clave significativas en mayúsculas.
+    """
+    ignore_words = {"DE", "DEL", "LA", "LAS", "LOS", "Y", "E", "SAN"}
+    tokens = [w for w in text.split() if len(w) > 1 and w not in ignore_words]
+    return tokens
+
+
+def find_matching_student(
+    filename: str,
+    primary_candidates: list[Student],
+    fallback_candidates: list[Student] | None = None,
+) -> tuple[Student | None, float, str]:
+    """Busca el estudiante que mejor coincide con el nombre de archivo de la fotografía.
+
+    Aplica coincidencia por matrícula exacta, coincidencia por subconjunto de tokens
+    de nombre/apellidos, similitud difusa por token y similitud global de cadena.
+
+    Args:
+        filename (str): Nombre del archivo fotográfico (con o sin extensión).
+        primary_candidates (list[Student]): Lista prioritaria de estudiantes (ej. grupo actual).
+        fallback_candidates (list[Student] | None, optional): Estudiantes del resto del plantel. Defaults to None.
+
+    Returns:
+        tuple[Student | None, float, str]: Tupla con el estudiante asignado (o None),
+            la puntuación de confianza (0.0 a 1000.0) y el criterio de vinculación.
+    """
+    name_no_ext = os.path.splitext(filename)[0]
+    norm_filename = normalize_name(name_no_ext)
+
+    # Descartar archivos genéricos de cámara o duplicados evidentes
+    if (
+        norm_filename.startswith("IMG ")
+        or norm_filename.startswith("DSC ")
+        or norm_filename.startswith("PHOTO ")
+        or norm_filename in {"VALENZUELA"}
+    ):
+        return None, 0.0, "Archivo con nombre genérico o duplicado omitido."
+
+    file_tokens = tokenize_name(norm_filename)
+    if not file_tokens:
+        return None, 0.0, "Nombre de archivo sin tokens válidos para comparación."
+
+    def evaluate_candidates(
+        candidates: list[Student],
+    ) -> tuple[Student | None, float, str]:
+        best_student: Student | None = None
+        best_score = 0.0
+        best_reason = ""
+
+        for student in candidates:
+            # 1. Coincidencia directa por matrícula escolar (enrollment_id)
+            student_matricula = normalize_name(student.enrollment_id or "")
+            if student_matricula and (
+                norm_filename == student_matricula
+                or student_matricula in norm_filename.split()
+            ):
+                return student, 1000.0, "Coincidencia exacta por matrícula escolar."
+
+            # Representaciones normalizadas del estudiante
+            s_father = normalize_name(student.last_name_father or "")
+            s_mother = normalize_name(student.last_name_mother or "")
+            s_first = normalize_name(student.first_name or "")
+
+            full_name_order1 = f"{s_father} {s_mother} {s_first}".strip()
+            full_name_order2 = f"{s_first} {s_father} {s_mother}".strip()
+            short_order1 = f"{s_father} {s_first}".strip()
+            short_order2 = f"{s_first} {s_father}".strip()
+
+            student_tokens = set(tokenize_name(full_name_order1))
+            file_token_set = set(file_tokens)
+
+            # 2. Todos los tokens del archivo están en el nombre del estudiante (mínimo 2)
+            if len(file_token_set) >= 2 and file_token_set.issubset(student_tokens):
+                score = 200.0 + (len(file_token_set) * 10.0)
+                if score > best_score:
+                    best_score = score
+                    best_student = student
+                    best_reason = "Subconjunto exacto de tokens (apellidos y nombres)."
+                continue
+
+            # 3. Coincidencia difusa token por token (tolerancia a variaciones ortográficas)
+            # Ej: COBARRUVIAS -> COVARRUBIAS, GINA -> GYNA, YARELI -> JARELI
+            token_scores: list[float] = []
+            for ft in file_tokens:
+                best_sim = 0.0
+                for st in student_tokens:
+                    sim = difflib.SequenceMatcher(None, ft, st).ratio()
+                    if sim > best_sim:
+                        best_sim = sim
+                token_scores.append(best_sim)
+
+            avg_sim = sum(token_scores) / len(token_scores) if token_scores else 0.0
+            min_sim = min(token_scores) if token_scores else 0.0
+
+            if len(file_tokens) >= 2 and min_sim >= 0.74:
+                score = 150.0 + (avg_sim * 20.0)
+                if score > best_score:
+                    best_score = score
+                    best_student = student
+                    best_reason = f"Similitud fonética/ortográfica por tokens ({min_sim:.0%})."
+                continue
+
+            # 4. Similitud global de secuencias sobre variantes de nombres
+            r1 = difflib.SequenceMatcher(None, norm_filename, short_order1).ratio()
+            r2 = difflib.SequenceMatcher(None, norm_filename, short_order2).ratio()
+            r3 = difflib.SequenceMatcher(None, norm_filename, full_name_order1).ratio()
+            r4 = difflib.SequenceMatcher(None, norm_filename, full_name_order2).ratio()
+            max_r = max(r1, r2, r3, r4)
+
+            common_tokens = file_token_set.intersection(student_tokens)
+            if (len(common_tokens) >= 1 and max_r >= 0.65) or max_r >= 0.80:
+                score = (len(common_tokens) * 20.0) + (max_r * 30.0)
+                if score > best_score:
+                    best_score = score
+                    best_student = student
+                    best_reason = f"Similitud global de texto ({max_r:.0%})."
+
+        return best_student, best_score, best_reason
+
+    # Evaluar primero en el grupo prioritario
+    best_student, best_score, best_reason = evaluate_candidates(primary_candidates)
+    if best_student and best_score >= 50.0:
+        return best_student, best_score, best_reason
+
+    # Si no se encontró en el grupo prioritario y hay candidatos de respaldo
+    if fallback_candidates:
+        fb_student, fb_score, fb_reason = evaluate_candidates(fallback_candidates)
+        if fb_student and fb_score >= 50.0:
+            return fb_student, fb_score, f"{fb_reason} (Encontrado fuera del grupo principal)"
+
+    return None, 0.0, "No se encontró ningún estudiante con coincidencia suficiente."
+
+
+def format_student_portrait(
+    image_raw: Image.Image, output_size: int = 800
+) -> Image.Image:
+    """Recorta y encuadra la fotografía escolar con zoom intenso a cabeza y hombros.
+
+    Aplica la orientación física real indicada en los metadatos EXIF, compone sobre
+    fondo blanco eliminando canales alfa y realiza un encuadre cuadrado (1:1) enfocado
+    estrictamente en la cabeza y hombros del alumno, eliminando todo el torso inferior
+    (pecho, abdomen, cintura). El crop agresivo garantiza que la cara sea lo suficientemente
+    grande y que la fotografía quede alineada al QR en las credenciales escolares oficiales.
+
+    Lógica de encuadre (orientación basada en relación de aspecto):
+    - **Vertical (h > w):** Se toma un cuadrado equivalente al 65% del ancho (zoom al
+      rostro) iniciando al 3% del alto para conservar el cabello y cubriendo solo
+      cabeza + hombros superiores.
+    - **Horizontal (w > h):** Se toma un cuadrado del 60% de la altura centrado
+      horizontalmente con un 3% de margen superior.
+    - **Cuadrada:** Zoom del 70% centrado en la parte superior de la imagen.
+
+    Args:
+        image_raw (Image.Image): Imagen original cargada por el usuario.
+        output_size (int, optional): Dimensión cuadrada final en píxeles. Defaults to 800.
+
+    Returns:
+        Image.Image: Imagen optimizada en formato cuadrado RGB de output_size x output_size.
+    """
+    # 1. Aplicar orientación física según metadatos EXIF reales
+    img = ImageOps.exif_transpose(image_raw) or image_raw
+
+    # 2. Componer sobre fondo blanco puro si tiene canal alfa o transparencia
+    if img.mode in ("RGBA", "LA") or (
+        img.mode == "P" and "transparency" in img.info
+    ):
+        img_rgba = img.convert("RGBA")
+        clean_img = Image.new("RGB", img_rgba.size, (255, 255, 255))
+        clean_img.paste(img_rgba, mask=img_rgba.split()[3])
+        img = clean_img
+    elif img.mode != "RGB":
+        img = img.convert("RGB")
+
+    w, h = img.size
+
+    # 3. Recorte cuadrado agresivo: solo cabeza y hombros superiores
+    if w > h:
+        # Foto horizontal: tomamos el 60% de la altura para hacer zoom al rostro,
+        # centrando horizontalmente y dejando un 3% de margen superior para el cabello.
+        crop_size = max(50, int(h * 0.60))
+        left = max(0, (w - crop_size) // 2)
+        top = max(0, int(h * 0.03))
+        if top + crop_size > h:
+            top = max(0, h - crop_size)
+    elif h > w:
+        # Foto vertical: tomamos el 65% del ancho para hacer un zoom pronunciado
+        # al rostro y eliminar el torso inferior completamente.
+        crop_size = max(50, int(w * 0.65))
+        left = max(0, (w - crop_size) // 2)
+        top = max(0, int(h * 0.03))
+        if top + crop_size > h:
+            top = max(0, h - crop_size)
+    else:
+        # Ya es cuadrada: zoom pronunciado (70%) centrado en la parte superior
+        crop_size = max(50, int(w * 0.70))
+        left = max(0, (w - crop_size) // 2)
+        top = max(0, int((h - crop_size) * 0.15))
+
+    right = min(w, left + crop_size)
+    bottom = min(h, top + crop_size)
+
+    cropped = img.crop((left, top, right, bottom))
+    return cropped.resize((output_size, output_size), Image.Resampling.LANCZOS)
+
+
+def process_and_save_photo(
+    student: Student,
+    file_bytes_or_obj: Any,
+    filename: str,
+    is_manual_crop: bool = False,
+    original_photo_file: Any | None = None,
+) -> tuple[bool, str, str]:
+    """Sanitiza, encuadra y almacena la fotografía institucional de un estudiante.
+
+    Preserva la fotografía original sin recortar en el directorio de respaldo
+    (MEDIA_ROOT/students/originals/) para permitir ajustes manuales posteriores sobre
+    la toma fotográfica completa. Almacena la versión encuadrada cuadrada (1:1 a 800x800)
+    en MEDIA_ROOT/students/<student_id>.jpg para credencialización y expediente.
+
+    Args:
+        student (Student): Instancia del estudiante a actualizar.
+        file_bytes_or_obj (Any): Bytes o descriptor de archivo de la fotografía a guardar.
+        filename (str): Nombre original del archivo para traza y extensión.
+        is_manual_crop (bool, optional): Si True, indica que el usuario ya realizó un
+            recorte manual en el cliente, por lo que no se aplica el recorte automático.
+            Defaults to False.
+        original_photo_file (Any | None, optional): Archivo original sin recortar cuando
+            se sube una nueva imagen con recorte manual simultáneo. Defaults to None.
+
+    Returns:
+        tuple[bool, str, str]: Tupla con el éxito (True/False), mensaje de resultado
+            y el hash SHA-256 calculado.
+    """
+    try:
+        dest_dir = Path(settings.MEDIA_ROOT) / "students"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        orig_dir = dest_dir / "originals"
+        orig_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Obtener bytes del archivo principal
+        if hasattr(file_bytes_or_obj, "read"):
+            if hasattr(file_bytes_or_obj, "seek"):
+                file_bytes_or_obj.seek(0)
+            main_bytes = file_bytes_or_obj.read()
+        else:
+            main_bytes = file_bytes_or_obj
+
+        image_raw = Image.open(io.BytesIO(main_bytes))
+
+        # 2. Guardar la fotografía original sin recorte
+        # Si se envió un original explícito (ej. nueva foto cargada con recorte manual en UI):
+        if original_photo_file is not None:
+            if hasattr(original_photo_file, "read"):
+                if hasattr(original_photo_file, "seek"):
+                    original_photo_file.seek(0)
+                raw_orig_bytes = original_photo_file.read()
+            else:
+                raw_orig_bytes = original_photo_file
+
+            img_orig_raw = Image.open(io.BytesIO(raw_orig_bytes))
+            img_orig = ImageOps.exif_transpose(img_orig_raw) or img_orig_raw
+            if img_orig.mode in ("RGBA", "LA") or (
+                img_orig.mode == "P" and "transparency" in img_orig.info
+            ):
+                img_orig_rgba = img_orig.convert("RGBA")
+                clean_orig = Image.new("RGB", img_orig_rgba.size, (255, 255, 255))
+                clean_orig.paste(img_orig_rgba, mask=img_orig_rgba.split()[3])
+                img_orig = clean_orig
+            elif img_orig.mode != "RGB":
+                img_orig = img_orig.convert("RGB")
+
+            orig_buffer = io.BytesIO()
+            img_orig.save(orig_buffer, format="JPEG", quality=95, optimize=True)
+            (orig_dir / f"{student.id}.jpg").write_bytes(orig_buffer.getvalue())
+
+        elif not is_manual_crop:
+            # En carga automática o por lote, la imagen recibida es la original
+            img_orig = ImageOps.exif_transpose(image_raw) or image_raw
+            if img_orig.mode in ("RGBA", "LA") or (
+                img_orig.mode == "P" and "transparency" in img_orig.info
+            ):
+                img_orig_rgba = img_orig.convert("RGBA")
+                clean_orig = Image.new("RGB", img_orig_rgba.size, (255, 255, 255))
+                clean_orig.paste(img_orig_rgba, mask=img_orig_rgba.split()[3])
+                img_orig = clean_orig
+            elif img_orig.mode != "RGB":
+                img_orig = img_orig.convert("RGB")
+
+            orig_buffer = io.BytesIO()
+            img_orig.save(orig_buffer, format="JPEG", quality=95, optimize=True)
+            (orig_dir / f"{student.id}.jpg").write_bytes(orig_buffer.getvalue())
+
+        # 3. Preparar la versión cuadrada oficial (800x800) para credenciales
+        if is_manual_crop:
+            # Ya fue encuadrada por el usuario en el cliente; sanitizar y asegurar 800x800
+            img_crop = ImageOps.exif_transpose(image_raw) or image_raw
+            if img_crop.mode in ("RGBA", "LA") or (
+                img_crop.mode == "P" and "transparency" in img_crop.info
+            ):
+                img_crop_rgba = img_crop.convert("RGBA")
+                clean_crop = Image.new("RGB", img_crop_rgba.size, (255, 255, 255))
+                clean_crop.paste(img_crop_rgba, mask=img_crop_rgba.split()[3])
+                img_crop = clean_crop
+            elif img_crop.mode != "RGB":
+                img_crop = img_crop.convert("RGB")
+
+            if img_crop.size != (800, 800):
+                img_crop = img_crop.resize((800, 800), Image.Resampling.LANCZOS)
+            image_clean = img_crop
+        else:
+            # Recorte automático inteligente enfocado a cabeza y hombros
+            image_clean = format_student_portrait(image_raw, output_size=800)
+
+        # 4. Guardar versión activa para credenciales
+        buffer = io.BytesIO()
+        image_clean.save(buffer, format="JPEG", quality=93, optimize=True)
+        photo_bytes = buffer.getvalue()
+
+        # Calcular firma SHA-256 (RN-EST-15)
+        sha256_hash = hashlib.sha256(photo_bytes).hexdigest()
+
+        # Almacenar en disco en MEDIA_ROOT/students/<student_id>.jpg
+        dest_path = dest_dir / f"{student.id}.jpg"
+        dest_path.write_bytes(photo_bytes)
+
+        # 5. Actualizar campos en el modelo Student
+        rel_path = f"students/{student.id}.jpg"
+        student.photo_url = rel_path
+        student.photo_sha256 = sha256_hash
+        student.photo_updated_at = timezone.now()
+        student._recalculate_completeness()
+        student.save(
+            update_fields=[
+                "photo_url",
+                "photo_sha256",
+                "photo_updated_at",
+                "completeness",
+                "updated_at",
+            ]
+        )
+
+        # Si el estudiante NO cuenta con un token QR activo, generarlo automáticamente (US-064)
+        if not student.active_qr_token:
+            from apps.qr_codes.crypto import issue_qr_token_for_student
+            issue_qr_token_for_student(
+                student, reason="Emisión automática al cargar fotografía oficial"
+            )
+
+        return True, "Fotografía procesada y guardada exitosamente.", sha256_hash
+
+    except Exception as exc:
+        return False, f"Error al procesar la imagen: {str(exc)}", ""
