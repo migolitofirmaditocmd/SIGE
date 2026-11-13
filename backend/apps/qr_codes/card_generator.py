@@ -297,15 +297,21 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     card.paste(qr_resized, (340, 270))
     d.text((467, 545), "Código de Asistencia", fill=(100, 116, 139), font=f_captions, anchor="mm")
 
-    # 5. Banner de Nombre del Alumno
+    # 5. Banner de Nombre del Alumno con ajuste automático de escala si es muy largo
     student_name = (
         student_data.get("display_name")
         or student_data.get("full_name")
         or "IBARRA MEJÍA CARMEN SCARLTT"
     ).strip().upper()
 
+    f_name_size = 32
+    f_name_cur = _get_pil_font(f_name_size, bold=True)
+    while f_name_size > 20 and d.textbbox((0, 0), student_name, font=f_name_cur)[2] > (w - 64):
+        f_name_size -= 1
+        f_name_cur = _get_pil_font(f_name_size, bold=True)
+
     d.line([(30, 622), (w - 30, 622)], fill=(203, 213, 225), width=1)
-    d.text((w // 2, 652), student_name, fill=col_navy, font=f_name, anchor="mm")
+    d.text((w // 2, 652), student_name, fill=col_navy, font=f_name_cur, anchor="mm")
     d.line([(30, 680), (w - 30, 680)], fill=(203, 213, 225), width=1)
 
     # 6. Ficha de Datos Inferior (Contenedor Amarillo #FFFF9B)
@@ -327,6 +333,81 @@ def render_credential_front_pil(student_data: dict[str, Any]) -> Image.Image:
     d.text((45, 950), "CICLO: 2026-2027          VENCE: JULIO 2028", fill=col_navy, font=f_data_bold)
 
     return card
+
+
+def _format_multiline_guardian_name(
+    name: str,
+    draw: ImageDraw.ImageDraw,
+    max_w: int = 380,
+    initial_font_size: int = 23,
+) -> tuple[list[str], ImageFont.ImageFont]:
+    """Divide y ajusta el nombre del tutor para que nunca desborde el marco del reverso.
+
+    Si el nombre cabe en una sola línea dentro del margen útil, se retorna sin dividir.
+    Si excede el ancho disponible, se busca el punto de corte óptimo entre nombres de pila
+    y apellidos para mostrar los nombres en la línea superior y los apellidos en la inferior.
+    En casos extremos de nombres muy extensos, reduce dinámicamente la escala tipográfica.
+
+    Args:
+        name (str): Nombre completo del tutor o familiar.
+        draw (ImageDraw.ImageDraw): Contexto de dibujo Pillow para medición precisa de texto.
+        max_w (int, optional): Ancho máximo disponible en píxeles. Defaults to 380.
+        initial_font_size (int, optional): Tamaño tipográfico inicial. Defaults to 23.
+
+    Returns:
+        tuple[list[str], ImageFont.ImageFont]: Tupla con la lista de líneas (1 o 2)
+            y el objeto de fuente calibrado.
+    """
+    clean_name = name.strip().upper()
+    cur_size = initial_font_size
+    font = _get_pil_font(cur_size, bold=True)
+
+    # 1. Si cabe perfectamente en una sola línea
+    if draw.textbbox((0, 0), clean_name, font=font)[2] <= max_w:
+        return [clean_name], font
+
+    words = clean_name.split()
+    if len(words) <= 1:
+        while (
+            cur_size > 14
+            and draw.textbbox((0, 0), clean_name, font=_get_pil_font(cur_size, bold=True))[2]
+            > max_w
+        ):
+            cur_size -= 1
+        return [clean_name], _get_pil_font(cur_size, bold=True)
+
+    # 2. Buscar partición balanceada entre nombres (arriba) y apellidos (abajo)
+    best_split: list[str] | None = None
+    best_diff = 9999
+
+    for i in range(1, len(words)):
+        l1 = " ".join(words[:i])
+        l2 = " ".join(words[i:])
+        w1 = draw.textbbox((0, 0), l1, font=font)[2]
+        w2 = draw.textbbox((0, 0), l2, font=font)[2]
+        if w1 <= max_w and w2 <= max_w:
+            diff = abs(w1 - w2)
+            if diff < best_diff:
+                best_diff = diff
+                best_split = [l1, l2]
+
+    if best_split:
+        return best_split, font
+
+    # 3. Si aún dividiendo excede max_w, reducir gradualmente el tamaño de fuente
+    while cur_size > 14:
+        cur_size -= 1
+        test_font = _get_pil_font(cur_size, bold=True)
+        for i in range(1, len(words)):
+            l1 = " ".join(words[:i])
+            l2 = " ".join(words[i:])
+            if (
+                draw.textbbox((0, 0), l1, font=test_font)[2] <= max_w
+                and draw.textbbox((0, 0), l2, font=test_font)[2] <= max_w
+            ):
+                return [l1, l2], test_font
+
+    return [clean_name], _get_pil_font(14, bold=True)
 
 
 def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
@@ -368,9 +449,9 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
     d.rectangle([(20, 20), (w - 20, 75)], fill=col_navy)
     d.text((w // 2, 47), "DATOS DE SEGURIDAD Y VIGENCIA", fill=(255, 255, 255), font=f_title, anchor="mm")
 
-    # 2. Caja de contacto de emergencia escolar (tipografía ampliada)
+    # 2. Caja de contacto de emergencia escolar (tipografía calibrada sin desbordes)
     d.rectangle([(20, 90), (w - 20, 275)], fill=(248, 250, 252), outline=border_col, width=2)
-    d.text((35, 115), "EN CASO DE EMERGENCIA LLAMAR A:", fill=col_navy, font=f_sub)
+    d.text((35, 114), "EN CASO DE EMERGENCIA LLAMAR A:", fill=col_navy, font=f_sub)
 
     guardian_name = (
         student_data.get("guardian_name")
@@ -382,11 +463,21 @@ def render_credential_back_pil(student_data: dict[str, Any]) -> Image.Image:
         or "33-3614-2289 / 33-1289-4455"
     ).strip()
 
-    d.text((35, 158), "Tutor / Familiar:", fill=col_muted, font=f_sub)
-    d.text((215, 158), guardian_name, fill=col_dark, font=f_name)
+    name_lines, f_tutor = _format_multiline_guardian_name(
+        guardian_name, d, max_w=380, initial_font_size=23
+    )
 
-    d.text((35, 212), "Tel. Emergencia:", fill=col_muted, font=f_sub)
-    d.text((215, 212), guardian_phone, fill=col_dark, font=f_name)
+    if len(name_lines) == 1:
+        d.text((35, 155), "Tutor / Familiar:", fill=col_muted, font=f_sub)
+        d.text((215, 155), name_lines[0], fill=col_dark, font=f_tutor)
+        d.text((35, 212), "Tel. Emergencia:", fill=col_muted, font=f_sub)
+        d.text((215, 212), guardian_phone, fill=col_dark, font=f_name)
+    else:
+        d.text((35, 146), "Tutor / Familiar:", fill=col_muted, font=f_sub)
+        d.text((215, 146), name_lines[0], fill=col_dark, font=f_tutor)
+        d.text((215, 176), name_lines[1], fill=col_dark, font=f_tutor)
+        d.text((35, 218), "Tel. Emergencia:", fill=col_muted, font=f_sub)
+        d.text((215, 218), guardian_phone, fill=col_dark, font=f_name)
 
     # 3. Recuadro de autorización institucional y firma de dirección
     # Espacio amplio para firma rúbrica física
