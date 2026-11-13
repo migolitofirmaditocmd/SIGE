@@ -366,12 +366,22 @@ def process_and_save_photo(
         # Calcular firma SHA-256 (RN-EST-15)
         sha256_hash = hashlib.sha256(photo_bytes).hexdigest()
 
-        # Almacenar en disco en MEDIA_ROOT/students/<student_id>.jpg
-        dest_path = dest_dir / f"{student.id}.jpg"
-        dest_path.write_bytes(photo_bytes)
-
-        # 5. Actualizar campos en el modelo Student
+        # Almacenar en disco o en almacenamiento en la nube (Supabase Storage)
         rel_path = f"students/{student.id}.jpg"
+        if getattr(settings, "USE_SUPABASE_STORAGE", False):
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            if default_storage.exists(rel_path):
+                default_storage.delete(rel_path)
+            default_storage.save(rel_path, ContentFile(photo_bytes))
+            if "orig_buffer" in locals() and orig_buffer:
+                orig_key = f"students/originals/{student.id}.jpg"
+                if default_storage.exists(orig_key):
+                    default_storage.delete(orig_key)
+                default_storage.save(orig_key, ContentFile(orig_buffer.getvalue()))
+        else:
+            dest_path = dest_dir / f"{student.id}.jpg"
+            dest_path.write_bytes(photo_bytes)
         student.photo_url = rel_path
         student.photo_sha256 = sha256_hash
         student.photo_updated_at = timezone.now()

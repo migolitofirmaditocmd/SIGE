@@ -1003,6 +1003,18 @@ class StudentPhotoView(APIView):
             True,
         ) or request.query_params.get("raw") in ("true", "1", True)
 
+        # 1. Si se usa almacenamiento remoto en la nube (Supabase Storage / S3)
+        if getattr(settings, "USE_SUPABASE_STORAGE", False):
+            from django.core.files.storage import default_storage
+            from django.http import HttpResponseRedirect
+            target_key = f"students/originals/{student.id}.jpg" if is_original else student.photo_url
+            try:
+                remote_url = default_storage.url(target_key)
+                return HttpResponseRedirect(remote_url)
+            except Exception:
+                pass
+
+        # 2. Servir archivo desde disco local (desarrollo o fallback)
         if is_original and hasattr(settings, "MEDIA_ROOT"):
             orig_path = Path(settings.MEDIA_ROOT) / "students" / "originals" / f"{student.id}.jpg"
             if orig_path.exists() and orig_path.is_file():
@@ -1020,9 +1032,10 @@ class StudentPhotoView(APIView):
             resp["Cache-Control"] = "no-store"
             return resp
 
-        return _no_store_response(
-            {"photo_url": student.photo_url},
-            status.HTTP_200_OK,
+        raise SIGEAPIException(
+            error_code="NOT_FOUND",
+            message="El archivo de la fotografía no se encuentra disponible.",
+            http_status=status.HTTP_404_NOT_FOUND,
         )
 
     @extend_schema(
