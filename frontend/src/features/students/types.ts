@@ -99,4 +99,32 @@ export interface BatchPhotoUploadResponse {
   results: BatchPhotoResultItem[];
 }
 
+export interface StudentUpdatePayload {
+  first_name?: string;
+  last_name_father?: string;
+  last_name_mother?: string | null;
+  curp?: string | null;
+  institutional_email?: string | null;
+  grade?: number;
+  group_letter?: string;
+  shift?: string;
+  birth_date?: string | null;
+  sex?: string | null;
+  blood_type?: string | null;
+  allergies?: string | null;
+  address_street?: string | null;
+  address_colonia?: string | null;
+  address_municipio?: string | null;
+  address_estado?: string | null;
+  address_postal_code?: string | null;
+}
+
+export interface GuardianUpdatePayload {
+  first_name?: string;
+  last_name_father?: string;
+  last_name_mother?: string | null;
+  phone_number?: string | null;
+  email?: string | null;
+}
+
 

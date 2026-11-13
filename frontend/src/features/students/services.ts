@@ -5,8 +5,11 @@
 import {
   AcademicGroup,
   BatchPhotoUploadResponse,
+  GuardianContact,
+  GuardianUpdatePayload,
   PaginatedResponse,
   Student,
+  StudentUpdatePayload,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -264,6 +267,81 @@ export async function downloadGroupCredentialPdf(
 
   return await res.blob();
 }
+
+/**
+ * Actualiza parcialmente los datos de un estudiante mediante PATCH (§3.4).
+ * La matrícula es inmutable en el backend (RN-EST-02).
+ */
+export async function updateStudent(
+  studentId: string,
+  payload: StudentUpdatePayload
+): Promise<Student> {
+  const res = await fetch(`${API_BASE}/api/v1/students/${studentId}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    let errorMsg = `Error ${res.status} al actualizar estudiante`;
+    if (errorData?.details) {
+      const details = errorData.details;
+      if (typeof details === "object") {
+        const fieldErrors = Object.entries(details)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+          .join(" | ");
+        errorMsg = `${errorData.message || "Error de validación"}: ${fieldErrors}`;
+      } else {
+        errorMsg = String(details);
+      }
+    } else if (errorData?.message) {
+      errorMsg = errorData.message;
+    }
+    throw new Error(errorMsg);
+  }
+
+  return await res.json();
+}
+
+/**
+ * Actualiza los datos de un tutor asociado mediante PATCH (§3.4).
+ * Si el tutor está vinculado a múltiples estudiantes, confirm=true aplica el cambio.
+ */
+export async function updateGuardian(
+  guardianId: string,
+  payload: GuardianUpdatePayload,
+  confirm = true
+): Promise<GuardianContact> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/students/guardians/${guardianId}/?confirm=${confirm}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    let errorMsg = `Error ${res.status} al actualizar tutor`;
+    if (errorData?.details) {
+      const details = errorData.details;
+      if (typeof details === "object") {
+        const fieldErrors = Object.entries(details)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+          .join(" | ");
+        errorMsg = `${errorData.message || "Error"}: ${fieldErrors}`;
+      }
+    } else if (errorData?.message) {
+      errorMsg = errorData.message;
+    }
+    throw new Error(errorMsg);
+  }
+
+  return await res.json();
+}
+
 
 
 

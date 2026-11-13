@@ -118,7 +118,10 @@ export default function EstudiantesAdminPage() {
             <StudentDetailCard
               student={selectedStudent}
               onClose={() => setSelectedStudent(null)}
-              onStudentUpdated={setSelectedStudent}
+              onStudentUpdated={(updated) => {
+                setSelectedStudent(updated);
+                setRefreshKey((prev) => prev + 1);
+              }}
             />
           </section>
         )}

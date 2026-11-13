@@ -26,7 +26,9 @@ import {
   FileDown,
   Mail,
   IdCard,
+  Pencil,
 } from "lucide-react";
+import { EditStudentModal } from "./EditStudentModal";
 
 interface StudentDetailCardProps {
   student: Student;
@@ -44,6 +46,7 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [uploadMessage, setUploadMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -339,15 +342,40 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
           </div>
         </div>
 
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors self-start sm:self-auto"
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditModalOpen(true)}
+            className="h-8 px-3 text-xs font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50 flex items-center gap-1.5 shadow-2xs"
+            title="Editar datos personales, escolares, médicos o tutor del alumno"
           >
-            Cerrar ficha
-          </button>
-        )}
+            <Pencil className="w-3.5 h-3.5" />
+            <span>Editar información</span>
+          </Button>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Cerrar ficha
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Modal para editar información del estudiante */}
+      <EditStudentModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        student={student}
+        onStudentUpdated={(updated) => {
+          if (onStudentUpdated) {
+            onStudentUpdated(updated);
+          }
+        }}
+      />
 
       {/* Contenido en dos columnas: Datos generales / QR institucional */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
