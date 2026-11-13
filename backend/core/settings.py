@@ -87,12 +87,19 @@ ASGI_APPLICATION = 'core.asgi.application'
 
 # Database Configuration
 # Supports:
-# 1. DATABASE_URL (Supabase / Postgres Connection String)
-# 2. Individual DB_* variables
-# 3. Fallback to SQLite for automated tests and isolated local development
-if 'DATABASE_URL' in os.environ:
+# 1. DATABASE_URL (Supabase / PostgreSQL Connection String con SSL obligatorio)
+# 2. Variables individuales DB_*
+# 3. Fallback automático a SQLite para desarrollo local y tests aislados
+database_url = env.str('DATABASE_URL', default=os.environ.get('DATABASE_URL', ''))
+
+if database_url:
+    db_config = env.db_url_config(database_url)
+    # Supabase y proveedores Cloud exigen conexión segura SSL
+    if 'supabase' in database_url.lower() or env.bool('DB_SSL_REQUIRE', default=True):
+        db_config.setdefault('OPTIONS', {})
+        db_config['OPTIONS']['sslmode'] = 'require'
     DATABASES = {
-        'default': env.db('DATABASE_URL')
+        'default': db_config
     }
 elif os.environ.get('DB_NAME'):
     DATABASES = {
@@ -142,6 +149,49 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files (Uploaded files, generated QR codes)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# File Storage Configuration (Local FileSystem vs. Supabase Storage / AWS S3)
+USE_SUPABASE_STORAGE = env.bool('USE_SUPABASE_STORAGE', default=False)
+
+if USE_SUPABASE_STORAGE:
+    if 'storages' not in INSTALLED_APPS:
+        INSTALLED_APPS.append('storages')
+
+    AWS_ACCESS_KEY_ID = env.str('SUPABASE_STORAGE_ACCESS_KEY_ID', default=env.str('AWS_ACCESS_KEY_ID', default=''))
+    AWS_SECRET_ACCESS_KEY = env.str('SUPABASE_STORAGE_SECRET_ACCESS_KEY', default=env.str('AWS_SECRET_ACCESS_KEY', default=''))
+    AWS_STORAGE_BUCKET_NAME = env.str('SUPABASE_STORAGE_BUCKET_NAME', default='sige-media')
+    AWS_S3_ENDPOINT_URL = env.str('SUPABASE_STORAGE_S3_ENDPOINT', default='')
+    AWS_S3_REGION_NAME = env.str('SUPABASE_STORAGE_REGION', default='us-east-1')
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = True
+
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': {
+                'access_key': AWS_ACCESS_KEY_ID,
+                'secret_key': AWS_SECRET_ACCESS_KEY,
+                'bucket_name': AWS_STORAGE_BUCKET_NAME,
+                'endpoint_url': AWS_S3_ENDPOINT_URL,
+                'region_name': AWS_S3_REGION_NAME,
+                'signature_version': 's3v4',
+                'file_overwrite': True,
+            },
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
+else:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
