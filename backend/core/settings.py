@@ -30,7 +30,20 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env('ALLOWED_HOSTS')
+# Configuración dinámica y tolerante de ALLOWED_HOSTS para Railway y entornos locales
+_raw_hosts = env.list('ALLOWED_HOSTS', default=['*'])
+ALLOWED_HOSTS = []
+for _h in _raw_hosts:
+    _h = _h.strip()
+    if _h.startswith('*.'):
+        ALLOWED_HOSTS.append(_h[1:])  # Django usa .domain.com en vez de *.domain.com
+    else:
+        ALLOWED_HOSTS.append(_h)
+
+if '*' not in ALLOWED_HOSTS:
+    for _fallback in ['.up.railway.app', '.vercel.app', 'localhost', '127.0.0.1', 'testserver']:
+        if _fallback not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_fallback)
 
 # Application definition
 INSTALLED_APPS = [
@@ -233,8 +246,25 @@ SPECTACULAR_SETTINGS = {
 }
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS')
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://sige-dusky.vercel.app',
+    'https://sige-git-main-sige10.vercel.app',
+])
+# Permite automáticamente cualquier subdominio o preview generado por Vercel
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF Trusted Origins (requerido para Django 4+ en producción HTTPS)
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
+    'https://*.up.railway.app',
+    'https://*.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+])
 
 # Django-Q2 Configuration (Decision D-02, ADR-02)
 # Broker ORM en PostgreSQL/SQLite local sin Redis
