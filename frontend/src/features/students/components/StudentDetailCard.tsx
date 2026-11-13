@@ -27,8 +27,10 @@ import {
   Mail,
   IdCard,
   Pencil,
+  Crop,
 } from "lucide-react";
 import { EditStudentModal } from "./EditStudentModal";
+import { PhotoCropModal } from "./PhotoCropModal";
 
 interface StudentDetailCardProps {
   student: Student;
@@ -47,6 +49,8 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isCropModalOpen, setIsCropModalOpen] = useState<boolean>(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string>("");
   const [uploadMessage, setUploadMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -120,7 +124,8 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /** Abre el modal de recorte con un archivo nuevo seleccionado por el usuario. */
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -133,42 +138,44 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
       return;
     }
 
-    try {
-      setIsUploading(true);
-      setUploadMessage(null);
-
-      const result = await uploadStudentPhoto(student.id, file);
-
-      // Actualizar estado local
-      const now = Date.now();
-      setPhotoTimestamp(now);
-      setHasPhoto(true);
-      setUploadMessage({
-        type: "success",
-        text: "Fotografía guardada exitosamente en la base de datos.",
-      });
-
-      // Notificar al componente padre
-      if (onStudentUpdated) {
-        onStudentUpdated({
-          ...student,
-          photo_url: result.photo_url,
-          completeness: result.completeness as "COMPLETO" | "INCOMPLETO",
-          active_qr_token_id: result.active_qr_token_id ?? student.active_qr_token_id,
-          updated_at: new Date(now).toISOString(),
-        });
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const src = event.target?.result as string;
+      if (src) {
+        setCropImageSrc(src);
+        setIsCropModalOpen(true);
       }
-    } catch (err: unknown) {
-      console.error(err);
-      setUploadMessage({
-        type: "error",
-        text: err instanceof Error ? err.message : "Error al subir la fotografía.",
+    };
+    reader.readAsDataURL(file);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  /** Abre el modal de recorte manual usando la fotografía actual del alumno. */
+  const handleOpenCropCurrentPhoto = () => {
+    const src = getStudentPhotoUrl(student.id, photoTimestamp || Date.now());
+    setCropImageSrc(src);
+    setIsCropModalOpen(true);
+  };
+
+  /** Callback ejecutado cuando el usuario guarda su recorte manual. */
+  const handleCropSuccess = (newPhotoUrl: string, newTimestamp: number) => {
+    setPhotoTimestamp(newTimestamp);
+    setHasPhoto(true);
+    setUploadMessage({
+      type: "success",
+      text: "Fotografía y encuadre guardados exitosamente.",
+    });
+
+    if (onStudentUpdated) {
+      onStudentUpdated({
+        ...student,
+        photo_url: newPhotoUrl,
+        completeness: "COMPLETO",
+        updated_at: new Date(newTimestamp).toISOString(),
       });
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     }
   };
 
@@ -226,8 +233,8 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
               </button>
             </div>
 
-            {/* Botones de foto: Cargar/Cambiar y Eliminar */}
-            <div className="flex items-center gap-1.5">
+            {/* Botones de foto: Cargar/Cambiar, Ajustar Encuadre y Eliminar */}
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               <Button
                 variant="outline"
                 size="sm"
@@ -243,15 +250,30 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
                 ) : hasPhoto ? (
                   <>
                     <Camera className="w-3 h-3 mr-1" />
-                    <span>Cambiar foto</span>
+                    <span>Cambiar</span>
                   </>
                 ) : (
                   <>
                     <Upload className="w-3 h-3 mr-1" />
-                    <span>Cargar foto</span>
+                    <span>Cargar</span>
                   </>
                 )}
               </Button>
+
+              {/* Botón de ajuste manual de recorte y encuadre */}
+              {hasPhoto && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenCropCurrentPhoto}
+                  disabled={isUploading || isDeleting}
+                  title="Ajustar manualmente el encuadre, zoom y rotación de la fotografía"
+                  className="h-7 px-2 text-[11px] font-semibold text-slate-700 border-slate-300 hover:bg-slate-100 flex items-center gap-1"
+                >
+                  <Crop className="w-3 h-3 text-[#0A3D91]" />
+                  <span>Ajustar</span>
+                </Button>
+              )}
 
               {/* Botón eliminar foto (solo visible si hay foto) */}
               {hasPhoto && (
@@ -375,6 +397,16 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
             onStudentUpdated(updated);
           }
         }}
+      />
+
+      {/* Modal para ajuste manual de encuadre, zoom y recorte de fotografía */}
+      <PhotoCropModal
+        isOpen={isCropModalOpen}
+        onClose={() => setIsCropModalOpen(false)}
+        imageSrc={cropImageSrc}
+        studentId={student.id}
+        studentName={student.display_name}
+        onSuccess={handleCropSuccess}
       />
 
       {/* Contenido en dos columnas: Datos generales / QR institucional */}

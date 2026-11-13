@@ -181,13 +181,21 @@ def find_matching_student(
 def format_student_portrait(
     image_raw: Image.Image, output_size: int = 800
 ) -> Image.Image:
-    """Recorta y encuadra la fotografía escolar con zoom a cabeza y hombros.
+    """Recorta y encuadra la fotografía escolar con zoom intenso a cabeza y hombros.
 
     Aplica la orientación física real indicada en los metadatos EXIF, compone sobre
     fondo blanco eliminando canales alfa y realiza un encuadre cuadrado (1:1) enfocado
-    en la cabeza y hombros del alumno, recortando el exceso inferior del torso (pecho
-    y abdomen) y los laterales vacíos. Esto asegura que la fotografía quede a la par
-    exacta del código QR en las credenciales escolares oficiales.
+    estrictamente en la cabeza y hombros del alumno, eliminando todo el torso inferior
+    (pecho, abdomen, cintura). El crop agresivo garantiza que la cara sea lo suficientemente
+    grande y que la fotografía quede alineada al QR en las credenciales escolares oficiales.
+
+    Lógica de encuadre (orientación basada en relación de aspecto):
+    - **Vertical (h > w):** Se toma un cuadrado equivalente al 65% del ancho (zoom al
+      rostro) iniciando al 3% del alto para conservar el cabello y cubriendo solo
+      cabeza + hombros superiores.
+    - **Horizontal (w > h):** Se toma un cuadrado del 60% de la altura centrado
+      horizontalmente con un 3% de margen superior.
+    - **Cuadrada:** Zoom del 70% centrado en la parte superior de la imagen.
 
     Args:
         image_raw (Image.Image): Imagen original cargada por el usuario.
@@ -212,30 +220,28 @@ def format_student_portrait(
 
     w, h = img.size
 
-    # 3. Recorte cuadrado centrado enfocado en cabeza y hombros
+    # 3. Recorte cuadrado agresivo: solo cabeza y hombros superiores
     if w > h:
-        # Foto horizontal (cámara/celular apaisado con el alumno centrado):
-        # Tomamos un cuadrado de ~78% de la altura, centrado horizontalmente
-        # y dejando ~4% de margen superior para el cabello.
-        crop_size = max(50, int(h * 0.78))
+        # Foto horizontal: tomamos el 60% de la altura para hacer zoom al rostro,
+        # centrando horizontalmente y dejando un 3% de margen superior para el cabello.
+        crop_size = max(50, int(h * 0.60))
         left = max(0, (w - crop_size) // 2)
-        top = max(0, int(h * 0.04))
+        top = max(0, int(h * 0.03))
         if top + crop_size > h:
             top = max(0, h - crop_size)
     elif h > w:
-        # Foto vertical (retrato escolar donde el torso ocupa la parte baja):
-        # Tomamos un cuadrado de ~86% del ancho para hacer zoom al rostro
-        # y cortar el exceso inferior de torso/pecho.
-        crop_size = max(50, int(w * 0.86))
+        # Foto vertical: tomamos el 65% del ancho para hacer un zoom pronunciado
+        # al rostro y eliminar el torso inferior completamente.
+        crop_size = max(50, int(w * 0.65))
         left = max(0, (w - crop_size) // 2)
-        top = max(0, int(h * 0.05))
+        top = max(0, int(h * 0.03))
         if top + crop_size > h:
             top = max(0, h - crop_size)
     else:
-        # Ya es cuadrada: zoom moderado enfocado en la cabeza
-        crop_size = max(50, int(w * 0.88))
+        # Ya es cuadrada: zoom pronunciado (70%) centrado en la parte superior
+        crop_size = max(50, int(w * 0.70))
         left = max(0, (w - crop_size) // 2)
-        top = max(0, int((h - crop_size) * 0.25))
+        top = max(0, int((h - crop_size) * 0.15))
 
     right = min(w, left + crop_size)
     bottom = min(h, top + crop_size)
