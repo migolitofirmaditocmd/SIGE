@@ -182,6 +182,12 @@ if USE_SUPABASE_STORAGE:
     AWS_DEFAULT_ACL = None
     AWS_S3_FILE_OVERWRITE = True
 
+    # Generación de URLs públicas directas vía CDN de Supabase Storage
+    supabase_custom_domain = env.str('SUPABASE_STORAGE_CUSTOM_DOMAIN', default='')
+    if not supabase_custom_domain and 'supabase.co' in AWS_S3_ENDPOINT_URL:
+        endpoint_clean = AWS_S3_ENDPOINT_URL.replace('https://', '').replace('http://', '').split('/')[0]
+        supabase_custom_domain = f"{endpoint_clean}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
+
     STORAGES = {
         'default': {
             'BACKEND': 'storages.backends.s3.S3Storage',
@@ -193,6 +199,8 @@ if USE_SUPABASE_STORAGE:
                 'region_name': AWS_S3_REGION_NAME,
                 'signature_version': 's3v4',
                 'file_overwrite': True,
+                'querystring_auth': False,
+                'custom_domain': supabase_custom_domain or None,
             },
         },
         'staticfiles': {
