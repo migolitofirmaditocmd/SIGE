@@ -177,14 +177,93 @@ export async function uploadBatchPhotos(
     body: formData,
   });
 
+  return await res.json();
+}
+
+/**
+ * Elimina la fotografía de un estudiante de la base de datos y del disco.
+ * El endpoint limpia photo_url, photo_sha256 y photo_updated_at.
+ */
+export async function deleteStudentPhoto(studentId: string): Promise<{
+  message: string;
+  completeness: string;
+  completeness_display: string;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/students/${studentId}/photo/`, {
+    method: "DELETE",
+  });
+
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
     throw new Error(
-      errorData?.message || `Error ${res.status} al procesar lote de fotografías`
+      errorData?.message || `Error ${res.status} al eliminar fotografía`
     );
   }
 
   return await res.json();
 }
+
+/**
+ * Genera y descarga el PDF de credencial individual de un estudiante.
+ * Llama a POST /api/v1/credentials/exports/ con mode=CREDENCIAL y entity_ids=[studentId].
+ * Retorna el Blob binario del PDF listo para descarga.
+ */
+export async function downloadStudentCredentialPdf(
+  studentId: string
+): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/v1/credentials/exports/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: "CREDENCIAL",
+      entity_type: "STUDENT",
+      entity_ids: [studentId],
+      format: "PDF",
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(
+      errorData?.detail ||
+        errorData?.message ||
+        `Error ${res.status} al generar credencial PDF`
+    );
+  }
+
+  return await res.blob();
+}
+
+/**
+ * Genera y descarga el PDF de credenciales de todos los alumnos elegibles de un grupo.
+ * Llama a POST /api/v1/credentials/exports/ con mode=CREDENCIAL y group_id.
+ * Retorna el Blob binario del PDF listo para descarga.
+ */
+export async function downloadGroupCredentialPdf(
+  groupId: string
+): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/v1/credentials/exports/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: "CREDENCIAL",
+      entity_type: "STUDENT",
+      group_id: groupId,
+      format: "PDF",
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(
+      errorData?.detail ||
+        errorData?.message ||
+        `Error ${res.status} al generar credenciales PDF del grupo`
+    );
+  }
+
+  return await res.blob();
+}
+
 
 

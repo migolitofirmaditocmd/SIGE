@@ -495,34 +495,61 @@ export const StudentDetailCard: React.FC<StudentDetailCardProps> = ({
           </div>
 
           <div className="w-full pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
-            {/* Botón credencial PDF individual */}
-            {student.active_qr_token_id && hasPhoto ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadCredentialPdf}
-                disabled={isDownloadingPdf}
-                className="w-full h-8 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50 flex items-center justify-center gap-1.5"
-                title="Generar y descargar la credencial escolar en PDF"
-              >
-                {isDownloadingPdf ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Generando PDF...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="w-3.5 h-3.5" />
-                    <span>Descargar Credencial PDF</span>
-                  </>
-                )}
-              </Button>
+            {/* Botón credencial PDF individual — solo si tiene foto */}
+            {hasPhoto ? (
+              student.active_qr_token_id ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadCredentialPdf}
+                  disabled={isDownloadingPdf}
+                  className="w-full h-8 text-[11px] font-semibold text-[#0A3D91] border-[#0A3D91]/30 hover:bg-blue-50 flex items-center justify-center gap-1.5"
+                  title="Generar y descargar la credencial escolar en PDF"
+                >
+                  {isDownloadingPdf ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Generando PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="w-3.5 h-3.5" />
+                      <span>Descargar Credencial PDF</span>
+                    </>
+                  )}
+                </Button>
+              ) : (
+                /* Tiene foto pero QR aún no se generó (caso edge) */
+                <div className="w-full flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-left">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-800 font-medium leading-snug">
+                    El código QR aún no se ha generado. Recarga la ficha e inténtalo de nuevo.
+                  </p>
+                </div>
+              )
             ) : (
-              <div
-                className="w-full text-center text-[10px] text-slate-400 italic px-2"
-                title="Se requiere fotografía y código QR activo para generar la credencial"
-              >
-                Requiere foto y QR para generar credencial
+              /* Sin foto — bloquear generación de credencial con aviso claro */
+              <div className="w-full flex flex-col items-center gap-2">
+                <div className="w-full flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-left">
+                  <AlertTriangle className="w-3.5 h-3.5 text-orange-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] text-orange-900 font-bold leading-snug">
+                      Falta la fotografía
+                    </p>
+                    <p className="text-[10px] text-orange-800 leading-snug mt-0.5">
+                      Para generar la credencial es obligatorio subir primero la fotografía del alumno.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUploadClick}
+                  disabled={isUploading}
+                  className="w-full inline-flex items-center justify-center gap-1.5 h-8 px-3 bg-[#0A3D91] hover:bg-[#072B68] text-white rounded-lg text-[11px] font-semibold shadow-xs transition-colors disabled:opacity-50"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Subir foto para generar credencial</span>
+                </button>
               </div>
             )}
 
