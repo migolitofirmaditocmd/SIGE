@@ -24,6 +24,7 @@ from apps.qr_codes.card_generator import (
     generate_qr_pil_image,
     render_credential_back_pil,
     render_credential_front_pil,
+    _get_expiration_year_by_grade,
 )
 from apps.qr_codes.crypto import issue_qr_token_for_student
 from apps.qr_codes.models import QRCodeToken
@@ -251,6 +252,23 @@ class TestCredentialCardGenerator:
         }
         img = render_credential_front_pil(data)
         assert img.size == (638, 1011)
+
+    def test_credential_expiration_year_by_grade(self) -> None:
+        """La vigencia de la credencial se calcula según el grado escolar del alumno.
+
+        - 1° Grado: vence en Julio del 2029 (3 años).
+        - 2° Grado: vence en Julio del 2028 (2 años).
+        - 3° Grado: vence en Julio del 2027 (1 año).
+        """
+        assert _get_expiration_year_by_grade({"grade": 1}) == 2029
+        assert _get_expiration_year_by_grade({"grade": 2}) == 2028
+        assert _get_expiration_year_by_grade({"grade": 3}) == 2027
+
+        # Extracción a partir de academic_group si grade no viene explícito
+        assert _get_expiration_year_by_grade({"academic_group": "1°A · MATUTINO"}) == 2029
+        assert _get_expiration_year_by_grade({"academic_group": "2°B · VESPERTINO"}) == 2028
+        assert _get_expiration_year_by_grade({"academic_group": "3°C · MATUTINO"}) == 2027
+
 
 
 # ----------------------------------------------------------------------
