@@ -45,6 +45,7 @@ from apps.core.exceptions import (
     SIGEAPIException,
     StudentNotActiveError,
 )
+from .batch_photos import find_matching_student, process_and_save_photo
 from .models import GroupProxy, Guardian, GuardianConsentLog, Student, StudentGuardian
 from .serializers import (
     ConsentUpdateSerializer,
@@ -982,3 +983,246 @@ class GroupListView(APIView):
         )
         serializer = GroupListSerializer(groups, many=True)
         return _no_store_response(serializer.data, status.HTTP_200_OK)
+
+
+# ------------------------------------------------------------------
+# POST /api/v1/students/batch-photos/
+# ------------------------------------------------------------------
+
+class StudentBatchPhotoUploadView(APIView):
+    """Carga masiva y vinculación automática de fotografías por lote (SIGE-US-064).
+
+    Recibe múltiples archivos fotográficos (o un archivo ZIP), identifica
+    a qué estudiante pertenece cada imagen según su nombre de archivo o matrícula,
+    elimina metadatos EXIF por privacidad de menores (RN-TRX-02, RN-EST-16),
+    almacena la imagen y actualiza la firma SHA-256 (RN-EST-15).
+    """
+
+    parser_classes = [MultiPartParser, FormParser]
+
+    @extend_schema(
+        operation_id="students_batch_upload_photos",
+        summary="Carga masiva de fotografías de estudiantes",
+        description=(
+            "Asocia y actualiza automáticamente fotos de estudiantes a partir de "
+            "los nombres de archivo de las imágenes recibidas o paquete ZIP (US-064)."
+        ),
+        request=inline_serializer(
+            "BatchPhotoUploadRequest",
+            fields={
+                "photos": serializers.ListField(
+                    child=serializers.FileField(),
+                    required=False,
+                    help_text="Lista de archivos fotográficos a procesar.",
+                ),
+                "zip_file": serializers.FileField(
+                    required=False,
+                    help_text="Paquete ZIP opcional con fotografías.",
+                ),
+                "grade": serializers.IntegerField(
+                    required=False,
+                    help_text="Grado escolar para limitar la búsqueda (1, 2 o 3).",
+                ),
+                "group": serializers.CharField(
+                    required=False,
+                    help_text="Letra de grupo (A, B, C, etc.).",
+                ),
+                "shift": serializers.CharField(
+                    required=False,
+                    help_text="Turno escolar (MATUTINO o VESPERTINO).",
+                ),
+                "overwrite": serializers.BooleanField(
+                    required=False,
+                    default=True,
+                    help_text="Indica si se deben sobreescribir fotos existentes.",
+                ),
+            },
+        ),
+        responses={
+            200: inline_serializer(
+                "BatchPhotoUploadResponse",
+                fields={
+                    "total_received": serializers.IntegerField(),
+                    "matched_count": serializers.IntegerField(),
+                    "updated_count": serializers.IntegerField(),
+                    "skipped_count": serializers.IntegerField(),
+                    "unmatched_count": serializers.IntegerField(),
+                    "results": serializers.ListField(child=serializers.DictField()),
+                },
+            )
+        },
+        tags=["Estudiantes"],
+    )
+    def post(self, request: Request) -> Response:
+        """Procesa el lote de fotografías y las vincula a los estudiantes.
+
+        Args:
+            request (Request): Petición multipart con lista de archivos o zip_file.
+
+        Returns:
+            Response: Reporte detallado de asociación por alumno (HTTP 200).
+        """
+        import zipfile
+
+        photos = request.FILES.getlist("photos") or request.FILES.getlist("files")
+        zip_file = request.FILES.get("zip_file")
+
+        # Extraer elementos a procesar: lista de tuplas (nombre, descriptor/bytes)
+        file_items: list[tuple[str, Any]] = []
+
+        for p in photos:
+            file_items.append((p.name, p))
+
+        if zip_file:
+            try:
+                with zipfile.ZipFile(zip_file, "r") as zf:
+                    for zip_info in zf.infolist():
+                        if zip_info.is_dir():
+                            continue
+                        name = Path(zip_info.filename).name
+                        if name.startswith(".") or name.startswith("__MACOSX"):
+                            continue
+                        if name.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                            file_items.append((name, zf.read(zip_info)))
+            except Exception as exc:
+                raise SIGEAPIException(
+                    error_code="INVALID_ZIP",
+                    message=f"No se pudo descomprimir el archivo ZIP: {str(exc)}",
+                    http_status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if not file_items:
+            raise SIGEAPIException(
+                error_code="VALIDATION_ERROR",
+                message="No se proporcionaron fotografías ni archivo ZIP válido para procesar.",
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Parámetros opcionales de alcance
+        grade = request.data.get("grade")
+        group_letter = request.data.get("group")
+        shift = request.data.get("shift")
+
+        overwrite_raw = request.data.get("overwrite")
+        overwrite_flag = True
+        if overwrite_raw is not None:
+            overwrite_flag = str(overwrite_raw).strip().lower() in (
+                "true",
+                "1",
+                "yes",
+                "t",
+            )
+
+        # Determinar candidatos prioritarios y de respaldo
+        primary_candidates: list[Student]
+        fallback_candidates: list[Student] | None = None
+
+        if grade and group_letter and shift:
+            primary_candidates = list(
+                Student.objects.filter(
+                    grade=int(grade),
+                    group_letter=str(group_letter).strip().upper(),
+                    shift=str(shift).strip().upper(),
+                )
+            )
+            fallback_candidates = list(
+                Student.objects.exclude(
+                    grade=int(grade),
+                    group_letter=str(group_letter).strip().upper(),
+                    shift=str(shift).strip().upper(),
+                )
+            )
+        else:
+            primary_candidates = list(Student.objects.all())
+            fallback_candidates = None
+
+        total_received = len(file_items)
+        matched_count = 0
+        updated_count = 0
+        skipped_count = 0
+        unmatched_count = 0
+        results: list[dict[str, Any]] = []
+
+        for filename, file_data in file_items:
+            matched_student, score, reason = find_matching_student(
+                filename, primary_candidates, fallback_candidates
+            )
+
+            if not matched_student:
+                unmatched_count += 1
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "UNMATCHED",
+                        "message": reason,
+                        "student_id": None,
+                        "student_name": None,
+                        "enrollment_id": None,
+                        "group": None,
+                    }
+                )
+                continue
+
+            matched_count += 1
+            has_photo = bool(matched_student.photo_url)
+
+            # Si ya cuenta con foto y no se solicitó sobreescribir
+            if has_photo and not overwrite_flag:
+                skipped_count += 1
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "SKIPPED",
+                        "message": (
+                            "El estudiante ya cuenta con fotografía institucional "
+                            "y se especificó conservar la existente."
+                        ),
+                        "student_id": str(matched_student.id),
+                        "student_name": matched_student.display_name,
+                        "enrollment_id": matched_student.enrollment_id,
+                        "group": f"{matched_student.grade}°{matched_student.group_letter} {matched_student.get_shift_display()}",
+                    }
+                )
+                continue
+
+            success, msg, sha256_val = process_and_save_photo(
+                matched_student, file_data, filename
+            )
+
+            if success:
+                updated_count += 1
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "SUCCESS",
+                        "message": f"{msg} · {reason}",
+                        "student_id": str(matched_student.id),
+                        "student_name": matched_student.display_name,
+                        "enrollment_id": matched_student.enrollment_id,
+                        "group": f"{matched_student.grade}°{matched_student.group_letter} {matched_student.get_shift_display()}",
+                    }
+                )
+            else:
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "ERROR",
+                        "message": msg,
+                        "student_id": str(matched_student.id),
+                        "student_name": matched_student.display_name,
+                        "enrollment_id": matched_student.enrollment_id,
+                        "group": f"{matched_student.grade}°{matched_student.group_letter} {matched_student.get_shift_display()}",
+                    }
+                )
+
+        response_payload = {
+            "total_received": total_received,
+            "matched_count": matched_count,
+            "updated_count": updated_count,
+            "skipped_count": skipped_count,
+            "unmatched_count": unmatched_count,
+            "results": results,
+        }
+
+        return _no_store_response(response_payload, status.HTTP_200_OK)
+

@@ -2,7 +2,12 @@
  * Servicios de comunicación HTTP con la API REST de SIGE Backend.
  */
 
-import { AcademicGroup, PaginatedResponse, Student } from "./types";
+import {
+  AcademicGroup,
+  BatchPhotoUploadResponse,
+  PaginatedResponse,
+  Student,
+} from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -127,4 +132,54 @@ export function getStudentPhotoUrl(
   const t = timestamp ? `?t=${timestamp}` : "";
   return `${API_BASE}/api/v1/students/${studentId}/photo/${t}`;
 }
+
+/**
+ * Carga un lote de fotografías a la API para asociarlas automáticamente a los estudiantes (US-064).
+ */
+export async function uploadBatchPhotos(
+  files: File[],
+  options?: {
+    grade?: number;
+    group?: string;
+    shift?: string;
+    overwrite?: boolean;
+  }
+): Promise<BatchPhotoUploadResponse> {
+  const formData = new FormData();
+  for (const file of files) {
+    if (file.name.toLowerCase().endsWith(".zip")) {
+      formData.append("zip_file", file);
+    } else {
+      formData.append("photos", file);
+    }
+  }
+
+  if (options?.grade) {
+    formData.append("grade", options.grade.toString());
+  }
+  if (options?.group) {
+    formData.append("group", options.group);
+  }
+  if (options?.shift) {
+    formData.append("shift", options.shift);
+  }
+  if (options?.overwrite !== undefined) {
+    formData.append("overwrite", options.overwrite.toString());
+  }
+
+  const res = await fetch(`${API_BASE}/api/v1/students/batch-photos/`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(
+      errorData?.message || `Error ${res.status} al procesar lote de fotografías`
+    );
+  }
+
+  return await res.json();
+}
+
 

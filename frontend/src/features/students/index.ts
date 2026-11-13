@@ -8,3 +8,4 @@ export * from "./components/StudentSearchBar";
 export * from "./components/StudentDetailCard";
 export * from "./components/GroupSelector";
 export * from "./components/GroupStudentTable";
+export * from "./components/BatchPhotoUploadModal";

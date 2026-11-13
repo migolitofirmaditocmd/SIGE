@@ -78,3 +78,23 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
+export interface BatchPhotoResultItem {
+  filename: string;
+  status: "SUCCESS" | "SKIPPED" | "UNMATCHED" | "ERROR";
+  message: string;
+  student_id?: string | null;
+  student_name?: string | null;
+  enrollment_id?: string | null;
+  group?: string | null;
+}
+
+export interface BatchPhotoUploadResponse {
+  total_received: number;
+  matched_count: number;
+  updated_count: number;
+  skipped_count: number;
+  unmatched_count: number;
+  results: BatchPhotoResultItem[];
+}
+
+

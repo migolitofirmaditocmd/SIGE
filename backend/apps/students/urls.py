@@ -14,6 +14,7 @@ from .views import (
     GroupListView,
     GuardianDetailView,
     InvalidateContactView,
+    StudentBatchPhotoUploadView,
     StudentDetailView,
     StudentGuardianAddView,
     StudentListCreateView,
@@ -40,6 +41,12 @@ urlpatterns = [
         "groups/",
         GroupListView.as_view(),
         name="group-list",
+    ),
+    # POST /api/v1/students/batch-photos/ — carga masiva de fotografías por lote (US-064)
+    path(
+        "batch-photos/",
+        StudentBatchPhotoUploadView.as_view(),
+        name="student-batch-photos",
     ),
     # GET   /api/v1/students/{id}/   — expediente completo
     # PATCH /api/v1/students/{id}/   — actualización parcial

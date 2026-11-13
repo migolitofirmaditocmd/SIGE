@@ -5,16 +5,20 @@ import React, { useEffect, useState } from "react";
 import { AcademicGroup, Student } from "../types";
 import { fetchStudentsByGroup, getStudentPhotoUrl } from "../services";
 import { Badge, Button } from "@/shared/ui";
-import { User, Loader2, Eye, Phone } from "lucide-react";
+import { User, Loader2, Eye, Phone, Upload } from "lucide-react";
 
 interface GroupStudentTableProps {
   group: AcademicGroup;
   onSelectStudent: (student: Student) => void;
+  refreshTrigger?: number;
+  onUploadPhotosClick?: () => void;
 }
 
 export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
   group,
   onSelectStudent,
+  refreshTrigger = 0,
+  onUploadPhotosClick,
 }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +44,7 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
     }
 
     loadStudents();
-  }, [group.id, group.grade, group.group_letter, group.shift]);
+  }, [group.id, group.grade, group.group_letter, group.shift, refreshTrigger]);
 
   if (isLoading) {
     return (
@@ -64,7 +68,7 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       {/* Barra superior de la tabla */}
-      <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h4 className="font-bold text-sm text-slate-800">
             Listado Oficial: {group.display_name}
@@ -73,6 +77,18 @@ export const GroupStudentTable: React.FC<GroupStudentTableProps> = ({
             {students.length} estudiantes registrados en este grupo
           </p>
         </div>
+
+        {onUploadPhotosClick && (
+          <Button
+            onClick={onUploadPhotosClick}
+            variant="outline"
+            size="sm"
+            className="bg-white hover:bg-blue-50 text-[#0A3D91] border-blue-200 flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+          >
+            <Upload className="w-3.5 h-3.5 text-[#0A3D91]" />
+            <span>Subir Fotos de este Grupo</span>
+          </Button>
+        )}
       </div>
 
       {/* Tabla responsiva */}
