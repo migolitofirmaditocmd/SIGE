@@ -33,9 +33,10 @@ CR80_HEIGHT_MM: float = 85.60
 CR80_HORIZ_WIDTH_MM: float = 85.60
 CR80_HORIZ_HEIGHT_MM: float = 53.98
 
-# Dimensiones ampliadas optimizadas para impresión en sustrato Carta horizontal (+30% área)
-PRINT_CARD_WIDTH_MM: float = 61.50
-PRINT_CARD_HEIGHT_MM: float = 97.40
+# Dimensiones optimizadas para mica térmica estándar de 65 mm × 95 mm
+# Permite un margen perimétrico de sellado plástico uniforme (~4.75 mm lateral, ~3.5 mm vertical)
+PRINT_CARD_WIDTH_MM: float = 55.50
+PRINT_CARD_HEIGHT_MM: float = 88.00
 
 # Sticker térmico de asistencia
 STICKER_WIDTH_MM: float = 50.00
@@ -759,13 +760,13 @@ def generate_credential_pdf(
     rows = 2
     students_per_page = 4
 
-    # Dimensiones ampliadas para maximizar el área impresa en hoja Carta
-    card_w = PRINT_CARD_WIDTH_MM * mm  # 61.50 mm
-    card_h = PRINT_CARD_HEIGHT_MM * mm  # 97.40 mm
+    # Dimensiones optimizadas para mica térmica estándar 65 × 95 mm
+    card_w = PRINT_CARD_WIDTH_MM * mm  # 55.50 mm
+    card_h = PRINT_CARD_HEIGHT_MM * mm  # 88.00 mm
 
-    margin_x = 8.0 * mm
-    top_margin = 9.0 * mm
-    gap_y = 4.3 * mm
+    margin_x = 10.0 * mm
+    top_margin = 13.0 * mm
+    gap_y = 9.0 * mm
 
     # Pares [Frente|Reverso] contiguos sin espacio interno para facilitar el
     # doblez individual de cada credencial tras el recorte.
